@@ -10,9 +10,20 @@ EduZim serves two primary audiences:
 
 2. **School tier (ECD Grade 0 – Grade 7)**: A multi-tenant B2B tier where schools subscribe and each school operates in its own isolated environment. Teachers create and manage content, students learn and are assessed, and parents/guardians track progress — all aligned to the Zimbabwe Ministry of Primary and Secondary Education (MoPSE) curriculum.
 
-### Architecture Decision: Multi-Tenant
+### Architecture Decision: Clean Architecture Monolith
 
-The school tier is **multi-tenant with strict data isolation**. Each school is a separate tenant with its own data boundary — students, teachers, content, and results from one school are never visible to another school by default. Content sharing between schools is opt-in and request-based. This approach balances scalability and cost-efficiency (shared infrastructure) with the privacy and autonomy each school requires.
+EduZim is implemented as a **single deployable ASP.NET Core (.NET 10+) application** structured using Clean Architecture principles. The solution is organised into four layers with strict dependency rules:
+
+1. **Domain** (`EduZim.Domain`) — Entities, value objects, domain events, enums, and domain interfaces. No dependencies on any external framework or infrastructure concern.
+2. **Application** (`EduZim.Application`) — Use cases implemented as MediatR command and query handlers, organised by feature folder. Contains DTOs, FluentValidation validators, and interfaces for infrastructure services. Depends only on Domain.
+3. **Infrastructure** (`EduZim.Infrastructure`) — EF Core `EduZimDbContext`, repository implementations, external service integrations (AI, SMS, email, payment, video), Hangfire background jobs, S3 storage, Redis cache, and SignalR hubs. Depends on Application and Domain.
+4. **Presentation** (`EduZim.API`) — ASP.NET Core minimal API endpoints, middleware, JWT authentication, and request/response mapping. Depends only on Application.
+
+This monolithic approach eliminates the operational complexity of distributed services while retaining clean separation of concerns through layer boundaries enforced by project references.
+
+### Multi-Tenancy Strategy
+
+The school tier is **multi-tenant with strict data isolation**. Each school is a separate tenant with its own data boundary — students, teachers, content, and results from one school are never visible to another school by default. Content sharing between schools is opt-in and request-based. A single **PostgreSQL database** with Row-Level Security (RLS) enforces tenant isolation at the data layer; the application layer validates tenant claims on every request as a defence-in-depth measure.
 
 The pre-school consumer tier is a **single shared platform** — parents subscribe individually and children access a common content library.
 
@@ -36,7 +47,7 @@ Beyond the core request, the following innovations are proposed:
 ## Glossary
 
 - **EduZim**: The eLearning platform described in this document.
-- **Platform**: The EduZim system as a whole, including all tiers and services.
+- **Platform**: The EduZim system as a whole, including all tiers and use cases.
 - **Pre-school Tier**: The consumer-facing product for toddlers aged 2–5, subscribed to by parents.
 - **School Tier**: The multi-tenant B2B product for ECD Grade 0 – Grade 7 students enrolled in subscribing schools.
 - **Tenant**: A single school and all its associated data, users, and content within the School Tier.
@@ -49,7 +60,7 @@ Beyond the core request, the following innovations are proposed:
 - **Module**: A structured collection of Content items organised around a learning objective.
 - **Curriculum**: The Zimbabwe MoPSE-aligned syllabus for ECD Grade 0 – Grade 7.
 - **ZimBot**: The AI-powered conversational tutor embedded in the Platform.
-- **Gamification Engine**: The subsystem responsible for points, badges, leaderboards, and rewards.
+- **Gamification Engine**: The application use cases responsible for points, badges, leaderboards, and rewards.
 - **Subscription**: A recurring payment plan (monthly, termly, or yearly) granting access to the Platform.
 - **Offline Mode**: The ability to access downloaded Content without an active internet connection.
 - **Content Marketplace**: The feature allowing Teachers to publish and share Content packs across Tenants.
@@ -57,7 +68,7 @@ Beyond the core request, the following innovations are proposed:
 - **Assessment**: A quiz, test, or exercise used to evaluate a Student's understanding.
 - **Progress Report**: A summary of a Student's performance, engagement, and achievements over a period.
 - **SMS_Service**: The external SMS gateway used to deliver notifications to Parents in low-connectivity areas.
-- **Sync_Service**: The background service that reconciles offline progress data with the server when connectivity is restored.
+- **Sync Use Case**: The application use case that reconciles offline progress data with the server when connectivity is restored.
 
 ---
 
@@ -103,7 +114,7 @@ Beyond the core request, the following innovations are proposed:
 
 #### Acceptance Criteria
 
-1. THE Platform SHALL provide Pre-school Tier Content covering: the English alphabet, numbers 1–100, basic shapes, colours, animals, body parts, simple Venecular vocabulary 
+1. THE Platform SHALL provide Pre-school Tier Content covering: the English alphabet, numbers 1–100, basic shapes, colours, animals, body parts, simple Vernacular vocabulary.
 2. WHEN a toddler interacts with a letter or number, THE Platform SHALL play an audio pronunciation and display a 3D animated character demonstrating the concept.
 3. THE Platform SHALL present all Pre-school Tier Content through interactive animations, 3D scenes, songs, and short videos not exceeding 5 minutes in duration.
 4. WHEN a toddler completes a learning activity, THE Platform SHALL display a celebratory animation and award a star to reinforce positive engagement.
@@ -250,10 +261,10 @@ Beyond the core request, the following innovations are proposed:
 #### Acceptance Criteria
 
 1. THE Platform SHALL allow Students and Parents to download Modules for offline access from within the app.
-2. WHEN a Student completes a Module or Assessment in Offline Mode, THE Sync_Service SHALL queue the progress data locally and upload it to the server within 60 seconds of internet connectivity being restored.
+2. WHEN a Student completes a Module or Assessment in Offline Mode, THE Sync Use Case SHALL queue the progress data locally and upload it to the server within 60 seconds of internet connectivity being restored.
 3. WHILE a Student is in Offline Mode, THE Platform SHALL display a clear indicator showing that the session is offline and that progress will sync when connectivity is restored.
 4. THE Platform SHALL support offline access for downloaded Content on Android and iOS mobile devices and on web browsers that support Progressive Web App (PWA) caching.
-5. IF a conflict is detected between locally queued progress and server-side progress during sync, THEN THE Sync_Service SHALL retain the record with the later timestamp and log the conflict for review.
+5. IF a conflict is detected between locally queued progress and server-side progress during sync, THEN THE Sync Use Case SHALL retain the record with the later timestamp and log the conflict for review.
 6. THE Platform SHALL allow a School Admin to configure which Modules are pre-downloaded to student devices during initial app setup within their Tenant.
 
 ---

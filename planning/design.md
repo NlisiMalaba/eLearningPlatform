@@ -7,406 +7,313 @@ EduZim is a Zimbabwe-focused eLearning platform serving two tiers:
 - **Pre-school Tier** (ages 2–5): A consumer product subscribed to by parents, delivering foundational learning through 3D animations, audio, games, and AI tutoring.
 - **School Tier** (ECD Grade 0 – Grade 7): A multi-tenant B2B product where each subscribing school operates in a fully isolated data environment, with teachers, students, parents, and admins all scoped to their tenant.
 
-The backend is built on **ASP.NET Core (.NET 8+)** using a microservices architecture. The frontend is **React** (web) and **React Native** (mobile). Real-time features use **SignalR**. Background processing uses **Hangfire** and **.NET Worker Services**. Data is stored in **PostgreSQL** with Row-Level Security (RLS) enforcing multi-tenant isolation. **Entity Framework Core** is the ORM. **Redis** provides distributed caching. **S3-compatible object storage** (e.g., MinIO or AWS S3) holds media assets.
+The backend is a **single deployable ASP.NET Core (.NET 10+) application** structured using Clean Architecture. The frontend is **React** (web PWA) and **React Native** (mobile). Real-time features use **SignalR**. Background processing uses **Hangfire**. Data is stored in a single **PostgreSQL** database with Row-Level Security (RLS) enforcing multi-tenant isolation. **Entity Framework Core** (`EduZimDbContext`) is the ORM. **Redis** provides distributed caching. **S3-compatible object storage** (MinIO or AWS S3) holds media assets. In-process event handling uses **MediatR** notifications.
 
 ---
 
 ## Architecture
+
+### Solution Structure
+
+```
+EduZim.sln
+  src/
+    EduZim.Domain/          ← Entities, value objects, domain events, enums, domain interfaces
+    EduZim.Application/     ← MediatR commands/queries/handlers, DTOs, validators, app interfaces
+    EduZim.Infrastructure/  ← EF Core, repositories, external integrations, Hangfire, Redis, S3, SignalR
+    EduZim.API/             ← ASP.NET Core minimal API endpoints, middleware, JWT auth
+  clients/
+    eduzim-web/             ← React PWA
+    eduzim-mobile/          ← React Native
+  tests/
+    EduZim.Tests.Unit/
+    EduZim.Tests.Integration/
+    EduZim.Tests.Properties/
+```
+
+### Layer Dependency Rules
+
+```
+EduZim.API  →  EduZim.Application  →  EduZim.Domain
+                      ↑
+          EduZim.Infrastructure
+```
+
+- **Domain** has zero external dependencies.
+- **Application** depends only on Domain.
+- **Infrastructure** depends on Application and Domain (implements Application interfaces).
+- **API** depends only on Application (dispatches MediatR commands/queries).
 
 ### High-Level Architecture
 
 ```mermaid
 graph TB
     subgraph Clients
-        WEB[React Web App]
+        WEB[React Web PWA]
         MOB[React Native Mobile]
     end
 
-    subgraph API_Gateway
-        GW[API Gateway / YARP Reverse Proxy]
+    subgraph EduZim.API
+        ENDPOINTS[Minimal API Endpoints]
+        MW[Middleware\nJWT · Tenant · Audit · Exception]
     end
 
-    subgraph Microservices
-        AUTH[Identity Service\nASP.NET Core + ASP.NET Identity]
-        TENANT[Tenant Service\nASP.NET Core]
-        CONTENT[Content Service\nASP.NET Core]
-        ASSESS[Assessment Service\nASP.NET Core]
-        ADAPT[Adaptive Learning Service\nASP.NET Core]
-        GAMIFY[Gamification Service\nASP.NET Core]
-        NOTIFY[Notification Service\nASP.NET Core + Hangfire]
-        ZIMBOT[ZimBot Service\nASP.NET Core + AI SDK]
-        BILLING[Billing Service\nASP.NET Core]
-        LIVE[Live Classroom Service\nASP.NET Core + SignalR]
-        SYNC[Sync Service\n.NET Worker Service]
-        MARKET[Marketplace Service\nASP.NET Core]
+    subgraph EduZim.Application
+        IDENTITY[Identity Handlers]
+        TENANTS[Tenant Handlers]
+        CONTENT[Content Handlers]
+        ASSESS[Assessment Handlers]
+        ADAPT[Adaptive Learning Handlers]
+        GAMIFY[Gamification Handlers]
+        NOTIFY[Notification Handlers]
+        ZIMBOT[ZimBot Handlers]
+        BILLING[Billing Handlers]
+        LIVE[Live Classroom Handlers]
+        SYNC[Sync Handlers]
+        MARKET[Marketplace Handlers]
+        PROGRESS[Progress Handlers]
+    end
+
+    subgraph EduZim.Infrastructure
+        DBCTX[EduZimDbContext\nEF Core + RLS]
+        REPOS[Repositories]
+        HANGFIRE[Hangfire Jobs]
+        SIGNALR[SignalR Hubs]
+        EXTSVCS[External Services\nAI · SMS · Email · Payment · Video · S3]
+        REDIS[Redis Cache]
     end
 
     subgraph Data
         PG[(PostgreSQL + RLS)]
-        REDIS[(Redis Cache)]
-        S3[(S3-Compatible Object Store)]
+        REDISDB[(Redis)]
+        S3[(S3 Object Store)]
     end
 
     subgraph External
         STRIPE[Stripe / Paynow]
-        SMS[SMS Gateway\nBulkSMS / Africa's Talking]
-        EMAIL[Email\nSendGrid / SES]
+        SMS[SMS Gateway]
+        EMAIL[SendGrid / SES]
         AI[OpenAI / Azure OpenAI]
-        VIDEO[Video Provider\nDaily.co / Jitsi]
+        VIDEO[Daily.co / Jitsi]
     end
 
-    WEB --> GW
-    MOB --> GW
-    GW --> AUTH
-    GW --> TENANT
-    GW --> CONTENT
-    GW --> ASSESS
-    GW --> ADAPT
-    GW --> GAMIFY
-    GW --> NOTIFY
-    GW --> ZIMBOT
-    GW --> BILLING
-    GW --> LIVE
-    GW --> MARKET
+    WEB --> ENDPOINTS
+    MOB --> ENDPOINTS
+    ENDPOINTS --> MW
+    MW --> IDENTITY
+    MW --> TENANTS
+    MW --> CONTENT
+    MW --> ASSESS
+    MW --> ADAPT
+    MW --> GAMIFY
+    MW --> NOTIFY
+    MW --> ZIMBOT
+    MW --> BILLING
+    MW --> LIVE
+    MW --> MARKET
+    MW --> PROGRESS
 
-    AUTH --> PG
-    TENANT --> PG
-    CONTENT --> PG
-    CONTENT --> S3
-    ASSESS --> PG
-    ADAPT --> PG
+    IDENTITY --> REPOS
+    TENANTS --> REPOS
+    CONTENT --> REPOS
+    ASSESS --> REPOS
+    ADAPT --> REPOS
     ADAPT --> REDIS
-    GAMIFY --> PG
-    NOTIFY --> PG
-    ZIMBOT --> AI
-    ZIMBOT --> PG
-    BILLING --> PG
-    BILLING --> STRIPE
-    LIVE --> PG
-    LIVE --> VIDEO
-    SYNC --> PG
-    MARKET --> PG
-    MARKET --> S3
+    GAMIFY --> REPOS
+    NOTIFY --> REPOS
+    ZIMBOT --> EXTSVCS
+    BILLING --> REPOS
+    BILLING --> EXTSVCS
+    LIVE --> REPOS
+    LIVE --> SIGNALR
+    SYNC --> REPOS
+    MARKET --> REPOS
 
-    NOTIFY --> SMS
-    NOTIFY --> EMAIL
+    REPOS --> DBCTX
+    DBCTX --> PG
+    REDIS --> REDISDB
+    EXTSVCS --> STRIPE
+    EXTSVCS --> SMS
+    EXTSVCS --> EMAIL
+    EXTSVCS --> AI
+    EXTSVCS --> VIDEO
+    EXTSVCS --> S3
+    HANGFIRE --> PG
 ```
 
-
-### Service Communication
-
-- **Client → Gateway**: HTTPS/REST + WebSocket (SignalR)
-- **Gateway → Services**: HTTP/REST internally (YARP reverse proxy)
-- **Service → Service (sync)**: gRPC for low-latency inter-service calls (e.g., Assessment Service calling Gamification Service after submission)
-- **Service → Service (async)**: MassTransit + RabbitMQ for event-driven messaging (e.g., `ModuleCompleted` event triggers Gamification, Notification, and Adaptive Learning services)
-- **Background Jobs**: Hangfire (persistent, database-backed) for scheduled tasks; .NET Worker Services for long-running background processes (Sync Service)
-
-### Multi-Tenancy Strategy
-
-PostgreSQL Row-Level Security (RLS) is the primary enforcement layer. Every table in the school tier has a `tenant_id` column. A `SET app.current_tenant_id = '{tenantId}'` session variable is set on every database connection, and RLS policies filter all reads and writes to that tenant. The application layer also validates tenant claims on every request as a defence-in-depth measure.
+### Request Flow
 
 ```mermaid
 sequenceDiagram
     participant Client
-    participant Gateway
-    participant Service
-    participant EFCore as EF Core
+    participant API as EduZim.API
+    participant MediatR
+    participant Handler as Application Handler
+    participant Repo as Repository (Infrastructure)
     participant PG as PostgreSQL (RLS)
 
-    Client->>Gateway: Request + JWT
-    Gateway->>Service: Forward + validate JWT
-    Service->>Service: Extract tenant_id from JWT claims
-    Service->>EFCore: Query with tenant_id in DbContext
-    EFCore->>PG: SET app.current_tenant_id; SELECT ...
+    Client->>API: HTTPS Request + JWT
+    API->>API: JWT middleware validates token
+    API->>API: TenantMiddleware extracts tenant_id from claims
+    API->>MediatR: Send(command or query)
+    MediatR->>Handler: Dispatch to handler
+    Handler->>Repo: Repository call
+    Repo->>PG: SET app.current_tenant_id; query
     PG->>PG: RLS policy filters rows
-    PG-->>EFCore: Tenant-scoped results
-    EFCore-->>Service: Typed entities
-    Service-->>Client: Response
+    PG-->>Repo: Tenant-scoped results
+    Repo-->>Handler: Typed entities
+    Handler->>MediatR: Publish domain event notifications (if any)
+    Handler-->>API: Result DTO
+    API-->>Client: HTTP Response
 ```
+
+### In-Process Event Handling
+
+Domain events are published via **MediatR notifications** within the same request pipeline or from Hangfire background jobs. This replaces the previous MassTransit + RabbitMQ message bus.
+
+```csharp
+// Domain event published after module completion
+public record ModuleCompletedNotification(Guid StudentId, Guid ModuleId, Guid TenantId)
+    : INotification;
+
+// Multiple handlers respond in-process
+public class UpdateLearningProfileOnModuleCompleted
+    : INotificationHandler<ModuleCompletedNotification> { ... }
+
+public class AwardPointsOnModuleCompleted
+    : INotificationHandler<ModuleCompletedNotification> { ... }
+
+public class UpdateParentDashboardOnModuleCompleted
+    : INotificationHandler<ModuleCompletedNotification> { ... }
+```
+
+### Multi-Tenancy Strategy
+
+PostgreSQL Row-Level Security (RLS) is the primary enforcement layer. Every school-tier table has a `tenant_id` column. A `SET app.current_tenant_id = '{tenantId}'` session variable is set on every database connection via an EF Core `DbConnectionInterceptor`, and RLS policies filter all reads and writes to that tenant. The application layer also validates tenant claims on every request as a defence-in-depth measure.
 
 ---
 
 ## Components and Interfaces
 
-### 1. Identity Service
+The Application layer is organised into feature folders. Each folder contains commands, queries, handlers, DTOs, and validators for that feature domain.
 
-Handles authentication, authorisation, and user lifecycle.
-
-**Technology**: ASP.NET Core + ASP.NET Identity + OpenIddict (OAuth 2.0 / OIDC server)
-
-**Key Endpoints**:
-- `POST /auth/register` — parent or school admin registration
-- `POST /auth/login` — credential-based login, returns JWT + refresh token
-- `POST /auth/refresh` — exchange refresh token for new JWT
-- `POST /auth/logout` — revoke refresh token
-- `POST /auth/verify-email` — email verification
-- `POST /auth/sso/{tenantId}` — SSO redirect for tenant IdP
-- `POST /auth/2fa/verify` — two-factor authentication verification
-
-**Key Interfaces**:
-```csharp
-public interface IIdentityService
-{
-    Task<AuthResult> RegisterAsync(RegisterRequest request);
-    Task<AuthResult> LoginAsync(LoginRequest request);
-    Task<AuthResult> RefreshTokenAsync(string refreshToken);
-    Task RevokeTokenAsync(string refreshToken);
-    Task<bool> VerifyEmailAsync(string userId, string token);
-    Task LockAccountAsync(string userId, TimeSpan duration);
-    Task<bool> ValidateTwoFactorAsync(string userId, string code);
-}
+```
+EduZim.Application/
+  Identity/       Commands: Register, Login, RefreshToken, VerifyEmail, LockAccount, ValidateTwoFactor
+  Tenants/        Commands: ProvisionTenant, UpdateBranding, SuspendTenant, GenerateInviteCode
+                  Queries:  GetTenantDashboard
+  Content/        Commands: UploadContent, CreateModule, ArchiveContent, PublishContent
+                  Queries:  GetModuleContent, GetSignedUrl, GetCaptions
+  Assessments/    Commands: CreateAssessment, AssignAssessment, SubmitAssessment
+                  Queries:  GetAssessmentResult, GetClassResults
+  AdaptiveLearning/ Commands: UpdateLearningProfile
+                    Queries:  GetRecommendedPath, GetWeeklySummary, GetAdjustedDifficulty
+  Gamification/   Commands: AwardPoints, CheckAndAwardBadges
+                  Queries:  GetLeaderboard, GetStudentPoints, GetStudentBadges
+  Notifications/  Commands: QueueNotification, UpdateNotificationPreferences
+                  Queries:  GetInAppNotifications
+  ZimBot/         Commands: Chat
+                  Queries:  GetInteractionLogs
+  Billing/        Commands: CreateSubscription, HandlePaymentSucceeded, HandlePaymentFailed, GenerateInvoice
+                  Queries:  GetInvoices, CalculateSchoolFee
+  LiveClassrooms/ Commands: ScheduleSession, EndSession
+                  Queries:  GetJoinToken, GetAttendanceRecord, GetRecordingUrl
+  Sync/           Commands: ProcessOfflineQueue, ResolveConflict
+  Marketplace/    Commands: SubmitContentPack, ApproveContentPack, RequestAccess, ApproveAccess, RateContentPack, RemoveContentPack
+                  Queries:  BrowseContentPacks
+  Progress/       Commands: RecordModuleCompletion
+                  Queries:  GetStudentProgress, GetParentDashboard
+  Common/         Behaviours: ValidationBehaviour, LoggingBehaviour, TenantScopeBehaviour
+                  Interfaces: IRepository<T>, IUnitOfWork, ICurrentUser, IEmailService, ISmsService,
+                              IStorageService, IAiService, IPaymentService, IVideoService, ICacheService
 ```
 
-### 2. Tenant Service
+### Key Application Interfaces (defined in Application, implemented in Infrastructure)
 
-Manages tenant provisioning, branding, and school admin operations.
-
-**Technology**: ASP.NET Core minimal API
-
-**Key Endpoints**:
-- `POST /tenants` — create new tenant (Platform Admin only)
-- `GET /tenants/{tenantId}` — get tenant details
-- `PUT /tenants/{tenantId}/branding` — update logo, name, colour scheme
-- `GET /tenants/{tenantId}/dashboard` — admin dashboard metrics
-- `POST /tenants/{tenantId}/invite-codes` — generate student/parent invite codes
-
-**Key Interfaces**:
 ```csharp
-public interface ITenantService
+public interface IRepository<T> where T : class
 {
-    Task<Tenant> ProvisionTenantAsync(CreateTenantRequest request);
-    Task<TenantDashboard> GetDashboardAsync(Guid tenantId);
-    Task UpdateBrandingAsync(Guid tenantId, BrandingSettings branding);
-    Task<InviteCode> GenerateInviteCodeAsync(Guid tenantId, InviteCodeType type);
-    Task SuspendTenantAsync(Guid tenantId);
-    Task RestoreTenantAsync(Guid tenantId);
+    Task<T?> GetByIdAsync(Guid id, CancellationToken ct = default);
+    Task<IReadOnlyList<T>> ListAsync(CancellationToken ct = default);
+    Task AddAsync(T entity, CancellationToken ct = default);
+    void Update(T entity);
+    void Remove(T entity);
 }
-```
 
-### 3. Content Service
-
-Manages all learning content: upload, storage, retrieval, and lifecycle.
-
-**Technology**: ASP.NET Core + EF Core + S3 SDK (AWSSDK.S3 or Minio)
-
-**Key Endpoints**:
-- `POST /content/upload` — multipart upload for video/PDF/audio
-- `GET /content/{contentId}` — retrieve content metadata + signed URL
-- `POST /modules` — create module
-- `GET /modules/{moduleId}` — get module with ordered content items
-- `DELETE /content/{contentId}` — soft-delete (archived for 30 days)
-- `GET /content/{contentId}/captions` — retrieve closed captions
-
-**Key Interfaces**:
-```csharp
-public interface IContentService
+public interface IUnitOfWork
 {
-    Task<ContentItem> UploadAsync(UploadRequest request, Stream fileStream);
-    Task<Module> CreateModuleAsync(CreateModuleRequest request);
-    Task<IReadOnlyList<ContentItem>> GetModuleContentAsync(Guid moduleId);
-    Task ArchiveContentAsync(Guid contentId);
-    Task<string> GetSignedUrlAsync(Guid contentId, TimeSpan expiry);
+    Task<int> SaveChangesAsync(CancellationToken ct = default);
 }
-```
 
-### 4. Assessment Service
-
-Handles quiz/test creation, assignment, submission, and auto-grading.
-
-**Technology**: ASP.NET Core + EF Core
-
-**Key Endpoints**:
-- `POST /assessments` — create assessment with questions
-- `POST /assessments/{id}/assign` — assign to class
-- `POST /assessments/{id}/submit` — student submits answers
-- `GET /assessments/{id}/results/{studentId}` — get result with feedback
-- `GET /assessments/{id}/class-results` — teacher view of all results
-
-**Key Interfaces**:
-```csharp
-public interface IAssessmentService
+public interface ICurrentUser
 {
-    Task<Assessment> CreateAsync(CreateAssessmentRequest request);
-    Task AssignToClassAsync(Guid assessmentId, Guid classId);
-    Task<AssessmentResult> SubmitAsync(Guid assessmentId, Guid studentId, IReadOnlyList<Answer> answers);
-    Task<ClassResults> GetClassResultsAsync(Guid assessmentId);
+    Guid UserId { get; }
+    Guid? TenantId { get; }
+    UserRole Role { get; }
 }
-```
 
-### 5. Adaptive Learning Service
-
-Analyses student performance and generates personalised learning path recommendations.
-
-**Technology**: ASP.NET Core + EF Core + Redis (caching learning profiles)
-
-**Key Endpoints**:
-- `GET /adaptive/{studentId}/path` — get current recommended learning path
-- `GET /adaptive/{studentId}/summary` — weekly summary
-- `POST /adaptive/{studentId}/update` — trigger profile update after module completion
-
-**Key Interfaces**:
-```csharp
-public interface IAdaptiveLearningService
+public interface IEmailService
 {
-    Task UpdateLearningProfileAsync(Guid studentId, ModuleCompletionData data);
-    Task<LearningPath> GetRecommendedPathAsync(Guid studentId);
-    Task<WeeklySummary> GenerateWeeklySummaryAsync(Guid studentId);
-    Task<DifficultyLevel> GetAdjustedDifficultyAsync(Guid studentId, Guid topicId);
-}
-```
-
-### 6. Gamification Service
-
-Awards points, badges, and manages leaderboards.
-
-**Technology**: ASP.NET Core + EF Core
-
-**Key Endpoints**:
-- `GET /gamification/{studentId}/points` — current points total
-- `GET /gamification/{studentId}/badges` — earned badges
-- `GET /gamification/leaderboard/{tenantId}` — tenant-scoped leaderboard
-- `POST /gamification/award` — internal gRPC endpoint called by other services
-
-**Key Interfaces**:
-```csharp
-public interface IGamificationService
-{
-    Task<PointsAward> AwardPointsAsync(Guid studentId, AwardReason reason, int basePoints, double? bonusMultiplier);
-    Task<Badge> CheckAndAwardBadgesAsync(Guid studentId, MilestoneEvent milestoneEvent);
-    Task<IReadOnlyList<LeaderboardEntry>> GetLeaderboardAsync(Guid tenantId, int topN);
-}
-```
-
-### 7. Notification Service
-
-Routes notifications across in-app, email, and SMS channels.
-
-**Technology**: ASP.NET Core + Hangfire (scheduled/retry jobs) + SendGrid + Africa's Talking SMS
-
-**Key Endpoints**:
-- `POST /notifications/send` — internal endpoint to queue a notification
-- `GET /notifications/{userId}` — get user's in-app notifications
-- `PUT /notifications/{id}/read` — mark as read
-- `PUT /users/{userId}/notification-preferences` — update preferences
-
-**Key Interfaces**:
-```csharp
-public interface INotificationService
-{
-    Task QueueNotificationAsync(NotificationRequest request);
-    Task<IReadOnlyList<Notification>> GetInAppNotificationsAsync(Guid userId);
-    Task UpdatePreferencesAsync(Guid userId, NotificationPreferences preferences);
+    Task SendAsync(string to, string subject, string htmlBody, CancellationToken ct = default);
 }
 
 public interface ISmsService
 {
-    Task<SmsResult> SendAsync(string phoneNumber, string message);
+    Task<SmsResult> SendAsync(string phoneNumber, string message, CancellationToken ct = default);
 }
-```
 
-### 8. ZimBot Service
-
-Wraps the AI provider and manages conversational tutoring sessions.
-
-**Technology**: ASP.NET Core + Azure OpenAI SDK / Semantic Kernel
-
-**Key Endpoints**:
-- `POST /zimbot/chat` — send a message, receive a response
-- `GET /zimbot/logs/{tenantId}` — teacher view of interaction logs (tenant-scoped)
-
-**Key Interfaces**:
-```csharp
-public interface IZimBotService
+public interface IStorageService
 {
-    Task<ZimBotResponse> ChatAsync(ZimBotRequest request);
-    Task<IReadOnlyList<ZimBotInteraction>> GetLogsAsync(Guid tenantId, Guid? studentId);
+    Task<string> UploadAsync(string key, Stream content, string contentType, CancellationToken ct = default);
+    Task<string> GetSignedUrlAsync(string key, TimeSpan expiry);
 }
-```
 
-### 9. Billing Service
-
-Manages subscriptions, payment processing, and invoice generation.
-
-**Technology**: ASP.NET Core + Stripe.net / Paynow SDK + Hangfire (renewal reminders)
-
-**Key Endpoints**:
-- `POST /billing/subscriptions` — create subscription
-- `POST /billing/webhooks/stripe` — Stripe webhook handler
-- `GET /billing/invoices/{subscriptionId}` — list invoices
-- `GET /billing/invoices/{invoiceId}/download` — download PDF invoice
-
-**Key Interfaces**:
-```csharp
-public interface IBillingService
+public interface IAiService
 {
-    Task<Subscription> CreateSubscriptionAsync(CreateSubscriptionRequest request);
-    Task HandlePaymentSucceededAsync(string paymentIntentId);
-    Task HandlePaymentFailedAsync(string paymentIntentId);
-    Task<Invoice> GenerateInvoiceAsync(Guid subscriptionId, Guid paymentId);
-    Task<decimal> CalculateSchoolFeeAsync(int studentCount, BillingCycle cycle);
+    Task<string> ChatAsync(string systemPrompt, string userMessage, CancellationToken ct = default);
 }
-```
 
-### 10. Live Classroom Service
-
-Manages scheduling, real-time sessions, attendance, and recordings.
-
-**Technology**: ASP.NET Core + SignalR (presence/signalling) + Daily.co or Jitsi (video)
-
-**Key Endpoints**:
-- `POST /classrooms` — schedule a session
-- `GET /classrooms/{id}/join` — get join token
-- `POST /classrooms/{id}/end` — end session, trigger attendance + recording
-- `GET /classrooms/{id}/attendance` — get attendance record
-- `GET /classrooms/{id}/recording` — get recording URL (within 30-day window)
-
-**Key Interfaces**:
-```csharp
-public interface ILiveClassroomService
+public interface IPaymentService
 {
-    Task<ClassroomSession> ScheduleAsync(ScheduleSessionRequest request);
-    Task<JoinToken> GetJoinTokenAsync(Guid sessionId, Guid userId);
-    Task<AttendanceRecord> EndSessionAsync(Guid sessionId);
-    Task<string?> GetRecordingUrlAsync(Guid sessionId);
+    Task<PaymentResult> CreateSubscriptionAsync(CreatePaymentRequest request, CancellationToken ct = default);
+    Task<Invoice> GenerateInvoiceAsync(Guid subscriptionId, Guid paymentId, CancellationToken ct = default);
 }
-```
 
-### 11. Sync Service
-
-Reconciles offline progress data with the server.
-
-**Technology**: .NET Worker Service + EF Core + MassTransit
-
-**Key Interfaces**:
-```csharp
-public interface ISyncService
+public interface IVideoService
 {
-    Task ProcessOfflineQueueAsync(Guid studentId, IReadOnlyList<OfflineProgressItem> items);
-    Task<SyncConflict?> DetectConflictAsync(OfflineProgressItem local, ProgressRecord server);
-    Task ResolveConflictAsync(SyncConflict conflict, ConflictResolutionStrategy strategy);
+    Task<string> GetJoinTokenAsync(string roomId, string participantId, CancellationToken ct = default);
+    Task<string?> GetRecordingUrlAsync(string roomId, CancellationToken ct = default);
+}
+
+public interface ICacheService
+{
+    Task<T?> GetAsync<T>(string key, CancellationToken ct = default);
+    Task SetAsync<T>(string key, T value, TimeSpan? expiry = null, CancellationToken ct = default);
+    Task RemoveAsync(string key, CancellationToken ct = default);
 }
 ```
 
-### 12. Marketplace Service
+### MediatR Pipeline Behaviours (Application/Common/Behaviours)
 
-Manages content pack publishing, discovery, approval, and cross-tenant sharing.
+```csharp
+// Runs FluentValidation before every command/query handler
+public class ValidationBehaviour<TRequest, TResponse>
+    : IPipelineBehavior<TRequest, TResponse> { ... }
 
-**Technology**: ASP.NET Core + EF Core
+// Logs every command/query with timing
+public class LoggingBehaviour<TRequest, TResponse>
+    : IPipelineBehavior<TRequest, TResponse> { ... }
 
-**Key Endpoints**:
-- `POST /marketplace/packs` — submit content pack for review
-- `GET /marketplace/packs` — browse approved packs
-- `POST /marketplace/packs/{id}/request-access` — request access from another tenant
-- `POST /marketplace/packs/{id}/approve-access` — originating teacher approves
-- `POST /marketplace/packs/{id}/rate` — submit rating/review
-- `DELETE /marketplace/packs/{id}` — Platform Admin removes violating pack
+// Validates tenant claim matches requested resource tenant
+public class TenantScopeBehaviour<TRequest, TResponse>
+    : IPipelineBehavior<TRequest, TResponse> { ... }
+```
 
 ---
 
-
 ## Data Models
 
-### Core Entities
+### Core Entities (EduZim.Domain)
 
 ```csharp
 // Multi-tenancy base
@@ -598,15 +505,15 @@ public class AuditLog
 }
 ```
 
-### Database Schema Notes
+### Database Notes
 
+- A **single** `EduZimDbContext` in `EduZim.Infrastructure` owns all entities.
 - All school-tier tables include `tenant_id UUID NOT NULL` with a PostgreSQL RLS policy: `USING (tenant_id = current_setting('app.current_tenant_id')::uuid)`
-- PII fields (email, phone, name) are encrypted at the application layer using `Microsoft.AspNetCore.DataProtection` with AES-256 before storage
-- EF Core `DbContext` sets the session variable on every connection open via `SaveChangesAsync` interceptor
-- Soft deletes use `ArchivedAt` timestamp; a Hangfire job permanently deletes records where `ArchivedAt < NOW() - INTERVAL '30 days'`
+- PII fields (email, phone, name) are encrypted at the application layer using `Microsoft.AspNetCore.DataProtection` (AES-256) before EF Core persistence.
+- `EduZimDbContext` sets the session variable on every connection open via a `DbConnectionInterceptor`.
+- Soft deletes use `ArchivedAt` timestamp; a Hangfire job permanently deletes records where `ArchivedAt < NOW() - INTERVAL '30 days'`.
 
 ---
-
 
 ## Correctness Properties
 
@@ -698,13 +605,13 @@ public class AuditLog
 
 ### Property 15: Remedial Content Recommendation Below 60%
 
-*For any* assessment attempt where `ScorePercent < 60`, the adaptive learning service must include at least one remedial content recommendation for the associated topic in the student's learning path.
+*For any* assessment attempt where `ScorePercent < 60`, the adaptive learning handler must include at least one remedial content recommendation for the associated topic in the student's learning path.
 
 **Validates: Requirements 6.2**
 
 ### Property 16: Advanced Extension Offer Above 85%
 
-*For any* assessment attempt where `ScorePercent >= 85`, the adaptive learning service must include at least one advanced extension activity recommendation for the associated topic.
+*For any* assessment attempt where `ScorePercent >= 85`, the adaptive learning handler must include at least one advanced extension activity recommendation for the associated topic.
 
 **Validates: Requirements 6.3**
 
@@ -746,7 +653,7 @@ public class AuditLog
 
 ### Property 23: Marketplace Attribution Completeness
 
-*For any* content pack returned from the marketplace API, the response must include both `SchoolName` and `TeacherName` attribution fields with non-empty values.
+*For any* content pack returned from the marketplace query, the response must include both `SchoolName` and `TeacherName` attribution fields with non-empty values.
 
 **Validates: Requirements 8.5**
 
@@ -884,50 +791,58 @@ public class AuditLog
 
 ---
 
-
 ## Error Handling
 
 ### Strategy
 
-All services follow a consistent error handling pattern using ASP.NET Core's `ProblemDetails` (RFC 7807) for structured error responses.
+All errors follow a consistent pattern using ASP.NET Core's `ProblemDetails` (RFC 7807). The global exception handler in `EduZim.API` maps domain and application exceptions to appropriate HTTP status codes.
 
 ```csharp
-// Global exception handler registered in Program.cs
+// Domain exceptions (EduZim.Domain/Exceptions)
+public class DomainException : Exception { ... }
+public class TenantAccessViolationException : DomainException { ... }
+
+// Application exceptions (EduZim.Application/Exceptions)
+public class NotFoundException : Exception { ... }
+public class ValidationException : Exception { ... }
+public class ConflictException : Exception { ... }
+
+// Global exception handler in EduZim.API/Program.cs
 app.UseExceptionHandler(exceptionHandlerApp =>
 {
     exceptionHandlerApp.Run(async context =>
     {
-        var problemDetails = context.RequestServices
-            .GetRequiredService<IProblemDetailsService>();
-        // Maps exceptions to appropriate HTTP status codes
+        // Maps DomainException → 400/403, NotFoundException → 404,
+        // ValidationException → 400, ConflictException → 409,
+        // unhandled → 500 with generic ProblemDetails
     });
 });
 ```
 
 ### Error Categories
 
-| Scenario | HTTP Status | Handling |
+| Scenario | HTTP Status | Layer |
 |---|---|---|
-| Unauthenticated request | 401 | JWT middleware rejects; no audit log |
-| Unauthorised (wrong tenant/role) | 403 | Middleware rejects; audit log created |
-| Validation failure | 400 | FluentValidation returns field-level errors |
-| Resource not found | 404 | Service throws `NotFoundException` |
-| Conflict (duplicate, version mismatch) | 409 | Service throws `ConflictException` |
-| File too large | 413 | Upload middleware rejects before processing |
-| External service unavailable | 503 | Circuit breaker (Polly) returns fallback |
+| Unauthenticated request | 401 | API middleware |
+| Unauthorised (wrong tenant/role) | 403 | TenantScopeBehaviour + audit log |
+| Validation failure | 400 | ValidationBehaviour (FluentValidation) |
+| Resource not found | 404 | Application handler throws `NotFoundException` |
+| Conflict (duplicate, version mismatch) | 409 | Application handler throws `ConflictException` |
+| File too large | 413 | API middleware rejects before dispatching command |
+| External service unavailable | 503 | Infrastructure throws; Polly circuit breaker returns fallback |
 | Unhandled exception | 500 | Global handler logs + returns generic ProblemDetails |
 
 ### Resilience Patterns
 
-- **Polly** for retry and circuit breaker policies on all external HTTP calls (AI service, SMS gateway, payment provider, video provider)
-- **ZimBot fallback**: when AI service circuit is open, return a static "I'm having trouble right now, please ask your teacher" response and log the question
-- **SMS retry**: Hangfire job retries failed SMS up to 3 times at 10-minute intervals; marks `Undelivered` after 3 failures
-- **Sync conflict**: `Sync_Service` uses last-write-wins by timestamp; conflicts are logged to `SyncConflictLog` for admin review
-- **Idempotency**: Payment webhook handlers use idempotency keys to prevent double-processing of Stripe events
+- **Polly** retry and circuit breaker policies on all `HttpClient` instances in Infrastructure (AI service, SMS gateway, payment provider, video provider).
+- **ZimBot fallback**: when the AI circuit is open, the `IAiService` implementation returns a static fallback message and logs the question via MediatR notification.
+- **SMS retry**: Hangfire job retries failed SMS up to 3 times at 10-minute intervals; marks `Undelivered` after 3 failures.
+- **Sync conflict**: `ProcessOfflineQueueHandler` uses last-write-wins by timestamp; conflicts are logged to `SyncConflictLog`.
+- **Idempotency**: Payment webhook handlers use idempotency keys to prevent double-processing of payment events.
 
-### Tenant Suspension Error Handling
+### Tenant Suspension
 
-When a tenant's subscription is suspended, a middleware layer intercepts all requests for that tenant and returns:
+When a tenant's subscription is suspended, `TenantMiddleware` in `EduZim.API` intercepts all requests for that tenant and returns:
 
 ```json
 {
@@ -948,17 +863,17 @@ Data is preserved for 90 days; a Hangfire job schedules permanent deletion at `S
 
 EduZim uses both unit/integration tests and property-based tests. They are complementary:
 
-- **Unit/Integration tests** (xUnit): verify specific examples, edge cases, error conditions, and integration points between components
-- **Property-based tests** (FsCheck): verify universal properties across randomly generated inputs, providing confidence that correctness holds for all valid inputs, not just the cases a developer thought to write
+- **Unit/Integration tests** (xUnit): verify specific examples, edge cases, error conditions, and integration points between components.
+- **Property-based tests** (FsCheck): verify universal properties across randomly generated inputs, providing confidence that correctness holds for all valid inputs.
 
 ### Property-Based Testing with FsCheck
 
-**Library**: [FsCheck](https://fscheck.github.io/FsCheck/) — the standard property-based testing library for .NET, usable from both F# and C# via `FsCheck.Xunit`.
+**Library**: [FsCheck](https://fscheck.github.io/FsCheck/) — the standard property-based testing library for .NET, usable from C# via `FsCheck.Xunit`.
 
-**Configuration**: Each property test must run a minimum of **100 iterations** (FsCheck default is 100; increase to 500 for critical security properties).
+**Configuration**: Each property test must run a minimum of **100 iterations** (increase to 500 for critical security properties).
 
 ```csharp
-// Example: configuring iterations in C# with FsCheck.Xunit
+// Example property test in EduZim.Tests.Properties
 [Property(MaxTest = 500, Arbitrary = new[] { typeof(EduZimArbitraries) })]
 public Property TenantIsolation_UserInTenantA_CannotSeeDataFromTenantB(
     Guid tenantAId, Guid tenantBId, ApplicationUser userInA)
@@ -966,7 +881,7 @@ public Property TenantIsolation_UserInTenantA_CannotSeeDataFromTenantB(
     // Feature: elearning-app-zimbabwe, Property 1: Cross-Tenant Data Isolation
     return (tenantAId != tenantBId).Implies(() =>
     {
-        var result = _tenantScopedService.GetData(userInA, tenantBId);
+        var result = _tenantScopedRepository.GetData(userInA, tenantBId);
         return result.IsEmpty;
     });
 }
@@ -979,82 +894,80 @@ public Property TenantIsolation_UserInTenantA_CannotSeeDataFromTenantB(
 
 ### Property Test Coverage Map
 
-Each correctness property must be implemented by exactly one property-based test:
-
 | Property | Test Class | FsCheck Property Method |
 |---|---|---|
 | P1: Cross-Tenant Isolation | `TenantIsolationTests` | `UserInTenantA_CannotSeeDataFromTenantB` |
-| P2: Password Never Plaintext | `IdentityServiceTests` | `StoredHash_NeverEqualsPlaintext` |
-| P3: Account Lockout Threshold | `IdentityServiceTests` | `FiveFailures_LocksAccount` |
-| P4: Unverified Account Blocked | `IdentityServiceTests` | `UnverifiedAccount_CannotAccessProtectedEndpoints` |
-| P5: Subscription Activation | `BillingServiceTests` | `PaymentSuccess_ActivatesSubscription` |
-| P6: Grace Period on Failure | `BillingServiceTests` | `PaymentFailure_EntersGracePeriod` |
-| P7: Data Preserved on Suspension | `BillingServiceTests` | `SuspendedTenant_DataPreservedFor90Days` |
-| P8: Invoice Per Payment | `BillingServiceTests` | `SuccessfulPayment_CreatesInvoice` |
-| P9: School Fee Calculation | `BillingServiceTests` | `FeeCalculation_IsLinearInStudentCount` |
-| P10: Video Duration Limit | `ContentServiceTests` | `PreschoolVideo_DurationUnder5Minutes` |
-| P11: Game Per Concept | `ContentServiceTests` | `EachFoundationalConcept_HasAtLeastOneGame` |
-| P12: Session Inactivity Pause | `SessionServiceTests` | `NoInteraction60Seconds_PausesSession` |
-| P13: Module Unlock on Completion | `ProgressServiceTests` | `ModuleCompletion_UnlocksNextModule` |
-| P14: Progress Percentage | `ProgressServiceTests` | `ProgressPercent_EqualsCompletedOverTotal` |
-| P15: Remedial Below 60% | `AdaptiveLearningTests` | `ScoreBelow60_RecommendsRemedial` |
-| P16: Advanced Above 85% | `AdaptiveLearningTests` | `ScoreAbove85_OffersAdvancedExtension` |
-| P17: No Advancement Without Pass | `AdaptiveLearningTests` | `NextModule_NotUnlockedWithoutPassingScore` |
-| P18: File Size Enforcement | `ContentServiceTests` | `OversizedFile_IsRejected` |
-| P19: Soft Delete Retention | `ContentServiceTests` | `DeletedContent_RemainsArchivedFor30Days` |
-| P20: Assessment Notifies All Students | `AssessmentServiceTests` | `AssignAssessment_NotifiesAllEnrolledStudents` |
-| P21: Marketplace Review Gate | `MarketplaceServiceTests` | `SubmittedPack_NotDiscoverableUntilApproved` |
-| P22: Cross-Tenant Access Requires Approval | `MarketplaceServiceTests` | `ContentAccess_RequiresOriginatingTeacherApproval` |
-| P23: Marketplace Attribution | `MarketplaceServiceTests` | `MarketplacePack_ContainsAttribution` |
-| P24: Attempt Record Completeness | `AssessmentServiceTests` | `Submission_CreatesCompleteAttemptRecord` |
-| P25: Points on Completion | `GamificationServiceTests` | `Completion_AwardsPoints` |
-| P26: Badge on Milestone | `GamificationServiceTests` | `MilestoneEvent_AwardsBadgeAndCertificate` |
-| P27: Leaderboard Tenant Isolation | `GamificationServiceTests` | `Leaderboard_OnlyContainsTenantStudents` |
-| P28: Timed Assessment Auto-Submit | `AssessmentServiceTests` | `LateSubmission_IsRejectedOrAutoSubmitted` |
-| P29: Parent Dashboard Completeness | `ParentDashboardTests` | `Dashboard_ContainsAllRequiredFields` |
-| P30: Invite Code Round Trip | `TenantServiceTests` | `ValidInviteCode_LinksParentToStudent` |
-| P31: Screen Time Enforcement | `SessionServiceTests` | `ScreenTimeLimit_PausesSessionWhenReached` |
-| P32: Inactivity Notification | `NotificationServiceTests` | `StudentInactive7Days_NotifiesParent` |
-| P33: Sync Conflict Resolution | `SyncServiceTests` | `Conflict_LaterTimestampWins` |
-| P34: Classroom Notification Lead Time | `LiveClassroomTests` | `ScheduledSession_NotificationAt24HoursBefore` |
-| P35: Attendance Record on End | `LiveClassroomTests` | `SessionEnd_CreatesAttendanceRecord` |
-| P36: Recording Availability Window | `LiveClassroomTests` | `Recording_AvailableFor30DaysOnly` |
-| P37: Font Size Validation | `UserPreferencesTests` | `InvalidFontSize_IsRejected` |
-| P38: Captions for Video | `ContentServiceTests` | `VideoWithAudio_HasCaptionTrack` |
-| P39: Audio Transcript Required | `ContentServiceTests` | `AudioContent_HasTranscript` |
-| P40: Notification Preference Routing | `NotificationServiceTests` | `DisabledChannel_DoesNotReceiveNotification` |
-| P41: SMS Retry Logic | `NotificationServiceTests` | `FailedSms_RetriesUpTo3Times` |
-| P42: PII Encryption | `IdentityServiceTests` | `StoredPii_IsEncrypted` |
-| P43: PII Deletion | `IdentityServiceTests` | `DeletionRequest_RemovesPii` |
+| P2: Password Never Plaintext | `IdentityHandlerTests` | `StoredHash_NeverEqualsPlaintext` |
+| P3: Account Lockout Threshold | `IdentityHandlerTests` | `FiveFailures_LocksAccount` |
+| P4: Unverified Account Blocked | `IdentityHandlerTests` | `UnverifiedAccount_CannotAccessProtectedEndpoints` |
+| P5: Subscription Activation | `BillingHandlerTests` | `PaymentSuccess_ActivatesSubscription` |
+| P6: Grace Period on Failure | `BillingHandlerTests` | `PaymentFailure_EntersGracePeriod` |
+| P7: Data Preserved on Suspension | `BillingHandlerTests` | `SuspendedTenant_DataPreservedFor90Days` |
+| P8: Invoice Per Payment | `BillingHandlerTests` | `SuccessfulPayment_CreatesInvoice` |
+| P9: School Fee Calculation | `BillingHandlerTests` | `FeeCalculation_IsLinearInStudentCount` |
+| P10: Video Duration Limit | `ContentHandlerTests` | `PreschoolVideo_DurationUnder5Minutes` |
+| P11: Game Per Concept | `ContentHandlerTests` | `EachFoundationalConcept_HasAtLeastOneGame` |
+| P12: Session Inactivity Pause | `SessionHandlerTests` | `NoInteraction60Seconds_PausesSession` |
+| P13: Module Unlock on Completion | `ProgressHandlerTests` | `ModuleCompletion_UnlocksNextModule` |
+| P14: Progress Percentage | `ProgressHandlerTests` | `ProgressPercent_EqualsCompletedOverTotal` |
+| P15: Remedial Below 60% | `AdaptiveLearningHandlerTests` | `ScoreBelow60_RecommendsRemedial` |
+| P16: Advanced Above 85% | `AdaptiveLearningHandlerTests` | `ScoreAbove85_OffersAdvancedExtension` |
+| P17: No Advancement Without Pass | `AdaptiveLearningHandlerTests` | `NextModule_NotUnlockedWithoutPassingScore` |
+| P18: File Size Enforcement | `ContentHandlerTests` | `OversizedFile_IsRejected` |
+| P19: Soft Delete Retention | `ContentHandlerTests` | `DeletedContent_RemainsArchivedFor30Days` |
+| P20: Assessment Notifies All Students | `AssessmentHandlerTests` | `AssignAssessment_NotifiesAllEnrolledStudents` |
+| P21: Marketplace Review Gate | `MarketplaceHandlerTests` | `SubmittedPack_NotDiscoverableUntilApproved` |
+| P22: Cross-Tenant Access Requires Approval | `MarketplaceHandlerTests` | `ContentAccess_RequiresOriginatingTeacherApproval` |
+| P23: Marketplace Attribution | `MarketplaceHandlerTests` | `MarketplacePack_ContainsAttribution` |
+| P24: Attempt Record Completeness | `AssessmentHandlerTests` | `Submission_CreatesCompleteAttemptRecord` |
+| P25: Points on Completion | `GamificationHandlerTests` | `Completion_AwardsPoints` |
+| P26: Badge on Milestone | `GamificationHandlerTests` | `MilestoneEvent_AwardsBadgeAndCertificate` |
+| P27: Leaderboard Tenant Isolation | `GamificationHandlerTests` | `Leaderboard_OnlyContainsTenantStudents` |
+| P28: Timed Assessment Auto-Submit | `AssessmentHandlerTests` | `LateSubmission_IsRejectedOrAutoSubmitted` |
+| P29: Parent Dashboard Completeness | `ProgressHandlerTests` | `Dashboard_ContainsAllRequiredFields` |
+| P30: Invite Code Round Trip | `TenantHandlerTests` | `ValidInviteCode_LinksParentToStudent` |
+| P31: Screen Time Enforcement | `SessionHandlerTests` | `ScreenTimeLimit_PausesSessionWhenReached` |
+| P32: Inactivity Notification | `NotificationHandlerTests` | `StudentInactive7Days_NotifiesParent` |
+| P33: Sync Conflict Resolution | `SyncHandlerTests` | `Conflict_LaterTimestampWins` |
+| P34: Classroom Notification Lead Time | `LiveClassroomHandlerTests` | `ScheduledSession_NotificationAt24HoursBefore` |
+| P35: Attendance Record on End | `LiveClassroomHandlerTests` | `SessionEnd_CreatesAttendanceRecord` |
+| P36: Recording Availability Window | `LiveClassroomHandlerTests` | `Recording_AvailableFor30DaysOnly` |
+| P37: Font Size Validation | `UserPreferencesHandlerTests` | `InvalidFontSize_IsRejected` |
+| P38: Captions for Video | `ContentHandlerTests` | `VideoWithAudio_HasCaptionTrack` |
+| P39: Audio Transcript Required | `ContentHandlerTests` | `AudioContent_HasTranscript` |
+| P40: Notification Preference Routing | `NotificationHandlerTests` | `DisabledChannel_DoesNotReceiveNotification` |
+| P41: SMS Retry Logic | `NotificationHandlerTests` | `FailedSms_RetriesUpTo3Times` |
+| P42: PII Encryption | `IdentityHandlerTests` | `StoredPii_IsEncrypted` |
+| P43: PII Deletion | `IdentityHandlerTests` | `DeletionRequest_RemovesPii` |
 | P44: 403 with Audit Log | `AuthorisationTests` | `UnauthorisedRequest_Returns403AndLogsAudit` |
-| P45: Audit Log Retention | `AuditServiceTests` | `AuditLog_NotDeletedBefore12Months` |
+| P45: Audit Log Retention | `AuditHandlerTests` | `AuditLog_NotDeletedBefore12Months` |
 
 ### Unit and Integration Test Strategy
 
 **Unit tests** (xUnit, Moq for mocking):
-- Service layer logic with mocked repositories and external dependencies
-- Validation logic (FluentValidation validators)
-- Domain model invariants
-- Calculation functions (fee calculation, progress percentage, points calculation)
+- Application handler logic with mocked repositories and infrastructure interfaces
+- FluentValidation validators
+- Domain model invariants and value objects
+- Calculation functions (fee calculation, progress percentage, points)
 
 **Integration tests** (xUnit + `WebApplicationFactory<Program>` + Testcontainers for PostgreSQL):
 - Full HTTP request/response cycle through the ASP.NET Core pipeline
-- Database queries with real PostgreSQL (Testcontainers spins up a container per test run)
+- `EduZimDbContext` queries against real PostgreSQL (Testcontainers)
 - RLS policy enforcement verified with real database connections
 - Hangfire job scheduling and execution
 
 **Test project structure**:
 ```
-EduZim.Tests/
-  Unit/
-    Services/
-    Validators/
-    Domain/
-  Integration/
-    Api/
-    Database/
-  Properties/          ← FsCheck property tests
-    Arbitraries/       ← Custom FsCheck generators
+tests/
+  EduZim.Tests.Unit/
+    Handlers/          ← Application handler unit tests (mocked dependencies)
+    Validators/        ← FluentValidation unit tests
+    Domain/            ← Domain model invariant tests
+  EduZim.Tests.Integration/
+    Api/               ← WebApplicationFactory end-to-end tests
+    Database/          ← Testcontainers RLS and EF Core tests
+  EduZim.Tests.Properties/
+    Arbitraries/       ← FsCheck custom generators
     Identity/
     Billing/
     Content/
@@ -1064,16 +977,17 @@ EduZim.Tests/
     Sync/
     Marketplace/
     LiveClassroom/
+    Progress/
 ```
 
 **Running tests**:
 ```bash
-# All tests (single run, no watch)
+# All tests (single run)
 dotnet test --no-watch
 
 # Property tests only
 dotnet test --filter "Category=Property"
 
-# Integration tests only  
+# Integration tests only
 dotnet test --filter "Category=Integration"
 ```

@@ -2,131 +2,147 @@
 
 ## Overview
 
-Implement the EduZim platform as 12 ASP.NET Core microservices, a React Web PWA, and a React Native mobile app, backed by PostgreSQL with RLS, Redis, RabbitMQ, and S3-compatible storage. Tasks are sequenced: shared infrastructure → core services → feature services → frontends → integration wiring → testing.
+Implement EduZim as a Clean Architecture ASP.NET Core (.NET 8+) monolith with a React Web PWA and React Native mobile app. The solution has four layers: Domain → Application → Infrastructure → API. Tasks are sequenced: solution scaffold → domain → application → infrastructure → API → frontends → testing.
 
 ## Tasks
 
-- [ ] 1. Scaffold solution structure and shared infrastructure
-  - Create the .NET solution file with all 12 service projects, shared library projects, and test projects
-  - Add `EduZim.Shared` class library with `TenantEntity` base class, `UserRole` enum, `ProblemDetails` helpers, and `AuditLog` entity
-  - Configure `docker-compose.yml` with PostgreSQL, Redis, RabbitMQ, and MinIO containers for local development
+- [ ] 1. Scaffold Clean Architecture solution
+  - Create `EduZim.sln` with projects: `EduZim.Domain`, `EduZim.Application`, `EduZim.Infrastructure`, `EduZim.API`, `EduZim.Tests.Unit`, `EduZim.Tests.Integration`, `EduZim.Tests.Properties`
+  - Set project references: API → Application → Domain; Infrastructure → Application + Domain
+  - Configure `docker-compose.yml` with PostgreSQL, Redis, and MinIO containers for local development
+  - Add Hangfire, MediatR, FluentValidation, EF Core, and FsCheck NuGet packages to the appropriate projects
   - _Requirements: 11.1, 11.2, 16.1_
 
-- [ ] 2. PostgreSQL schema, RLS policies, and EF Core setup
-  - [ ] 2.1 Create EF Core `DbContext` classes for each service with all entities from the data model
-    - Implement `TenantDbContext` base that sets `app.current_tenant_id` session variable on every connection open via a `DbConnectionInterceptor`
-    - Add all school-tier tables with `tenant_id UUID NOT NULL` columns
-    - _Requirements: 11.1, 11.3_
-  - [ ] 2.2 Write EF Core migrations for all service databases
-    - Include RLS policy SQL in migrations: `USING (tenant_id = current_setting('app.current_tenant_id')::uuid)`
-    - Enable RLS on all school-tier tables via `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`
+- [ ] 2. Domain layer — entities, enums, and domain events
+  - [ ] 2.1 Implement all domain entities and enums
+    - Add `TenantEntity` base class, `ApplicationUser`, `Tenant`, `Subscription`, `ContentItem`, `Module`, `Assessment`, `AssessmentAttempt`, `StudentProgress`, `StudentPoints`, `Badge`, `Notification`, `OfflineSyncQueue`, `AuditLog` as defined in the data model
+    - Add all enums: `UserRole`, `TenantTier`, `TenantStatus`, `BillingCycle`, `SubscriptionStatus`, `ContentType`, `ContentStatus`, `GradeLevel`, `QuestionType`, `BadgeType`, `NotificationType`, `NotificationChannel`, `NotificationStatus`, `SyncStatus`
+    - _Requirements: all_
+  - [ ] 2.2 Implement domain events
+    - Add MediatR `INotification` records: `ModuleCompletedNotification`, `AssessmentSubmittedNotification`, `BadgeAwardedNotification`, `PaymentSucceededNotification`, `PaymentFailedNotification`, `TenantSuspendedNotification`, `StudentInactiveNotification`
+    - _Requirements: 4.4, 6.1, 9.3, 9.4, 10.2, 15.1_
+  - [ ] 2.3 Implement domain exceptions
+    - Add `DomainException`, `TenantAccessViolationException` in `EduZim.Domain/Exceptions`
+    - _Requirements: 11.3, 16.5_
+
+- [ ] 3. Application layer — common infrastructure
+  - [ ] 3.1 Define application interfaces
+    - Add `IRepository<T>`, `IUnitOfWork`, `ICurrentUser`, `IEmailService`, `ISmsService`, `IStorageService`, `IAiService`, `IPaymentService`, `IVideoService`, `ICacheService` in `EduZim.Application/Common/Interfaces`
+    - _Requirements: all_
+  - [ ] 3.2 Implement MediatR pipeline behaviours
+    - Add `ValidationBehaviour<TRequest, TResponse>` that runs FluentValidation before every handler
+    - Add `LoggingBehaviour<TRequest, TResponse>` for structured request/response logging
+    - Add `TenantScopeBehaviour<TRequest, TResponse>` that validates tenant claim matches requested resource
+    - _Requirements: 11.3, 16.5_
+  - [ ] 3.3 Add application exceptions
+    - Add `NotFoundException`, `ValidationException`, `ConflictException` in `EduZim.Application/Exceptions`
+    - _Requirements: all_
+
+- [ ] 4. Infrastructure layer — EF Core and database setup
+  - [ ] 4.1 Implement `EduZimDbContext` with all entity configurations
+    - Create single `EduZimDbContext` in `EduZim.Infrastructure/Persistence`
+    - Add `DbConnectionInterceptor` that executes `SET app.current_tenant_id = '{tenantId}'` on every connection open
+    - Configure all entity type configurations with `tenant_id` columns for school-tier tables
+    - Implement PII encryption via `Microsoft.AspNetCore.DataProtection` value converters for `Email`, `PhoneNumber`, `FullName` columns
+    - _Requirements: 11.1, 11.3, 16.2_
+  - [ ] 4.2 Write EF Core migrations with RLS policies
+    - Create initial migration covering all entities
+    - Include RLS policy SQL: `USING (tenant_id = current_setting('app.current_tenant_id')::uuid)`
+    - Enable RLS on all school-tier tables: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`
     - _Requirements: 11.2, 11.3_
-  - [ ]* 2.3 Write property test for cross-tenant data isolation (Property 1)
+  - [ ]* 4.3 Write property test for cross-tenant data isolation (Property 1)
     - **Property 1: Cross-Tenant Data Isolation**
     - **Validates: Requirements 1.4, 4.7, 7.2, 11.1, 11.3**
 
-- [ ] 3. YARP API Gateway
-  - Create `EduZim.Gateway` ASP.NET Core project with YARP reverse proxy
-  - Configure route mappings for all 12 services in `appsettings.json`
-  - Add JWT validation middleware that extracts `tenant_id` claim and forwards it as a request header
-  - Add tenant-suspension middleware that returns HTTP 402 for suspended tenants
-  - _Requirements: 11.3, 16.5_
-
-- [ ] 4. MassTransit + RabbitMQ event bus setup
-  - Add `EduZim.Messaging` shared library with all domain event message contracts (`ModuleCompleted`, `AssessmentSubmitted`, `BadgeAwarded`, `PaymentSucceeded`, `PaymentFailed`, `TenantSuspended`, `StudentInactive`)
-  - Configure MassTransit with RabbitMQ transport in each service that publishes or consumes events
-  - _Requirements: 9.3, 9.4, 10.2, 15.1_
-
-- [ ] 5. Redis distributed cache setup
-  - Add `IDistributedCache` (StackExchange.Redis) configuration to `EduZim.Shared`
-  - Implement `ICacheService` wrapper with typed get/set/invalidate helpers
-  - Wire Redis into Adaptive Learning Service and Identity Service
+- [ ] 5. Infrastructure layer — Redis cache and repository implementations
+  - Implement `ICacheService` using `StackExchange.Redis` / `IDistributedCache`
+  - Implement generic `Repository<T>` and `UnitOfWork` backed by `EduZimDbContext`
   - _Requirements: 11.7_
 
-- [ ] 6. Identity Service
-  - [ ] 6.1 Implement `IIdentityService` with ASP.NET Identity + OpenIddict
-    - Implement `RegisterAsync`, `LoginAsync`, `RefreshTokenAsync`, `RevokeTokenAsync`, `VerifyEmailAsync`
-    - Implement per-user salted password hashing via ASP.NET Identity's `IPasswordHasher<ApplicationUser>`
-    - Implement PII encryption at rest using `Microsoft.AspNetCore.DataProtection` (AES-256) for email, phone, and name fields before EF Core persistence
-    - _Requirements: 1.1, 1.2, 1.8, 16.2_
-  - [ ] 6.2 Implement account lockout and 2FA
-    - Implement `LockAccountAsync` triggered after 5 consecutive failed logins; set lockout for 15 minutes and queue email notification
-    - Implement `ValidateTwoFactorAsync` for Platform Admin data export confirmation
-    - _Requirements: 1.5, 16.7_
-  - [ ] 6.3 Implement SSO redirect for tenant IdP
-    - Implement `POST /auth/sso/{tenantId}` that redirects to the tenant's configured external identity provider
-    - _Requirements: 1.7_
-  - [ ]* 6.4 Write property tests for Identity Service (Properties 2, 3, 4, 42, 43)
+- [ ] 6. API layer — foundation
+  - [ ] 6.1 Configure ASP.NET Core pipeline
+    - Register MediatR, FluentValidation, EF Core, Hangfire, Redis, and ASP.NET Identity in `Program.cs`
+    - Add global exception handler mapping domain/application exceptions to `ProblemDetails` HTTP responses
+    - Add `TenantMiddleware` that extracts `tenant_id` from JWT claims and sets it on `ICurrentUser`; returns HTTP 402 for suspended tenants
+    - Add `AuditMiddleware` that writes `AuditLog` records for failed authorisation and administrative actions
+    - Configure HTTPS redirection, HSTS, and security headers (X-Content-Type-Options, X-Frame-Options, CSP)
+    - _Requirements: 11.3, 16.1, 16.5, 16.6_
+  - [ ] 6.2 Implement JWT authentication and `ICurrentUser`
+    - Configure JWT bearer authentication with OpenIddict or ASP.NET Identity token provider
+    - Implement `CurrentUser` service resolving `UserId`, `TenantId`, and `Role` from `HttpContext`
+    - _Requirements: 1.1, 1.6_
+  - [ ]* 6.3 Write property tests for authorisation and audit (Properties 44, 45)
+    - **Property 44: Unauthorized Requests Return 403 with Audit Log — Validates: Requirements 16.5**
+    - **Property 45: Audit Log Retention — Validates: Requirements 16.6**
+
+- [ ] 7. Checkpoint — core infrastructure
+  - Ensure all tests pass, ask the user if questions arise.
+
+- [ ] 8. Identity feature — commands, handlers, and endpoints
+  - [ ] 8.1 Implement Identity command/query handlers
+    - Implement `RegisterCommandHandler`: create `ApplicationUser` with ASP.NET Identity's `IPasswordHasher<ApplicationUser>` (per-user salt), encrypt PII, send email verification link
+    - Implement `LoginCommandHandler`: validate credentials, enforce lockout after 5 consecutive failures (15-minute lock + email notification), return JWT + refresh token
+    - Implement `RefreshTokenCommandHandler`, `RevokeTokenCommandHandler`, `VerifyEmailCommandHandler`
+    - Implement `LockAccountCommandHandler` and `ValidateTwoFactorCommandHandler`
+    - Implement `SsoRedirectQueryHandler` for tenant IdP redirect
+    - _Requirements: 1.1, 1.2, 1.5, 1.6, 1.7, 1.8, 16.2, 16.7_
+  - [ ] 8.2 Add Identity API endpoints
+    - `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/verify-email`, `POST /auth/sso/{tenantId}`, `POST /auth/2fa/verify`
+    - _Requirements: 1.1, 1.2, 1.7_
+  - [ ]* 8.3 Write property tests for Identity (Properties 2, 3, 4, 42, 43)
     - **Property 2: Password Storage Never Stores Plaintext — Validates: Requirements 1.8**
     - **Property 3: Account Lockout Threshold — Validates: Requirements 1.5**
     - **Property 4: Unverified Accounts Cannot Access Protected Resources — Validates: Requirements 1.2**
     - **Property 42: PII Encryption at Rest — Validates: Requirements 16.2**
     - **Property 43: PII Deletion on Request — Validates: Requirements 16.4**
 
-- [ ] 7. Authorisation middleware and audit logging
-  - Implement `TenantAuthorizationMiddleware` that validates the authenticated user's `tenant_id` claim matches the requested resource's tenant on every request; return HTTP 403 on mismatch
-  - Implement `AuditLogService` that writes an `AuditLog` record for every failed authorisation and every administrative action
-  - Register both as ASP.NET Core middleware in all service pipelines
-  - _Requirements: 11.3, 16.5, 16.6_
-  - [ ]* 7.1 Write property tests for authorisation and audit (Properties 44, 45)
-    - **Property 44: Unauthorized Requests Return 403 with Audit Log — Validates: Requirements 16.5**
-    - **Property 45: Audit Log Retention — Validates: Requirements 16.6**
-
-- [ ] 8. Checkpoint — core infrastructure
-  - Ensure all tests pass, ask the user if questions arise.
-
-- [ ] 9. Tenant Service
-  - [ ] 9.1 Implement `ITenantService` with tenant provisioning and branding
-    - Implement `ProvisionTenantAsync` that creates the tenant record and sets `Status = Provisioning` then `Active` once the isolated data partition is ready
-    - Implement `UpdateBrandingAsync` for logo, school name, and colour scheme
-    - Implement `GetDashboardAsync` returning enrolled student count, active teacher count, subscription status, and storage usage
-    - _Requirements: 1.3, 11.2, 11.4, 11.5_
-  - [ ] 9.2 Implement invite code generation and parent-student linking
-    - Implement `GenerateInviteCodeAsync` producing a unique, time-limited code scoped to the tenant
-    - Implement the invite code redemption endpoint that creates the parent-student association
-    - _Requirements: 10.3_
-  - [ ] 9.3 Implement tenant suspension and restoration
-    - Implement `SuspendTenantAsync` and `RestoreTenantAsync`; schedule a Hangfire job to permanently delete data at `SuspendedAt + 90 days`
-    - _Requirements: 2.6, 11.6_
-  - [ ]* 9.4 Write property tests for Tenant Service (Properties 30, 7)
+- [ ] 9. Tenant feature — commands, handlers, and endpoints
+  - [ ] 9.1 Implement Tenant command/query handlers
+    - Implement `ProvisionTenantCommandHandler`: create tenant record, set `Status = Provisioning` then `Active`
+    - Implement `UpdateBrandingCommandHandler`, `GetTenantDashboardQueryHandler` (enrolled students, active teachers, subscription status, storage usage)
+    - Implement `GenerateInviteCodeCommandHandler` (unique, time-limited, tenant-scoped) and invite code redemption handler
+    - Implement `SuspendTenantCommandHandler` and `RestoreTenantCommandHandler`; schedule Hangfire job for permanent deletion at `SuspendedAt + 90 days`
+    - _Requirements: 1.3, 10.3, 11.2, 11.4, 11.5, 2.6, 11.6_
+  - [ ] 9.2 Add Tenant API endpoints
+    - `POST /tenants`, `GET /tenants/{tenantId}`, `PUT /tenants/{tenantId}/branding`, `GET /tenants/{tenantId}/dashboard`, `POST /tenants/{tenantId}/invite-codes`
+    - _Requirements: 1.3, 11.4, 11.5_
+  - [ ]* 9.3 Write property tests for Tenant (Properties 30, 7)
     - **Property 30: Parent Invite Code Round Trip — Validates: Requirements 10.3**
     - **Property 7: Subscription Data Preservation — Validates: Requirements 2.6, 11.6**
 
-- [ ] 10. Billing Service
-  - [ ] 10.1 Implement `IBillingService` with subscription creation and fee calculation
-    - Implement `CreateSubscriptionAsync` for monthly, termly, and yearly cycles (Pre-school and School tiers)
-    - Implement `CalculateSchoolFeeAsync` as `UnitPrice(cycle) * studentCount`
-    - _Requirements: 2.1, 2.2, 2.8_
-  - [ ] 10.2 Implement payment webhook handlers and invoice generation
-    - Implement `HandlePaymentSucceededAsync`: transition subscription to `Active`, extend `CurrentPeriodEnd`, generate invoice — all within a single database transaction
-    - Implement `HandlePaymentFailedAsync`: transition to `GracePeriod`, set `GracePeriodEnd = NOW() + 7 days`, queue subscriber notification
-    - Implement `GenerateInvoiceAsync` producing a downloadable PDF invoice record
-    - Use idempotency keys on webhook handlers to prevent double-processing
-    - _Requirements: 2.3, 2.5, 2.7_
-  - [ ] 10.3 Implement renewal reminder Hangfire jobs
-    - Schedule a recurring Hangfire job that queries subscriptions expiring within 7 days and queues email + SMS renewal reminders
+- [ ] 10. Billing feature — commands, handlers, and endpoints
+  - [ ] 10.1 Implement Billing command/query handlers
+    - Implement `CreateSubscriptionCommandHandler` for monthly, termly, and yearly cycles
+    - Implement `CalculateSchoolFeeQueryHandler` as `UnitPrice(cycle) * studentCount`
+    - Implement `HandlePaymentSucceededCommandHandler`: transition to `Active`, extend `CurrentPeriodEnd`, generate invoice — all in one `IUnitOfWork` transaction; use idempotency keys
+    - Implement `HandlePaymentFailedCommandHandler`: transition to `GracePeriod`, set `GracePeriodEnd = NOW() + 7 days`, publish `PaymentFailedNotification`
+    - Implement `GenerateInvoiceCommandHandler` producing a downloadable PDF invoice record
+    - _Requirements: 2.1, 2.2, 2.3, 2.5, 2.7, 2.8_
+  - [ ] 10.2 Implement renewal reminder Hangfire job
+    - Schedule recurring job querying subscriptions expiring within 7 days; queue email + SMS renewal reminders
     - _Requirements: 2.4_
-  - [ ]* 10.4 Write property tests for Billing Service (Properties 5, 6, 7, 8, 9)
+  - [ ] 10.3 Add Billing API endpoints
+    - `POST /billing/subscriptions`, `POST /billing/webhooks/stripe`, `GET /billing/invoices/{subscriptionId}`, `GET /billing/invoices/{invoiceId}/download`
+    - _Requirements: 2.1, 2.3, 2.7_
+  - [ ]* 10.4 Write property tests for Billing (Properties 5, 6, 7, 8, 9)
     - **Property 5: Subscription Activation on Payment — Validates: Requirements 2.3**
     - **Property 6: Grace Period on Payment Failure — Validates: Requirements 2.5**
     - **Property 7: Subscription Data Preservation — Validates: Requirements 2.6, 11.6**
     - **Property 8: Invoice Created for Every Successful Payment — Validates: Requirements 2.7**
     - **Property 9: School Fee Calculation Correctness — Validates: Requirements 2.8**
 
-- [ ] 11. Content Service
-  - [ ] 11.1 Implement file upload with size validation and S3 storage
-    - Implement `UploadAsync` with multipart upload to S3-compatible storage; enforce 500 MB limit for video and 50 MB for audio before writing to storage
-    - Generate and store signed URLs via `GetSignedUrlAsync`
-    - _Requirements: 7.1_
-  - [ ] 11.2 Implement module and content lifecycle management
-    - Implement `CreateModuleAsync` with grade level, subject, and sequence ordering
-    - Implement soft-delete (`ArchiveContentAsync`) setting `Status = Archived` and `ArchivedAt = NOW()`
-    - Schedule a Hangfire job to permanently delete records where `ArchivedAt < NOW() - 30 days`
-    - _Requirements: 7.2, 7.3, 7.4_
-  - [ ] 11.3 Implement captions and transcripts
-    - Add `CaptionTrack` and `Transcript` entities; implement endpoints `GET /content/{id}/captions` and transcript retrieval
-    - _Requirements: 14.4, 14.6_
-  - [ ]* 11.4 Write property tests for Content Service (Properties 10, 11, 18, 19, 38, 39)
+- [ ] 11. Content feature — commands, handlers, and endpoints
+  - [ ] 11.1 Implement Content command/query handlers
+    - Implement `UploadContentCommandHandler`: validate size limits (500 MB video, 50 MB audio), upload to S3 via `IStorageService`, persist `ContentItem`
+    - Implement `GetSignedUrlQueryHandler` via `IStorageService`
+    - Implement `CreateModuleCommandHandler` with grade level, subject, and sequence ordering
+    - Implement `ArchiveContentCommandHandler`: set `Status = Archived`, `ArchivedAt = NOW()`; schedule Hangfire permanent-delete job at `ArchivedAt + 30 days`
+    - Implement `GetCaptionsQueryHandler` and `GetTranscriptQueryHandler`
+    - _Requirements: 7.1, 7.2, 7.3, 7.4, 14.4, 14.6_
+  - [ ] 11.2 Add Content API endpoints
+    - `POST /content/upload`, `GET /content/{contentId}`, `POST /modules`, `GET /modules/{moduleId}`, `DELETE /content/{contentId}`, `GET /content/{contentId}/captions`
+    - _Requirements: 7.1, 7.3, 7.4_
+  - [ ]* 11.3 Write property tests for Content (Properties 10, 11, 18, 19, 38, 39)
     - **Property 10: Pre-school Video Duration Limit — Validates: Requirements 3.3**
     - **Property 11: At Least One Game Per Foundational Concept — Validates: Requirements 3.5**
     - **Property 18: File Upload Size Enforcement — Validates: Requirements 7.1**
@@ -134,160 +150,161 @@ Implement the EduZim platform as 12 ASP.NET Core microservices, a React Web PWA,
     - **Property 38: Closed Captions Required for Video Content — Validates: Requirements 14.4**
     - **Property 39: Audio Content Transcript Required — Validates: Requirements 14.6**
 
-- [ ] 12. Assessment Service
-  - [ ] 12.1 Implement assessment creation and class assignment
-    - Implement `CreateAsync` supporting multiple-choice, true/false, and short-answer question types with optional `TimeLimitSeconds`
-    - Implement `AssignToClassAsync`; publish a `AssessmentAssigned` event consumed by Notification Service to notify all enrolled students
-    - _Requirements: 7.5, 7.6_
-  - [ ] 12.2 Implement submission, auto-grading, and timed enforcement
-    - Implement `SubmitAsync` that calculates `ScorePercent`, records `TimeTakenSeconds` and `SubmittedAt`, and returns per-question feedback
-    - Enforce time limit: reject submissions where `NOW() > StartedAt + TimeLimitSeconds`; auto-submit via a Hangfire job scheduled at session start
-    - Publish `AssessmentSubmitted` event after every submission
-    - _Requirements: 9.1, 9.2, 9.8_
-  - [ ] 12.3 Implement teacher results dashboard endpoint
-    - Implement `GetClassResultsAsync` returning per-student scores, completion rates, and time-on-task
-    - _Requirements: 7.7_
-  - [ ]* 12.4 Write property tests for Assessment Service (Properties 20, 24, 28)
+- [ ] 12. Assessment feature — commands, handlers, and endpoints
+  - [ ] 12.1 Implement Assessment command/query handlers
+    - Implement `CreateAssessmentCommandHandler` supporting multiple-choice, true/false, and short-answer with optional `TimeLimitSeconds`
+    - Implement `AssignAssessmentCommandHandler`: assign to class, publish `AssessmentAssignedNotification` handled by Notification handlers to create `AssessmentDue` notifications for all enrolled students
+    - Implement `SubmitAssessmentCommandHandler`: calculate `ScorePercent`, record `TimeTakenSeconds` and `SubmittedAt`, return per-question feedback; reject late submissions; publish `AssessmentSubmittedNotification`
+    - Implement `GetClassResultsQueryHandler` returning per-student scores, completion rates, and time-on-task
+    - Schedule Hangfire auto-submit job at session start for timed assessments
+    - _Requirements: 7.5, 7.6, 7.7, 9.1, 9.2, 9.8_
+  - [ ] 12.2 Add Assessment API endpoints
+    - `POST /assessments`, `POST /assessments/{id}/assign`, `POST /assessments/{id}/submit`, `GET /assessments/{id}/results/{studentId}`, `GET /assessments/{id}/class-results`
+    - _Requirements: 7.5, 7.6, 9.1_
+  - [ ]* 12.3 Write property tests for Assessment (Properties 20, 24, 28)
     - **Property 20: Assessment Assignment Notifies All Enrolled Students — Validates: Requirements 7.6**
     - **Property 24: Assessment Attempt Record Completeness — Validates: Requirements 9.1**
     - **Property 28: Timed Assessment Auto-Submit — Validates: Requirements 9.8**
 
-- [ ] 13. Adaptive Learning Service
-  - [ ] 13.1 Implement learning profile update and difficulty adjustment
-    - Implement `UpdateLearningProfileAsync` consuming `AssessmentSubmitted` events; update the student's cached learning profile in Redis
-    - Implement `GetAdjustedDifficultyAsync` that decrements difficulty in increments when the student is on a remedial path until score >= 70%
-    - _Requirements: 6.1, 6.5_
-  - [ ] 13.2 Implement recommended learning path generation
-    - Implement `GetRecommendedPathAsync`: include remedial content when `ScorePercent < 60`; include advanced extension when `ScorePercent >= 85`; block next grade-level module until all required assessments pass with >= 60%
-    - _Requirements: 6.2, 6.3, 6.6_
-  - [ ] 13.3 Implement weekly summary generation
-    - Implement `GenerateWeeklySummaryAsync` as a Hangfire recurring job; make summary visible to teacher and parent
-    - _Requirements: 6.4_
-  - [ ]* 13.4 Write property tests for Adaptive Learning Service (Properties 15, 16, 17)
+- [ ] 13. Adaptive Learning feature — commands, handlers, and endpoints
+  - [ ] 13.1 Implement Adaptive Learning command/query handlers
+    - Implement `UpdateLearningProfileCommandHandler` as a `INotificationHandler<AssessmentSubmittedNotification>`; update cached learning profile in Redis via `ICacheService`
+    - Implement `GetAdjustedDifficultyQueryHandler`: decrement difficulty in increments when on remedial path until score >= 70%
+    - Implement `GetRecommendedPathQueryHandler`: include remedial content when `ScorePercent < 60`; include advanced extension when `ScorePercent >= 85`; block next grade-level module until all required assessments pass with >= 60%
+    - Implement `GetWeeklySummaryQueryHandler` as a Hangfire recurring job; expose summary to teacher and parent
+    - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
+  - [ ] 13.2 Add Adaptive Learning API endpoints
+    - `GET /adaptive/{studentId}/path`, `GET /adaptive/{studentId}/summary`, `POST /adaptive/{studentId}/update`
+    - _Requirements: 6.2, 6.3, 6.4_
+  - [ ]* 13.3 Write property tests for Adaptive Learning (Properties 15, 16, 17)
     - **Property 15: Remedial Content Recommendation Below 60% — Validates: Requirements 6.2**
     - **Property 16: Advanced Extension Offer Above 85% — Validates: Requirements 6.3**
     - **Property 17: No Grade Advancement Without Passing Score — Validates: Requirements 6.6**
 
-- [ ] 14. Gamification Service
-  - [ ] 14.1 Implement points awarding
-    - Implement `AwardPointsAsync` consuming `ModuleCompleted` and `AssessmentSubmitted` events; apply bonus multiplier for scores >= 85%
-    - _Requirements: 9.3_
-  - [ ] 14.2 Implement badge awarding and certificate generation
-    - Implement `CheckAndAwardBadgesAsync` for all four milestone types: `FirstModule`, `FiveConsecutiveDays`, `SubjectMastery`, `GradeCompletion`
-    - On badge award, queue a certificate generation job and publish a `BadgeAwarded` event consumed by Notification Service
-    - _Requirements: 9.4, 9.6_
-  - [ ] 14.3 Implement tenant-scoped leaderboard
-    - Implement `GetLeaderboardAsync` with RLS ensuring only students from the requesting tenant appear
-    - _Requirements: 9.5_
-  - [ ]* 14.4 Write property tests for Gamification Service (Properties 25, 26, 27)
+- [ ] 14. Gamification feature — commands, handlers, and endpoints
+  - [ ] 14.1 Implement Gamification command/query handlers
+    - Implement `AwardPointsCommandHandler` as a `INotificationHandler<ModuleCompletedNotification>` and `INotificationHandler<AssessmentSubmittedNotification>`; apply bonus multiplier for scores >= 85%
+    - Implement `CheckAndAwardBadgesCommandHandler` for all four milestone types: `FirstModule`, `FiveConsecutiveDays`, `SubjectMastery`, `GradeCompletion`; on badge award, queue certificate generation job and publish `BadgeAwardedNotification`
+    - Implement `GetLeaderboardQueryHandler` with RLS ensuring only students from the requesting tenant appear
+    - _Requirements: 9.3, 9.4, 9.5, 9.6_
+  - [ ] 14.2 Add Gamification API endpoints
+    - `GET /gamification/{studentId}/points`, `GET /gamification/{studentId}/badges`, `GET /gamification/leaderboard/{tenantId}`
+    - _Requirements: 9.3, 9.4, 9.5_
+  - [ ]* 14.3 Write property tests for Gamification (Properties 25, 26, 27)
     - **Property 25: Points Awarded on Module and Assessment Completion — Validates: Requirements 9.3**
     - **Property 26: Badge Awarded on Milestone Events — Validates: Requirements 9.4, 9.6**
     - **Property 27: Leaderboard Tenant Isolation — Validates: Requirements 9.5**
 
-- [ ] 15. Checkpoint — core services
+- [ ] 15. Checkpoint — core feature handlers
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 16. Notification Service
-  - [ ] 16.1 Implement multi-channel notification dispatch
-    - Implement `QueueNotificationAsync` that routes to in-app, email (SendGrid), or SMS (Africa's Talking) based on the user's `NotificationPreferences`
-    - Implement in-app notification storage and `GET /notifications/{userId}` + `PUT /notifications/{id}/read` endpoints
+- [ ] 16. Notification feature — commands, handlers, and endpoints
+  - [ ] 16.1 Implement Notification command/query handlers
+    - Implement `QueueNotificationCommandHandler`: route to in-app, email (`IEmailService`), or SMS (`ISmsService`) based on user's `NotificationPreferences`
+    - Implement in-app notification storage and `GetInAppNotificationsQueryHandler`
+    - Implement `UpdateNotificationPreferencesCommandHandler`
     - _Requirements: 15.1, 15.2, 15.4_
-  - [ ] 16.2 Implement SMS retry logic with Hangfire
-    - On SMS send failure, schedule a Hangfire retry job; increment `RetryCount` on each attempt; after 3 failures set `Status = Undelivered`
+  - [ ] 16.2 Implement SMS retry Hangfire job
+    - On SMS send failure, schedule Hangfire retry job; increment `RetryCount` on each attempt; after 3 failures set `Status = Undelivered`
     - _Requirements: 15.3, 15.5_
-  - [ ] 16.3 Implement inactivity alert job
-    - Implement a Hangfire recurring job that queries students with `LastLoginAt < NOW() - 7 days` and queues `InactivityAlert` notifications for linked parents
+  - [ ] 16.3 Implement inactivity alert Hangfire job
+    - Recurring job querying students with `LastLoginAt < NOW() - 7 days`; publish `StudentInactiveNotification` handled by `QueueNotificationCommandHandler`
     - _Requirements: 10.6_
-  - [ ]* 16.4 Write property tests for Notification Service (Properties 32, 40, 41)
+  - [ ] 16.4 Add Notification API endpoints
+    - `GET /notifications/{userId}`, `PUT /notifications/{id}/read`, `PUT /users/{userId}/notification-preferences`
+    - _Requirements: 15.1, 15.4_
+  - [ ]* 16.5 Write property tests for Notification (Properties 32, 40, 41)
     - **Property 32: Inactivity Notification After 7 Days — Validates: Requirements 10.6**
     - **Property 40: Notification Routing Respects User Preferences — Validates: Requirements 15.4**
     - **Property 41: SMS Retry Logic — Validates: Requirements 15.5**
 
-- [ ] 17. ZimBot Service
-  - [ ] 17.1 Implement conversational AI chat endpoint
-    - Implement `ChatAsync` using Azure OpenAI SDK / Semantic Kernel; include the student's grade level and current module context in the system prompt
-    - Implement hint-only mode: detect assessment-answer requests and respond with a guiding hint instead of the direct answer
-    - Implement multilingual response based on the student's `PreferredLanguage` (English, Shona, Ndebele, Kalanga)
-    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5_
-  - [ ] 17.2 Implement fallback and interaction logging
-    - Wrap AI provider calls with a Polly circuit breaker; return a static fallback message and log the question when the circuit is open
-    - Persist every interaction to `ZimBotInteraction` records scoped to the tenant
-    - Implement `GET /zimbot/logs/{tenantId}` for teacher review
-    - _Requirements: 5.6, 5.7, 5.8_
+- [ ] 17. ZimBot feature — commands, handlers, and endpoints
+  - [ ] 17.1 Implement ZimBot command/query handlers
+    - Implement `ChatCommandHandler` using `IAiService` (Azure OpenAI / Semantic Kernel); include student's grade level and current module context in system prompt
+    - Implement hint-only mode: detect assessment-answer requests and respond with a guiding hint
+    - Implement multilingual response based on student's `PreferredLanguage`
+    - Wrap `IAiService` calls with Polly circuit breaker in Infrastructure; return static fallback message and log question when circuit is open
+    - Persist every interaction to `ZimBotInteraction` records scoped to tenant
+    - Implement `GetInteractionLogsQueryHandler` for teacher review
+    - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
+  - [ ] 17.2 Add ZimBot API endpoints
+    - `POST /zimbot/chat`, `GET /zimbot/logs/{tenantId}`
+    - _Requirements: 5.1, 5.7_
 
-- [ ] 18. Live Classroom Service
-  - [ ] 18.1 Implement session scheduling and join token generation
-    - Implement `ScheduleAsync` creating a `ClassroomSession` record; publish a `ClassroomScheduled` event consumed by Notification Service to send 24-hour advance notifications to students and parents
-    - Implement `GetJoinTokenAsync` calling the Daily.co or Jitsi SDK to generate a participant token
-    - _Requirements: 13.1, 13.2_
-  - [ ] 18.2 Implement SignalR hub for presence and session control
-    - Implement a SignalR hub for real-time participant presence, screen share signalling, and teacher audio/video mute controls
+- [ ] 18. Live Classroom feature — commands, handlers, SignalR hub, and endpoints
+  - [ ] 18.1 Implement Live Classroom command/query handlers
+    - Implement `ScheduleSessionCommandHandler`: create `ClassroomSession` record; publish `ClassroomScheduledNotification` handled by Notification handlers to send 24-hour advance notifications
+    - Implement `GetJoinTokenQueryHandler` calling `IVideoService` (Daily.co / Jitsi)
+    - Implement `EndSessionCommandHandler`: record attendance (join time + duration) for each participant; trigger recording retrieval from `IVideoService`
+    - Implement `GetRecordingUrlQueryHandler`: return URL only within 30 days of `SessionEndTime`; return null after expiry
+    - _Requirements: 13.1, 13.2, 13.5, 13.6, 13.7_
+  - [ ] 18.2 Implement SignalR hub for real-time session control
+    - Implement `ClassroomHub` in Infrastructure for participant presence, screen share signalling, and teacher audio/video mute controls
     - Support minimum 50 concurrent participants
     - _Requirements: 13.3, 13.4, 13.6_
-  - [ ] 18.3 Implement session end, attendance, and recording
-    - Implement `EndSessionAsync` that records attendance (join time + duration) for each participant and triggers recording retrieval from the video provider
-    - Implement `GetRecordingUrlAsync` that returns the URL only within 30 days of `SessionEndTime`; return null/404 after expiry
-    - _Requirements: 13.5, 13.6, 13.7_
-  - [ ]* 18.4 Write property tests for Live Classroom Service (Properties 34, 35, 36)
+  - [ ] 18.3 Add Live Classroom API endpoints
+    - `POST /classrooms`, `GET /classrooms/{id}/join`, `POST /classrooms/{id}/end`, `GET /classrooms/{id}/attendance`, `GET /classrooms/{id}/recording`
+    - _Requirements: 13.1, 13.5, 13.7_
+  - [ ]* 18.4 Write property tests for Live Classroom (Properties 34, 35, 36)
     - **Property 34: Live Classroom Notification Lead Time — Validates: Requirements 13.2**
     - **Property 35: Attendance Record on Session End — Validates: Requirements 13.5**
     - **Property 36: Recording Availability Window — Validates: Requirements 13.7**
 
-- [ ] 19. Sync Service
-  - [ ] 19.1 Implement offline queue processing as a .NET Worker Service
-    - Implement `ProcessOfflineQueueAsync` that reads pending `OfflineSyncQueue` records and applies them to `StudentProgress` and `AssessmentAttempt` tables
-    - Implement `DetectConflictAsync` comparing local `LocalTimestamp` against server-side record timestamp
-    - Implement `ResolveConflictAsync` using last-write-wins (later timestamp retained); write a `SyncConflictLog` entry for every conflict
+- [ ] 19. Sync feature — commands and handlers
+  - [ ] 19.1 Implement Sync command handlers
+    - Implement `ProcessOfflineQueueCommandHandler`: read pending `OfflineSyncQueue` records; apply to `StudentProgress` and `AssessmentAttempt` tables
+    - Implement `ResolveConflictCommandHandler`: compare `LocalTimestamp` against server-side record; retain later timestamp (last-write-wins); write `SyncConflictLog` entry for every conflict
+    - Expose `POST /sync/upload` endpoint for mobile/PWA to submit offline queue on connectivity restore
     - _Requirements: 12.2, 12.5_
-  - [ ]* 19.2 Write property test for Sync Service (Property 33)
+  - [ ]* 19.2 Write property test for Sync (Property 33)
     - **Property 33: Offline Sync Conflict Resolution by Timestamp — Validates: Requirements 12.5**
 
-- [ ] 20. Marketplace Service
-  - [ ] 20.1 Implement content pack submission and admin review gate
-    - Implement `POST /marketplace/packs` that creates a pack with `Status = PendingReview`
-    - Implement Platform Admin approval endpoint that transitions status to `Approved`; only `Approved` packs appear in `GET /marketplace/packs` results
-    - _Requirements: 8.1, 8.2_
-  - [ ] 20.2 Implement cross-tenant access request and approval
-    - Implement `POST /marketplace/packs/{id}/request-access` that notifies the originating teacher
-    - Implement `POST /marketplace/packs/{id}/approve-access` that grants the requesting tenant read access to only that content pack — no other originating tenant data
-    - _Requirements: 8.3, 8.4_
-  - [ ] 20.3 Implement attribution, ratings, and admin removal
-    - Ensure all marketplace pack responses include non-empty `SchoolName` and `TeacherName` fields
-    - Implement `POST /marketplace/packs/{id}/rate` for teacher ratings and reviews
-    - Implement `DELETE /marketplace/packs/{id}` for Platform Admin policy violation removal with teacher notification
-    - _Requirements: 8.5, 8.6, 8.7_
-  - [ ]* 20.4 Write property tests for Marketplace Service (Properties 21, 22, 23)
+- [ ] 20. Marketplace feature — commands, handlers, and endpoints
+  - [ ] 20.1 Implement Marketplace command/query handlers
+    - Implement `SubmitContentPackCommandHandler`: create pack with `Status = PendingReview`
+    - Implement `ApproveContentPackCommandHandler` (Platform Admin): transition to `Approved`; only `Approved` packs appear in `BrowseContentPacksQueryHandler`
+    - Implement `RequestAccessCommandHandler`: notify originating teacher
+    - Implement `ApproveAccessCommandHandler`: grant requesting tenant read access to only that content pack
+    - Implement `RateContentPackCommandHandler` for teacher ratings and reviews
+    - Implement `RemoveContentPackCommandHandler` (Platform Admin): remove violating pack and notify submitting teacher
+    - Ensure all pack responses include non-empty `SchoolName` and `TeacherName`
+    - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
+  - [ ] 20.2 Add Marketplace API endpoints
+    - `POST /marketplace/packs`, `GET /marketplace/packs`, `POST /marketplace/packs/{id}/request-access`, `POST /marketplace/packs/{id}/approve-access`, `POST /marketplace/packs/{id}/rate`, `DELETE /marketplace/packs/{id}`
+    - _Requirements: 8.1, 8.2, 8.3_
+  - [ ]* 20.3 Write property tests for Marketplace (Properties 21, 22, 23)
     - **Property 21: Marketplace Submission Requires Admin Review — Validates: Requirements 8.2**
     - **Property 22: Cross-Tenant Content Access Requires Approval — Validates: Requirements 8.3, 8.4**
     - **Property 23: Marketplace Attribution Completeness — Validates: Requirements 8.5**
 
-- [ ] 21. Student progress tracking and parent dashboard API
-  - [ ] 21.1 Implement `StudentProgress` recording and module unlock logic
-    - On `ModuleCompleted` event, set `IsCompleted = true` and unlock the next module in sequence
-    - Calculate and store per-subject progress percentage as `(completed modules / total modules) * 100`
-    - _Requirements: 4.4, 4.8_
-  - [ ] 21.2 Implement parent dashboard endpoint
-    - Implement `GET /parents/{parentId}/dashboard` returning `CurrentGrade`, `Subjects`, `RecentActivity`, and `OverallProgressPercent` for each linked student
-    - Implement weekly summary notification job (email + SMS) for parents
-    - _Requirements: 10.1, 10.2, 10.4_
-  - [ ] 21.3 Implement screen time limit enforcement
-    - Track daily session time per student; when `DailyScreenTimeLimitSeconds` is reached, pause the session and block new session creation until the next calendar day
+- [ ] 21. Progress and Parent Dashboard feature — commands, handlers, and endpoints
+  - [ ] 21.1 Implement Progress command/query handlers
+    - Implement `RecordModuleCompletionCommandHandler` as a `INotificationHandler<ModuleCompletedNotification>`: set `IsCompleted = true`, unlock next module in sequence, calculate and store per-subject progress percentage
+    - Implement `GetStudentProgressQueryHandler` returning per-subject progress percentage
+    - Implement `GetParentDashboardQueryHandler` returning `CurrentGrade`, `Subjects`, `RecentActivity`, and `OverallProgressPercent` for each linked student
+    - Implement weekly summary notification Hangfire job (email + SMS) for parents
+    - _Requirements: 4.4, 4.8, 10.1, 10.2, 10.4_
+  - [ ] 21.2 Implement screen time limit enforcement
+    - Track daily session time per student; when `DailyScreenTimeLimitSeconds` is reached, pause session and block new session creation until next calendar day
     - _Requirements: 10.5_
-  - [ ]* 21.4 Write property tests for progress and parent dashboard (Properties 13, 14, 29, 31)
+  - [ ] 21.3 Add Progress and Parent Dashboard API endpoints
+    - `GET /students/{studentId}/progress`, `GET /parents/{parentId}/dashboard`
+    - _Requirements: 4.8, 10.1_
+  - [ ]* 21.4 Write property tests for Progress and Parent Dashboard (Properties 13, 14, 29, 31)
     - **Property 13: Module Completion Unlocks Next Module — Validates: Requirements 4.4**
     - **Property 14: Progress Percentage Calculation — Validates: Requirements 4.8**
     - **Property 29: Parent Dashboard Data Completeness — Validates: Requirements 10.1**
     - **Property 31: Screen Time Limit Enforcement — Validates: Requirements 10.5**
 
 - [ ] 22. Pre-school session management
-  - [ ] 22.1 Implement 20-minute segment limit and inactivity pause
-    - Track continuous interaction time per toddler session; display a rest prompt after 20 minutes of continuous interaction
+  - [ ] 22.1 Implement session segment and inactivity handlers
+    - Track continuous interaction time per toddler session; display rest prompt after 20 minutes of continuous interaction
     - Transition session `Status` to `Paused` after 60 seconds of no interaction events
     - _Requirements: 3.6, 3.7_
-  - [ ]* 22.2 Write property tests for session management (Properties 12)
+  - [ ]* 22.2 Write property test for session management (Property 12)
     - **Property 12: Session Inactivity Pause — Validates: Requirements 3.7**
 
-- [ ] 23. Checkpoint — feature services
+- [ ] 23. Checkpoint — feature handlers complete
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 24. React Web PWA — foundation and authentication
@@ -297,7 +314,7 @@ Implement the EduZim platform as 12 ASP.NET Core microservices, a React Web PWA,
     - _Requirements: 12.3, 12.4_
   - [ ] 24.2 Implement authentication screens and JWT management
     - Implement login, registration, email verification, and SSO redirect screens
-    - Store JWT and refresh token securely; implement silent token refresh; redirect to login on token expiry without exposing session data
+    - Store JWT and refresh token securely; implement silent token refresh; redirect to login on token expiry
     - _Requirements: 1.1, 1.2, 1.6_
   - [ ] 24.3 Implement accessibility settings
     - Implement high-contrast mode toggle, font size selector (Small/Medium/Large/ExtraLarge), and text-to-speech activation button in a settings panel
@@ -313,7 +330,7 @@ Implement the EduZim platform as 12 ASP.NET Core microservices, a React Web PWA,
     - _Requirements: 4.2, 4.3, 4.5, 14.4, 14.6_
   - [ ] 25.2 Implement ZimBot chat widget
     - Implement a persistent ZimBot button on all learning screens; render a chat panel with message history and language selector
-    - Display fallback message when ZimBot service is unavailable
+    - Display fallback message when ZimBot is unavailable
     - _Requirements: 5.1, 5.2, 5.3, 5.8_
   - [ ] 25.3 Implement student dashboard with progress display
     - Render per-subject progress percentage bars and recent activity feed
@@ -340,14 +357,14 @@ Implement the EduZim platform as 12 ASP.NET Core microservices, a React Web PWA,
     - Implement screen time limit configuration control
     - _Requirements: 10.1, 10.4, 10.5_
   - [ ] 27.2 Implement live classroom join and SignalR integration
-    - Implement classroom join flow using the join token from the Live Classroom Service
-    - Integrate Daily.co or Jitsi embed; connect to SignalR hub for presence and teacher controls
+    - Implement classroom join flow using the join token from the Live Classroom API
+    - Integrate Daily.co or Jitsi embed; connect to `ClassroomHub` SignalR for presence and teacher controls
     - _Requirements: 13.3, 13.4, 13.6_
 
 - [ ] 28. React Native Mobile app
   - [ ] 28.1 Scaffold React Native app with offline storage
     - Create React Native project (Expo or bare workflow); configure WatermelonDB or SQLite for local offline queue storage
-    - Implement offline progress queue: write `OfflineSyncQueue` records locally when offline; trigger sync on connectivity restore
+    - Implement offline progress queue: write `OfflineSyncQueue` records locally when offline; trigger `POST /sync/upload` on connectivity restore
     - _Requirements: 12.1, 12.2, 12.4_
   - [ ] 28.2 Implement mobile learning screens and content renderers
     - Implement video player (with captions), PDF viewer, audio player (with transcript), and quiz screens
@@ -367,25 +384,25 @@ Implement the EduZim platform as 12 ASP.NET Core microservices, a React Web PWA,
 - [ ] 29. Checkpoint — frontends
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 30. Integration wiring — event consumers and cross-service flows
-  - [ ] 30.1 Wire `ModuleCompleted` event flow
-    - Ensure `ModuleCompleted` published by Content/Progress service is consumed by: Adaptive Learning (profile update), Gamification (points + badge check), Notification (parent dashboard update), and Sync Service
+- [ ] 30. MediatR notification wiring — cross-feature event flows
+  - [ ] 30.1 Wire `ModuleCompletedNotification` handlers
+    - Ensure `ModuleCompletedNotification` is handled by: `RecordModuleCompletionCommandHandler` (progress + unlock), `AwardPointsCommandHandler` (gamification), `CheckAndAwardBadgesCommandHandler` (badges), `UpdateLearningProfileCommandHandler` (adaptive learning)
     - _Requirements: 4.4, 6.1, 9.3, 10.2_
-  - [ ] 30.2 Wire `AssessmentSubmitted` event flow
-    - Ensure `AssessmentSubmitted` is consumed by: Adaptive Learning (path update), Gamification (points + badge check), Notification (parent notification)
+  - [ ] 30.2 Wire `AssessmentSubmittedNotification` handlers
+    - Ensure `AssessmentSubmittedNotification` is handled by: `UpdateLearningProfileCommandHandler` (adaptive path update), `AwardPointsCommandHandler` (points + badge check), Notification handler (parent notification)
     - _Requirements: 6.1, 9.2, 9.3_
-  - [ ] 30.3 Wire `BadgeAwarded` event flow
-    - Ensure `BadgeAwarded` triggers: certificate generation job, parent in-app notification, and email notification
+  - [ ] 30.3 Wire `BadgeAwardedNotification` handlers
+    - Ensure `BadgeAwardedNotification` triggers: certificate generation Hangfire job, parent in-app notification, and email notification
     - _Requirements: 9.6, 10.2_
-  - [ ] 30.4 Wire `PaymentSucceeded` and `PaymentFailed` event flows
-    - Ensure payment events from Billing Service trigger tenant status updates and subscriber notifications within 60 seconds
+  - [ ] 30.4 Wire `PaymentSucceededNotification` and `PaymentFailedNotification` handlers
+    - Ensure payment notifications trigger tenant status updates and subscriber notifications within 60 seconds
     - _Requirements: 2.3, 2.5_
   - [ ] 30.5 Wire offline sync trigger on connectivity restore
-    - Implement connectivity listener in React Native and PWA that calls the Sync Service endpoint when `navigator.onLine` transitions to `true`
+    - Implement connectivity listener in React Native and PWA that calls `POST /sync/upload` when `navigator.onLine` transitions to `true`
     - _Requirements: 12.2_
 
 - [ ] 31. FsCheck custom arbitraries and test project setup
-  - Create `EduZim.Tests/Properties/Arbitraries/EduZimArbitraries.cs` with FsCheck generators for `ApplicationUser`, `Tenant`, `AssessmentAttempt`, `Subscription`, `ContentItem`, `Notification`, and `OfflineProgressItem`
+  - Create `EduZim.Tests.Properties/Arbitraries/EduZimArbitraries.cs` with FsCheck generators for `ApplicationUser`, `Tenant`, `AssessmentAttempt`, `Subscription`, `ContentItem`, `Notification`, and `OfflineProgressItem`
   - Configure all property test classes with `[Property(MaxTest = 500)]` for security-critical properties (P1, P2, P3, P4, P42, P44) and `[Property(MaxTest = 100)]` for others
   - _Requirements: all_
 
@@ -394,7 +411,7 @@ Implement the EduZim platform as 12 ASP.NET Core microservices, a React Web PWA,
     - Use `WebApplicationFactory<Program>` + Testcontainers PostgreSQL to verify that queries from tenant A never return rows belonging to tenant B
     - _Requirements: 11.1, 11.3_
   - [ ]* 32.2 Write integration tests for billing webhook idempotency
-    - Verify that replaying the same Stripe `payment_intent.succeeded` event twice results in exactly one `Invoice` record and one subscription status transition
+    - Verify that replaying the same payment success event twice results in exactly one `Invoice` record and one subscription status transition
     - _Requirements: 2.3, 2.7_
   - [ ]* 32.3 Write integration tests for Hangfire job execution
     - Verify soft-delete cleanup job, renewal reminder job, and inactivity alert job execute correctly against a real PostgreSQL instance
@@ -405,11 +422,11 @@ Implement the EduZim platform as 12 ASP.NET Core microservices, a React Web PWA,
 
 - [ ] 33. Security hardening
   - [ ] 33.1 Enforce TLS and security headers
-    - Configure HTTPS redirection and HSTS in all service `Program.cs` files
-    - Add security headers middleware (X-Content-Type-Options, X-Frame-Options, CSP) to the YARP gateway
+    - Configure HTTPS redirection and HSTS in `EduZim.API/Program.cs`
+    - Verify security headers middleware (X-Content-Type-Options, X-Frame-Options, CSP) is active
     - _Requirements: 16.1_
   - [ ] 33.2 Implement Polly resilience policies for all external calls
-    - Add retry + circuit breaker Polly policies to: AI service (ZimBot), SMS gateway, payment provider (Stripe/Paynow), and video provider (Daily.co/Jitsi) HTTP clients
+    - Add retry + circuit breaker Polly policies to all `HttpClient` registrations in Infrastructure: `IAiService`, `ISmsService`, `IPaymentService`, `IVideoService`
     - _Requirements: 5.8, 15.5_
 
 - [ ] 34. Final checkpoint — full system
@@ -419,7 +436,8 @@ Implement the EduZim platform as 12 ASP.NET Core microservices, a React Web PWA,
 
 - Tasks marked with `*` are optional and can be skipped for a faster MVP
 - Each task references specific requirements for traceability
-- Checkpoints at tasks 8, 15, 23, 29, and 34 ensure incremental validation
+- Checkpoints at tasks 7, 15, 23, 29, and 34 ensure incremental validation
 - Property tests use FsCheck with `MaxTest = 500` for security-critical properties (P1–P4, P42, P44) and `MaxTest = 100` for all others
 - All property tests must include the tag comment: `// Feature: elearning-app-zimbabwe, Property {N}: {property_text}`
 - Integration tests use Testcontainers to spin up real PostgreSQL and verify RLS policies with actual database connections
+- No YARP gateway, MassTransit, or RabbitMQ — all cross-feature communication is in-process via MediatR notifications
