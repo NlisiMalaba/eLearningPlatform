@@ -2,11 +2,11 @@
 
 ## Overview
 
-Implement EduZim as a Clean Architecture ASP.NET Core (.NET 8+) monolith with a React Web PWA and React Native mobile app. The solution has four layers: Domain → Application → Infrastructure → API. Tasks are sequenced: solution scaffold → domain → application → infrastructure → API → frontends → testing.
+Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a React Web PWA and React Native mobile app. The solution has four layers: Domain → Application → Infrastructure → API. Tasks are sequenced: solution scaffold → domain → application → infrastructure → API → frontends → testing.
 
 ## Tasks
 
-- [ ] 1. Scaffold Clean Architecture solution
+- [x] 1. Scaffold Clean Architecture solution
   - Create `EduZim.sln` with projects: `EduZim.Domain`, `EduZim.Application`, `EduZim.Infrastructure`, `EduZim.API`, `EduZim.Tests.Unit`, `EduZim.Tests.Integration`, `EduZim.Tests.Properties`
   - Set project references: API → Application → Domain; Infrastructure → Application + Domain
   - Configure `docker-compose.yml` with PostgreSQL, Redis, and MinIO containers for local development
