@@ -14,7 +14,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - _Requirements: 11.1, 11.2, 16.1_
 
 - [ ] 2. Domain layer — entities, enums, and domain events
-  - [ ] 2.1 Implement all domain entities and enums
+  - [x] 2.1 Implement all domain entities and enums
     - Add `TenantEntity` base class, `ApplicationUser`, `Tenant`, `Subscription`, `ContentItem`, `Module`, `Assessment`, `AssessmentAttempt`, `StudentProgress`, `StudentPoints`, `Badge`, `Notification`, `OfflineSyncQueue`, `AuditLog` as defined in the data model
     - Add all enums: `UserRole`, `TenantTier`, `TenantStatus`, `BillingCycle`, `SubscriptionStatus`, `ContentType`, `ContentStatus`, `GradeLevel`, `QuestionType`, `BadgeType`, `NotificationType`, `NotificationChannel`, `NotificationStatus`, `SyncStatus`
     - _Requirements: all_
