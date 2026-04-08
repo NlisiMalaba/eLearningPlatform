@@ -20,7 +20,7 @@ public sealed class TenantMiddleware
         ICurrentUser currentUser,
         ITenantLifecycleChecker tenantLifecycle)
     {
-        currentUserInitializer.InitializeFromPrincipal(context.User);
+        currentUserInitializer.InitializeFromHttpContext();
 
         if (context.User.Identity?.IsAuthenticated != true)
         {

@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace EduZim.Infrastructure;
@@ -50,27 +51,34 @@ public static class DependencyInjection
             .AddSignInManager()
             .AddDefaultTokenProviders();
 
-        var jwtSection = configuration.GetSection("Jwt");
-        var signingKey = jwtSection["SigningKey"]
-            ?? throw new InvalidOperationException("Jwt:SigningKey is not configured.");
-        var issuer = jwtSection["Issuer"] ?? "EduZim";
-        var audience = jwtSection["Audience"] ?? "EduZim.Api";
+        services.AddOptions<JwtSettings>()
+            .Bind(configuration.GetSection(JwtSettings.SectionName))
+            .Validate(
+                s => !string.IsNullOrWhiteSpace(s.SigningKey) && s.SigningKey.Length >= 32,
+                "Jwt:SigningKey must be configured and at least 32 characters.")
+            .ValidateOnStart();
 
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+            .AddJwtBearer();
+        services.AddOptions<JwtBearerOptions>(JwtBearerDefaults.AuthenticationScheme)
+            .Configure<IOptions<JwtSettings>>((options, jwt) =>
             {
+                var s = jwt.Value;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(signingKey)),
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(s.SigningKey)),
                     ValidateIssuer = true,
-                    ValidIssuer = issuer,
+                    ValidIssuer = s.Issuer,
                     ValidateAudience = true,
-                    ValidAudience = audience,
+                    ValidAudience = s.Audience,
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromMinutes(2),
                 };
             });
+
+        services.AddSingleton<JwtAccessTokenIssuer>();
+        services.AddScoped<IAuthenticationService, AuthenticationService>();
 
         services.AddHangfire((_, config) =>
             config

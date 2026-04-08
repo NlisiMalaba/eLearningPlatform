@@ -67,7 +67,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Add `AuditMiddleware` that writes `AuditLog` records for failed authorisation and administrative actions
     - Configure HTTPS redirection, HSTS, and security headers (X-Content-Type-Options, X-Frame-Options, CSP)
     - _Requirements: 11.3, 16.1, 16.5, 16.6_
-  - [ ] 6.2 Implement JWT authentication and `ICurrentUser`
+  - [x] 6.2 Implement JWT authentication and `ICurrentUser`
     - Configure JWT bearer authentication with OpenIddict or ASP.NET Identity token provider
     - Implement `CurrentUser` service resolving `UserId`, `TenantId`, and `Role` from `HttpContext`
     - _Requirements: 1.1, 1.6_
