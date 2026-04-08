@@ -13,48 +13,48 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - Add Hangfire, MediatR, FluentValidation, EF Core, and FsCheck NuGet packages to the appropriate projects
   - _Requirements: 11.1, 11.2, 16.1_
 
-- [ ] 2. Domain layer — entities, enums, and domain events
-  - [ ] 2.1 Implement all domain entities and enums
+- [x] 2. Domain layer — entities, enums, and domain events
+  - [x] 2.1 Implement all domain entities and enums
     - Add `TenantEntity` base class, `ApplicationUser`, `Tenant`, `Subscription`, `ContentItem`, `Module`, `Assessment`, `AssessmentAttempt`, `StudentProgress`, `StudentPoints`, `Badge`, `Notification`, `OfflineSyncQueue`, `AuditLog` as defined in the data model
     - Add all enums: `UserRole`, `TenantTier`, `TenantStatus`, `BillingCycle`, `SubscriptionStatus`, `ContentType`, `ContentStatus`, `GradeLevel`, `QuestionType`, `BadgeType`, `NotificationType`, `NotificationChannel`, `NotificationStatus`, `SyncStatus`
     - _Requirements: all_
-  - [ ] 2.2 Implement domain events
+  - [x] 2.2 Implement domain events
     - Add MediatR `INotification` records: `ModuleCompletedNotification`, `AssessmentSubmittedNotification`, `BadgeAwardedNotification`, `PaymentSucceededNotification`, `PaymentFailedNotification`, `TenantSuspendedNotification`, `StudentInactiveNotification`
     - _Requirements: 4.4, 6.1, 9.3, 9.4, 10.2, 15.1_
-  - [ ] 2.3 Implement domain exceptions
+  - [x] 2.3 Implement domain exceptions
     - Add `DomainException`, `TenantAccessViolationException` in `EduZim.Domain/Exceptions`
     - _Requirements: 11.3, 16.5_
 
-- [ ] 3. Application layer — common infrastructure
-  - [ ] 3.1 Define application interfaces
+- [x] 3. Application layer — common infrastructure
+  - [x] 3.1 Define application interfaces
     - Add `IRepository<T>`, `IUnitOfWork`, `ICurrentUser`, `IEmailService`, `ISmsService`, `IStorageService`, `IAiService`, `IPaymentService`, `IVideoService`, `ICacheService` in `EduZim.Application/Common/Interfaces`
     - _Requirements: all_
-  - [ ] 3.2 Implement MediatR pipeline behaviours
+  - [x] 3.2 Implement MediatR pipeline behaviours
     - Add `ValidationBehaviour<TRequest, TResponse>` that runs FluentValidation before every handler
     - Add `LoggingBehaviour<TRequest, TResponse>` for structured request/response logging
     - Add `TenantScopeBehaviour<TRequest, TResponse>` that validates tenant claim matches requested resource
     - _Requirements: 11.3, 16.5_
-  - [ ] 3.3 Add application exceptions
+  - [x] 3.3 Add application exceptions
     - Add `NotFoundException`, `ValidationException`, `ConflictException` in `EduZim.Application/Exceptions`
     - _Requirements: all_
 
-- [ ] 4. Infrastructure layer — EF Core and database setup
-  - [ ] 4.1 Implement `EduZimDbContext` with all entity configurations
+- [x] 4. Infrastructure layer — EF Core and database setup
+  - [x] 4.1 Implement `EduZimDbContext` with all entity configurations
     - Create single `EduZimDbContext` in `EduZim.Infrastructure/Persistence`
     - Add `DbConnectionInterceptor` that executes `SET app.current_tenant_id = '{tenantId}'` on every connection open
     - Configure all entity type configurations with `tenant_id` columns for school-tier tables
     - Implement PII encryption via `Microsoft.AspNetCore.DataProtection` value converters for `Email`, `PhoneNumber`, `FullName` columns
     - _Requirements: 11.1, 11.3, 16.2_
-  - [ ] 4.2 Write EF Core migrations with RLS policies
+  - [x] 4.2 Write EF Core migrations with RLS policies
     - Create initial migration covering all entities
     - Include RLS policy SQL: `USING (tenant_id = current_setting('app.current_tenant_id')::uuid)`
     - Enable RLS on all school-tier tables: `ALTER TABLE ... ENABLE ROW LEVEL SECURITY`
     - _Requirements: 11.2, 11.3_
-  - [ ]* 4.3 Write property test for cross-tenant data isolation (Property 1)
+  - [x]* 4.3 Write property test for cross-tenant data isolation (Property 1)
     - **Property 1: Cross-Tenant Data Isolation**
     - **Validates: Requirements 1.4, 4.7, 7.2, 11.1, 11.3**
 
-- [ ] 5. Infrastructure layer — Redis cache and repository implementations
+- [x] 5. Infrastructure layer — Redis cache and repository implementations
   - Implement `ICacheService` using `StackExchange.Redis` / `IDistributedCache`
   - Implement generic `Repository<T>` and `UnitOfWork` backed by `EduZimDbContext`
   - _Requirements: 11.7_
