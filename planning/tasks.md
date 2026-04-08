@@ -60,7 +60,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - _Requirements: 11.7_
 
 - [ ] 6. API layer — foundation
-  - [ ] 6.1 Configure ASP.NET Core pipeline
+  - [x] 6.1 Configure ASP.NET Core pipeline
     - Register MediatR, FluentValidation, EF Core, Hangfire, Redis, and ASP.NET Identity in `Program.cs`
     - Add global exception handler mapping domain/application exceptions to `ProblemDetails` HTTP responses
     - Add `TenantMiddleware` that extracts `tenant_id` from JWT claims and sets it on `ICurrentUser`; returns HTTP 402 for suspended tenants

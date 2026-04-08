@@ -1,29 +1,49 @@
+using EduZim.API.ExceptionHandling;
+using EduZim.API.Middleware;
 using EduZim.Application;
 using EduZim.Infrastructure;
+using Hangfire;
 
 var builder = WebApplication.CreateBuilder(args);
-
-// Add services to the container.
 
 builder.Services.AddHttpContextAccessor();
 builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
+
+builder.Services.AddAuthorization();
 builder.Services.AddControllers();
-// Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
 builder.Services.AddOpenApi();
+builder.Services.AddProblemDetails();
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
 }
+else
+{
+    app.UseHsts();
+}
+
+app.UseExceptionHandler();
 
 app.UseHttpsRedirection();
 
+app.UseMiddleware<SecurityHeadersMiddleware>();
+
+app.UseAuthentication();
 app.UseAuthorization();
 
+app.UseMiddleware<TenantMiddleware>();
+app.UseMiddleware<AuditMiddleware>();
+
 app.MapControllers();
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapHangfireDashboard("/hangfire");
+}
 
 app.Run();
