@@ -54,7 +54,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 1: Cross-Tenant Data Isolation**
     - **Validates: Requirements 1.4, 4.7, 7.2, 11.1, 11.3**
 
-- [ ] 5. Infrastructure layer — Redis cache and repository implementations
+- [x] 5. Infrastructure layer — Redis cache and repository implementations
   - Implement `ICacheService` using `StackExchange.Redis` / `IDistributedCache`
   - Implement generic `Repository<T>` and `UnitOfWork` backed by `EduZimDbContext`
   - _Requirements: 11.7_
