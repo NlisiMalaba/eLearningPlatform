@@ -1,0 +1,15 @@
+using EduZim.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace EduZim.Infrastructure.Persistence.Configurations;
+
+public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<ApplicationUser>
+{
+    public void Configure(EntityTypeBuilder<ApplicationUser> builder)
+    {
+        builder.Property(u => u.Role).HasConversion<int>();
+        builder.Property(u => u.TenantId).HasColumnName("tenant_id");
+        builder.HasIndex(u => u.TenantId);
+    }
+}

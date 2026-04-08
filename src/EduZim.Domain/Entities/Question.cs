@@ -5,6 +5,7 @@ namespace EduZim.Domain.Entities;
 public class Question
 {
     public Guid Id { get; set; }
+    public Guid TenantId { get; set; }
     public Guid AssessmentId { get; set; }
     public QuestionType Type { get; set; }
     public string Text { get; set; } = default!;

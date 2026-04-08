@@ -13,4 +13,5 @@ public class ApplicationUser : IdentityUser<Guid>
     public Guid? TenantId { get; set; }
     public UserRole Role { get; set; }
     public string? PreferredLanguage { get; set; }
+    public string? FullName { get; set; }
 }
