@@ -59,7 +59,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - Implement generic `Repository<T>` and `UnitOfWork` backed by `EduZimDbContext`
   - _Requirements: 11.7_
 
-- [ ] 6. API layer — foundation
+- [x] 6. API layer — foundation
   - [x] 6.1 Configure ASP.NET Core pipeline
     - Register MediatR, FluentValidation, EF Core, Hangfire, Redis, and ASP.NET Identity in `Program.cs`
     - Add global exception handler mapping domain/application exceptions to `ProblemDetails` HTTP responses
@@ -71,7 +71,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Configure JWT bearer authentication with OpenIddict or ASP.NET Identity token provider
     - Implement `CurrentUser` service resolving `UserId`, `TenantId`, and `Role` from `HttpContext`
     - _Requirements: 1.1, 1.6_
-  - [ ]* 6.3 Write property tests for authorisation and audit (Properties 44, 45)
+  - [x]* 6.3 Write property tests for authorisation and audit (Properties 44, 45)
     - **Property 44: Unauthorized Requests Return 403 with Audit Log — Validates: Requirements 16.5**
     - **Property 45: Audit Log Retention — Validates: Requirements 16.6**
 

@@ -11,6 +11,8 @@
     <PackageReference Include="coverlet.collector" Version="6.0.4" />
     <PackageReference Include="FsCheck" Version="3.3.2" />
     <PackageReference Include="FsCheck.Xunit" Version="3.3.2" />
+    <PackageReference Include="Microsoft.AspNetCore.DataProtection" Version="10.0.5" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.InMemory" Version="10.0.5" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
     <PackageReference Include="xunit" Version="2.9.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.1.4" />
@@ -21,8 +23,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\EduZim.API\EduZim.API.csproj" />
     <ProjectReference Include="..\..\src\EduZim.Application\EduZim.Application.csproj" />
     <ProjectReference Include="..\..\src\EduZim.Domain\EduZim.Domain.csproj" />
+    <ProjectReference Include="..\..\src\EduZim.Infrastructure\EduZim.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>

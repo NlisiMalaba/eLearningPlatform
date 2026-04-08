@@ -1,3 +1,4 @@
+using EduZim.Application.Common.Auth;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Domain.Enums;
 
@@ -30,8 +31,8 @@ public sealed class AuditMiddleware
                 ? currentUser.UserId
                 : Guid.Empty;
             var action = code == StatusCodes.Status401Unauthorized
-                ? "Authorization.Unauthorized"
-                : "Authorization.Forbidden";
+                ? AuthorizationFailureAuditActions.Unauthorized
+                : AuthorizationFailureAuditActions.Forbidden;
             await auditLogWriter.WriteAsync(
                 new AuditLogWrite(
                     currentUser.TenantId,
