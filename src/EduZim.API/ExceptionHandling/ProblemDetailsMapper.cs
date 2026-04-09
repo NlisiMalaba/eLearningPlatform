@@ -58,6 +58,15 @@ public static class ProblemDetailsMapper
                     Detail = ex.Message,
                     Type = "https://eduzim.co.zw/errors/conflict",
                 }),
+            UnauthorizedAccessException ex => (
+                StatusCodes.Status401Unauthorized,
+                new ProblemDetails
+                {
+                    Title = "Unauthorized",
+                    Status = StatusCodes.Status401Unauthorized,
+                    Detail = ex.Message,
+                    Type = "https://eduzim.co.zw/errors/unauthorized",
+                }),
             _ => (
                 StatusCodes.Status500InternalServerError,
                 new ProblemDetails

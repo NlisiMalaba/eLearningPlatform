@@ -34,6 +34,7 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<OfflineSyncQueue> OfflineSyncQueues => Set<OfflineSyncQueue>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

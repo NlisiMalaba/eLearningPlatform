@@ -75,18 +75,18 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 44: Unauthorized Requests Return 403 with Audit Log — Validates: Requirements 16.5**
     - **Property 45: Audit Log Retention — Validates: Requirements 16.6**
 
-- [ ] 7. Checkpoint — core infrastructure
+- [x] 7. Checkpoint — core infrastructure
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 8. Identity feature — commands, handlers, and endpoints
-  - [ ] 8.1 Implement Identity command/query handlers
+  - [x] 8.1 Implement Identity command/query handlers
     - Implement `RegisterCommandHandler`: create `ApplicationUser` with ASP.NET Identity's `IPasswordHasher<ApplicationUser>` (per-user salt), encrypt PII, send email verification link
     - Implement `LoginCommandHandler`: validate credentials, enforce lockout after 5 consecutive failures (15-minute lock + email notification), return JWT + refresh token
     - Implement `RefreshTokenCommandHandler`, `RevokeTokenCommandHandler`, `VerifyEmailCommandHandler`
     - Implement `LockAccountCommandHandler` and `ValidateTwoFactorCommandHandler`
     - Implement `SsoRedirectQueryHandler` for tenant IdP redirect
     - _Requirements: 1.1, 1.2, 1.5, 1.6, 1.7, 1.8, 16.2, 16.7_
-  - [ ] 8.2 Add Identity API endpoints
+  - [x] 8.2 Add Identity API endpoints
     - `POST /auth/register`, `POST /auth/login`, `POST /auth/refresh`, `POST /auth/logout`, `POST /auth/verify-email`, `POST /auth/sso/{tenantId}`, `POST /auth/2fa/verify`
     - _Requirements: 1.1, 1.2, 1.7_
   - [ ]* 8.3 Write property tests for Identity (Properties 2, 3, 4, 42, 43)

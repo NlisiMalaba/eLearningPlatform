@@ -15,6 +15,7 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
             b.Property(x => x.SchoolName).HasMaxLength(256);
             b.Property(x => x.PrimaryColour).HasMaxLength(32);
             b.Property(x => x.LogoUrl).HasMaxLength(1024);
+            b.Property(x => x.SsoAuthorizationEndpoint).HasMaxLength(2048);
         });
     }
 }

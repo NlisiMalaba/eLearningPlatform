@@ -6,9 +6,11 @@ using EduZim.Domain.Entities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
+using EduZim.Application.Common.Interfaces;
+
 namespace EduZim.Infrastructure.Identity;
 
-public sealed class JwtAccessTokenIssuer
+public sealed class JwtAccessTokenIssuer : IAccessTokenIssuer
 {
     private readonly JwtSettings _settings;
 

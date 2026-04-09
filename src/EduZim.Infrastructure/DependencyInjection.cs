@@ -1,6 +1,8 @@
 using System.Text;
+using EduZim.Application.Common.Configuration;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Domain.Entities;
+using EduZim.Infrastructure.Email;
 using EduZim.Infrastructure.Audit;
 using EduZim.Infrastructure.Caching;
 using EduZim.Infrastructure.Identity;
@@ -42,14 +44,21 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetRequiredService<TenantConnectionInterceptor>());
         });
 
+        services.Configure<IdentityAppSettings>(configuration.GetSection(IdentityAppSettings.SectionName));
+
         services.AddIdentityCore<ApplicationUser>(options =>
         {
             options.User.RequireUniqueEmail = true;
+            options.Lockout.AllowedForNewUsers = true;
+            options.Lockout.MaxFailedAccessAttempts = 5;
+            options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
         })
             .AddRoles<IdentityRole<Guid>>()
             .AddEntityFrameworkStores<EduZimDbContext>()
             .AddSignInManager()
             .AddDefaultTokenProviders();
+
+        services.AddSingleton<IEmailService, NullEmailService>();
 
         services.AddOptions<JwtSettings>()
             .Bind(configuration.GetSection(JwtSettings.SectionName))
@@ -77,8 +86,9 @@ public static class DependencyInjection
                 };
             });
 
-        services.AddSingleton<JwtAccessTokenIssuer>();
-        services.AddScoped<IAuthenticationService, AuthenticationService>();
+        services.AddScoped<JwtAccessTokenIssuer>();
+        services.AddScoped<IAccessTokenIssuer>(sp => sp.GetRequiredService<JwtAccessTokenIssuer>());
+        services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
         services.AddHangfire((_, config) =>
             config
