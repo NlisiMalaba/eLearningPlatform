@@ -96,14 +96,14 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 42: PII Encryption at Rest — Validates: Requirements 16.2**
     - **Property 43: PII Deletion on Request — Validates: Requirements 16.4**
 
-- [ ] 9. Tenant feature — commands, handlers, and endpoints
-  - [ ] 9.1 Implement Tenant command/query handlers
+- [x] 9. Tenant feature — commands, handlers, and endpoints
+  - [x] 9.1 Implement Tenant command/query handlers
     - Implement `ProvisionTenantCommandHandler`: create tenant record, set `Status = Provisioning` then `Active`
     - Implement `UpdateBrandingCommandHandler`, `GetTenantDashboardQueryHandler` (enrolled students, active teachers, subscription status, storage usage)
     - Implement `GenerateInviteCodeCommandHandler` (unique, time-limited, tenant-scoped) and invite code redemption handler
     - Implement `SuspendTenantCommandHandler` and `RestoreTenantCommandHandler`; schedule Hangfire job for permanent deletion at `SuspendedAt + 90 days`
     - _Requirements: 1.3, 10.3, 11.2, 11.4, 11.5, 2.6, 11.6_
-  - [ ] 9.2 Add Tenant API endpoints
+  - [x] 9.2 Add Tenant API endpoints
     - `POST /tenants`, `GET /tenants/{tenantId}`, `PUT /tenants/{tenantId}/branding`, `GET /tenants/{tenantId}/dashboard`, `POST /tenants/{tenantId}/invite-codes`
     - _Requirements: 1.3, 11.4, 11.5_
   - [ ]* 9.3 Write property tests for Tenant (Properties 30, 7)
