@@ -75,6 +75,22 @@ public sealed class TenantPermanentDeletionService : ITenantPermanentDeletionSer
             .ConfigureAwait(false);
         await _db.TenantInviteCodes.Where(i => i.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);
+
+        var subscriptionIds = await _db.Subscriptions.AsNoTracking()
+            .Where(s => s.TenantId == tenantId)
+            .Select(s => s.Id)
+            .ToListAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (subscriptionIds.Count > 0)
+        {
+            await _db.SubscriptionInvoices.Where(i => subscriptionIds.Contains(i.SubscriptionId))
+                .ExecuteDeleteAsync(cancellationToken)
+                .ConfigureAwait(false);
+            await _db.Payments.Where(p => subscriptionIds.Contains(p.SubscriptionId))
+                .ExecuteDeleteAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+
         await _db.Subscriptions.Where(s => s.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);
 

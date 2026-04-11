@@ -106,12 +106,12 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - [x] 9.2 Add Tenant API endpoints
     - `POST /tenants`, `GET /tenants/{tenantId}`, `PUT /tenants/{tenantId}/branding`, `GET /tenants/{tenantId}/dashboard`, `POST /tenants/{tenantId}/invite-codes`
     - _Requirements: 1.3, 11.4, 11.5_
-  - [ ]* 9.3 Write property tests for Tenant (Properties 30, 7)
+  - [x]* 9.3 Write property tests for Tenant (Properties 30, 7)
     - **Property 30: Parent Invite Code Round Trip — Validates: Requirements 10.3**
     - **Property 7: Subscription Data Preservation — Validates: Requirements 2.6, 11.6**
 
 - [ ] 10. Billing feature — commands, handlers, and endpoints
-  - [ ] 10.1 Implement Billing command/query handlers
+  - [x] 10.1 Implement Billing command/query handlers
     - Implement `CreateSubscriptionCommandHandler` for monthly, termly, and yearly cycles
     - Implement `CalculateSchoolFeeQueryHandler` as `UnitPrice(cycle) * studentCount`
     - Implement `HandlePaymentSucceededCommandHandler`: transition to `Active`, extend `CurrentPeriodEnd`, generate invoice — all in one `IUnitOfWork` transaction; use idempotency keys

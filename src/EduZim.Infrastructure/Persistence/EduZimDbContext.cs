@@ -38,6 +38,8 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<TenantInviteCode> TenantInviteCodes => Set<TenantInviteCode>();
     public DbSet<ParentStudentLink> ParentStudentLinks => Set<ParentStudentLink>();
+    public DbSet<Payment> Payments => Set<Payment>();
+    public DbSet<SubscriptionInvoice> SubscriptionInvoices => Set<SubscriptionInvoice>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

@@ -1,6 +1,8 @@
 using System.Text;
+using EduZim.Application.Billing.Services;
 using EduZim.Application.Common.Configuration;
 using EduZim.Application.Common.Interfaces;
+using EduZim.Infrastructure.Billing;
 using EduZim.Infrastructure.Jobs;
 using EduZim.Domain.Entities;
 using EduZim.Infrastructure.Email;
@@ -47,6 +49,12 @@ public static class DependencyInjection
 
         services.Configure<IdentityAppSettings>(configuration.GetSection(IdentityAppSettings.SectionName));
         services.Configure<TenantLifecycleSettings>(configuration.GetSection(TenantLifecycleSettings.SectionName));
+        services.Configure<BillingPricingOptions>(configuration.GetSection(BillingPricingOptions.SectionName));
+
+        services.AddScoped<IBillingPricingService, BillingPricingService>();
+        services.AddScoped<IBillingPeriodService, BillingPeriodService>();
+        services.AddScoped<IBillingInvoiceService, BillingInvoiceService>();
+        services.AddSingleton<IInvoicePdfGenerator, QuestPdfInvoiceGenerator>();
 
         services.AddIdentityCore<ApplicationUser>(options =>
         {
