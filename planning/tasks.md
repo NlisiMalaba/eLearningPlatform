@@ -124,7 +124,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - [x] 10.3 Add Billing API endpoints
     - `POST /billing/subscriptions`, `POST /billing/webhooks/stripe`, `GET /billing/invoices/{subscriptionId}`, `GET /billing/invoices/{invoiceId}/download`
     - _Requirements: 2.1, 2.3, 2.7_
-  - [ ]* 10.4 Write property tests for Billing (Properties 5, 6, 7, 8, 9)
+  - [x]* 10.4 Write property tests for Billing (Properties 5, 6, 7, 8, 9)
     - **Property 5: Subscription Activation on Payment — Validates: Requirements 2.3**
     - **Property 6: Grace Period on Payment Failure — Validates: Requirements 2.5**
     - **Property 7: Subscription Data Preservation — Validates: Requirements 2.6, 11.6**

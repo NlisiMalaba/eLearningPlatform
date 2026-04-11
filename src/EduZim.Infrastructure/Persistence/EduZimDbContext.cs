@@ -43,6 +43,10 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
 
     public Task SetSessionTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
+        // In-memory EF provider does not support raw SQL; RLS is a PostgreSQL concern only.
+        if (Database.ProviderName?.Contains("InMemory", StringComparison.OrdinalIgnoreCase) == true)
+            return Task.CompletedTask;
+
         return Database.ExecuteSqlInterpolatedAsync(
             $"SELECT set_config('app.current_tenant_id', {tenantId.ToString()}, false)",
             cancellationToken);
