@@ -10,6 +10,8 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<Tenant>
     {
         builder.HasKey(t => t.Id);
         builder.Property(t => t.Name).HasMaxLength(256);
+        builder.Property(t => t.SuspendedAtUtc);
+        builder.Property(t => t.PermanentDeletionHangfireJobId).HasMaxLength(128);
         builder.OwnsOne(t => t.Branding, b =>
         {
             b.Property(x => x.SchoolName).HasMaxLength(256);

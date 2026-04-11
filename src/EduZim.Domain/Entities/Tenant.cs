@@ -10,4 +10,10 @@ public class Tenant
     public TenantStatus Status { get; set; }
     public BrandingSettings Branding { get; set; } = default!;
     public DateTime CreatedAt { get; set; }
+
+    /// <summary>UTC timestamp when the tenant was suspended; used for the 90-day retention window.</summary>
+    public DateTime? SuspendedAtUtc { get; set; }
+
+    /// <summary>Hangfire background job id for scheduled permanent deletion after suspension retention.</summary>
+    public string? PermanentDeletionHangfireJobId { get; set; }
 }

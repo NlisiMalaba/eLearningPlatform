@@ -1,3 +1,4 @@
+using EduZim.Application.Common.Interfaces;
 using EduZim.Domain.Entities;
 using EduZim.Infrastructure.Persistence.Configurations;
 using EduZim.Infrastructure.Persistence.Encryption;
@@ -8,7 +9,7 @@ using Microsoft.EntityFrameworkCore;
 
 namespace EduZim.Infrastructure.Persistence;
 
-public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>
+public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<Guid>, Guid>, IEduZimDbContext
 {
     private readonly IDataProtectionProvider _dataProtectionProvider;
 
@@ -35,6 +36,8 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<OfflineSyncQueue> OfflineSyncQueues => Set<OfflineSyncQueue>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
+    public DbSet<TenantInviteCode> TenantInviteCodes => Set<TenantInviteCode>();
+    public DbSet<ParentStudentLink> ParentStudentLinks => Set<ParentStudentLink>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

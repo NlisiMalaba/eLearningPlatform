@@ -1,6 +1,7 @@
 using System.Text;
 using EduZim.Application.Common.Configuration;
 using EduZim.Application.Common.Interfaces;
+using EduZim.Infrastructure.Jobs;
 using EduZim.Domain.Entities;
 using EduZim.Infrastructure.Email;
 using EduZim.Infrastructure.Audit;
@@ -45,6 +46,7 @@ public static class DependencyInjection
         });
 
         services.Configure<IdentityAppSettings>(configuration.GetSection(IdentityAppSettings.SectionName));
+        services.Configure<TenantLifecycleSettings>(configuration.GetSection(TenantLifecycleSettings.SectionName));
 
         services.AddIdentityCore<ApplicationUser>(options =>
         {
@@ -104,6 +106,10 @@ public static class DependencyInjection
         services.AddScoped<ICurrentUserInitializer>(sp => sp.GetRequiredService<CurrentUser>());
         services.AddScoped<IAuditLogWriter, AuditLogWriter>();
         services.AddScoped<ITenantLifecycleChecker, TenantLifecycleChecker>();
+        services.AddScoped<IEduZimDbContext>(sp => sp.GetRequiredService<EduZimDbContext>());
+        services.AddScoped<ITenantBackgroundJobs, TenantBackgroundJobs>();
+        services.AddScoped<ITenantPermanentDeletionService, TenantPermanentDeletionService>();
+        services.AddScoped<TenantPermanentDeletionJob>();
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
