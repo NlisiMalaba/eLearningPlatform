@@ -26,6 +26,8 @@ public sealed class CreateSubscriptionCommandHandler : IRequestHandler<CreateSub
 
     public async Task<Guid> Handle(CreateSubscriptionCommand request, CancellationToken cancellationToken)
     {
+        await _db.SetSessionTenantIdAsync(request.TenantId, cancellationToken).ConfigureAwait(false);
+
         var tenant = await _db.Tenants.AsNoTracking()
             .FirstOrDefaultAsync(t => t.Id == request.TenantId, cancellationToken)
             .ConfigureAwait(false);

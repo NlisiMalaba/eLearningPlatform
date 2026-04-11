@@ -4,7 +4,7 @@ using EduZim.Domain.Exceptions;
 
 namespace EduZim.Application.Tenants;
 
-internal static class TenantAccessHelper
+public static class TenantAccessHelper
 {
     public static void EnsureCanManageTenantSettings(ICurrentUser user, Guid tenantId)
     {
@@ -51,5 +51,22 @@ internal static class TenantAccessHelper
                 "This operation requires platform administrator privileges.",
                 user.TenantId,
                 null);
+    }
+
+    /// <summary>Billing (subscriptions, invoices): school admin, parent/guardian, or platform admin for the tenant.</summary>
+    public static void EnsureCanManageBilling(ICurrentUser user, Guid tenantId)
+    {
+        if (user.Role == UserRole.PlatformAdmin)
+            return;
+        if (user.TenantId != tenantId)
+            throw new TenantAccessViolationException(
+                "You do not have access to billing for this tenant.",
+                tenantId,
+                tenantId);
+        if (user.Role is not (UserRole.SchoolAdmin or UserRole.ParentGuardian))
+            throw new TenantAccessViolationException(
+                "You are not allowed to manage billing for this tenant.",
+                tenantId,
+                tenantId);
     }
 }

@@ -1,7 +1,7 @@
 using System.Text;
 using EduZim.Application.Billing.Services;
-using EduZim.Application.Common.Configuration;
 using EduZim.Application.Common.Interfaces;
+using EduZim.Application.Common.Configuration;
 using EduZim.Infrastructure.Billing;
 using EduZim.Infrastructure.Jobs;
 using EduZim.Domain.Entities;
@@ -57,6 +57,7 @@ public static class DependencyInjection
         services.AddScoped<IBillingInvoiceService, BillingInvoiceService>();
         services.AddSingleton<IInvoicePdfGenerator, QuestPdfInvoiceGenerator>();
         services.AddScoped<ISubscriptionRenewalReminderService, SubscriptionRenewalReminderService>();
+        services.AddScoped<IBillingStripeWebhookProcessor, BillingStripeWebhookProcessor>();
 
         services.AddIdentityCore<ApplicationUser>(options =>
         {

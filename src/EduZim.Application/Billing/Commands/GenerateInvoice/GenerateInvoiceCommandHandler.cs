@@ -24,6 +24,8 @@ public sealed class GenerateInvoiceCommandHandler : IRequestHandler<GenerateInvo
 
     public async Task<Guid> Handle(GenerateInvoiceCommand request, CancellationToken cancellationToken)
     {
+        await _db.SetSessionTenantIdAsync(request.TenantId, cancellationToken).ConfigureAwait(false);
+
         var payment = await _db.Payments
             .FirstOrDefaultAsync(p => p.Id == request.PaymentId, cancellationToken)
             .ConfigureAwait(false);

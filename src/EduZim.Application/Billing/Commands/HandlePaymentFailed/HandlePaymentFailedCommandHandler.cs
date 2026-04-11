@@ -30,6 +30,8 @@ public sealed class HandlePaymentFailedCommandHandler : IRequestHandler<HandlePa
 
     public async Task<Unit> Handle(HandlePaymentFailedCommand request, CancellationToken cancellationToken)
     {
+        await _db.SetSessionTenantIdAsync(request.TenantId, cancellationToken).ConfigureAwait(false);
+
         var subscription = await _db.Subscriptions
             .FirstOrDefaultAsync(s => s.Id == request.SubscriptionId && s.TenantId == request.TenantId, cancellationToken)
             .ConfigureAwait(false);

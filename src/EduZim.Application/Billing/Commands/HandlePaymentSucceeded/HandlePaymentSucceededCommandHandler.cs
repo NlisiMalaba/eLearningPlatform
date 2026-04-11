@@ -32,6 +32,8 @@ public sealed class HandlePaymentSucceededCommandHandler : IRequestHandler<Handl
 
     public async Task<Unit> Handle(HandlePaymentSucceededCommand request, CancellationToken cancellationToken)
     {
+        await _db.SetSessionTenantIdAsync(request.TenantId, cancellationToken).ConfigureAwait(false);
+
         if (!string.IsNullOrWhiteSpace(request.IdempotencyKey))
         {
             var alreadyProcessed = await _db.Payments.AsNoTracking()

@@ -121,7 +121,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - [x] 10.2 Implement renewal reminder Hangfire job
     - Schedule recurring job querying subscriptions expiring within 7 days; queue email + SMS renewal reminders
     - _Requirements: 2.4_
-  - [ ] 10.3 Add Billing API endpoints
+  - [x] 10.3 Add Billing API endpoints
     - `POST /billing/subscriptions`, `POST /billing/webhooks/stripe`, `GET /billing/invoices/{subscriptionId}`, `GET /billing/invoices/{invoiceId}/download`
     - _Requirements: 2.1, 2.3, 2.7_
   - [ ]* 10.4 Write property tests for Billing (Properties 5, 6, 7, 8, 9)
