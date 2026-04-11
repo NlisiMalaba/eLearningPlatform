@@ -16,6 +16,7 @@ namespace EduZim.API.Controllers;
 
 [ApiController]
 [Route("auth")]
+[Tags("Authentication")]
 public sealed class AuthController : ControllerBase
 {
     private readonly IMediator _mediator;

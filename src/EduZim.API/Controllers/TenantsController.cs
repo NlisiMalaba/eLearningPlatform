@@ -14,6 +14,7 @@ namespace EduZim.API.Controllers;
 
 [ApiController]
 [Route("tenants")]
+[Tags("Tenants")]
 [Authorize]
 public sealed class TenantsController : ControllerBase
 {
