@@ -16,6 +16,7 @@ builder.Services.AddApplication();
 builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAuthorization();
+builder.Services.AddHealthChecks();
 builder.Services.AddControllers();
 builder.Services.AddApiVersioning(options =>
 {
