@@ -1,3 +1,5 @@
+using Asp.Versioning;
+using Asp.Versioning.ApiExplorer;
 using EduZim.API.ExceptionHandling;
 using EduZim.API.Middleware;
 using EduZim.Application;
@@ -15,6 +17,18 @@ builder.Services.AddInfrastructure(builder.Configuration);
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
+builder.Services.AddApiVersioning(options =>
+{
+    options.DefaultApiVersion = new ApiVersion(1, 0);
+    options.AssumeDefaultVersionWhenUnspecified = true;
+    options.ReportApiVersions = true;
+})
+.AddMvc()
+.AddApiExplorer(options =>
+{
+    options.GroupNameFormat = "'v'VVV";
+    options.SubstituteApiVersionInUrl = true;
+});
 builder.Services.AddOpenApi(options =>
 {
     options.AddDocumentTransformer((document, _, _) =>
@@ -23,7 +37,7 @@ builder.Services.AddOpenApi(options =>
         document.Info.Title = "EduZim API";
         document.Info.Version = "v1";
         document.Info.Description =
-            "EduZim e-learning platform API (Zimbabwe). Use POST /auth/login to obtain a JWT, then authorize requests with Bearer.";
+            "EduZim e-learning platform API (Zimbabwe). Use POST /api/v1/auth/login to obtain a JWT, then authorize requests with Bearer.";
 
         var components = document.Components ??= new OpenApiComponents();
         components.SecuritySchemes ??= new Dictionary<string, IOpenApiSecurityScheme>();
@@ -32,7 +46,7 @@ builder.Services.AddOpenApi(options =>
             Type = SecuritySchemeType.Http,
             Scheme = "bearer",
             BearerFormat = "JWT",
-            Description = "JWT access token from POST /auth/login.",
+            Description = "JWT access token from POST /api/v1/auth/login.",
         };
 
         return Task.CompletedTask;

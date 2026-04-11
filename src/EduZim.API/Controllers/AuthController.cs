@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using EduZim.API.Contracts;
+using EduZim.API.Routing;
 using EduZim.Application.Common.Auth;
 using EduZim.Application.Identity.Commands.LockAccount;
 using EduZim.Application.Identity.Commands.Login;
@@ -15,7 +17,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace EduZim.API.Controllers;
 
 [ApiController]
-[Route("auth")]
+[ApiVersion(1.0)]
+[Route("api/v{version:apiVersion}/auth")]
 [Tags("Authentication")]
 public sealed class AuthController : ControllerBase
 {
@@ -41,7 +44,7 @@ public sealed class AuthController : ControllerBase
                 request.TenantId),
             cancellationToken);
 
-        return Created($"/auth/register/{id}", new RegisterResponse { UserId = id });
+        return Created($"/{ApiRoutes.V1Auth}/register/{id}", new RegisterResponse { UserId = id });
     }
 
     [HttpPost("login")]

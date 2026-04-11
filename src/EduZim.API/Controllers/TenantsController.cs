@@ -1,4 +1,6 @@
+using Asp.Versioning;
 using EduZim.API.Contracts;
+using EduZim.API.Routing;
 using EduZim.Application.Tenants.Commands.GenerateInviteCode;
 using EduZim.Application.Tenants.Commands.ProvisionTenant;
 using EduZim.Application.Tenants.Commands.UpdateBranding;
@@ -13,7 +15,8 @@ using Microsoft.AspNetCore.Mvc;
 namespace EduZim.API.Controllers;
 
 [ApiController]
-[Route("tenants")]
+[ApiVersion(1.0)]
+[Route("api/v{version:apiVersion}/tenants")]
 [Tags("Tenants")]
 [Authorize]
 public sealed class TenantsController : ControllerBase
@@ -47,7 +50,7 @@ public sealed class TenantsController : ControllerBase
             cancellationToken);
 
         return Created(
-            $"/tenants/{id}",
+            $"/{ApiRoutes.V1Tenants}/{id}",
             new ProvisionTenantResponse { TenantId = id });
     }
 
@@ -98,7 +101,7 @@ public sealed class TenantsController : ControllerBase
             cancellationToken);
 
         return Created(
-            $"/tenants/{tenantId}/invite-codes",
+            $"/{ApiRoutes.V1Tenants}/{tenantId}/invite-codes",
             new GenerateInviteCodeResponse
             {
                 Code = result.Code,

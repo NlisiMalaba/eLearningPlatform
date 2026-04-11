@@ -8,5 +8,5 @@ public sealed class IdentityAppSettings
     public string PublicAppBaseUrl { get; set; } = "https://localhost";
 
     /// <summary>Relative path appended to <see cref="PublicAppBaseUrl"/> for email confirmation links (query params added by the app).</summary>
-    public string EmailConfirmationRelativePath { get; set; } = "/api/auth/verify-email";
+    public string EmailConfirmationRelativePath { get; set; } = "/api/v1/auth/verify-email";
 }
