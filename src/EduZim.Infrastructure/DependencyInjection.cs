@@ -12,6 +12,10 @@ using EduZim.Infrastructure.Caching;
 using EduZim.Infrastructure.Identity;
 using EduZim.Infrastructure.Persistence;
 using EduZim.Infrastructure.Persistence.Interceptors;
+using Amazon;
+using Amazon.S3;
+using EduZim.Infrastructure.Content;
+using EduZim.Infrastructure.Storage;
 using EduZim.Infrastructure.Tenants;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -51,6 +55,20 @@ public static class DependencyInjection
         services.Configure<IdentityAppSettings>(configuration.GetSection(IdentityAppSettings.SectionName));
         services.Configure<TenantLifecycleSettings>(configuration.GetSection(TenantLifecycleSettings.SectionName));
         services.Configure<BillingPricingOptions>(configuration.GetSection(BillingPricingOptions.SectionName));
+        services.Configure<ContentStorageOptions>(configuration.GetSection(ContentStorageOptions.SectionName));
+
+        services.AddSingleton<IStorageService>(sp =>
+        {
+            var opts = sp.GetRequiredService<IOptions<ContentStorageOptions>>().Value;
+            if (!string.IsNullOrWhiteSpace(opts.BucketName))
+            {
+                var regionName = string.IsNullOrWhiteSpace(opts.Region) ? "us-east-1" : opts.Region;
+                var client = new AmazonS3Client(RegionEndpoint.GetBySystemName(regionName));
+                return new S3StorageService(client, sp.GetRequiredService<IOptions<ContentStorageOptions>>());
+            }
+
+            return new LocalFileStorageService(sp.GetRequiredService<IOptions<ContentStorageOptions>>());
+        });
 
         services.AddScoped<IBillingPricingService, BillingPricingService>();
         services.AddScoped<IBillingPeriodService, BillingPeriodService>();
@@ -122,6 +140,9 @@ public static class DependencyInjection
         services.AddScoped<ITenantBackgroundJobs, TenantBackgroundJobs>();
         services.AddScoped<ITenantPermanentDeletionService, TenantPermanentDeletionService>();
         services.AddScoped<TenantPermanentDeletionJob>();
+        services.AddScoped<IContentBackgroundJobs, ContentBackgroundJobs>();
+        services.AddScoped<IContentPermanentDeletionService, ContentPermanentDeletionService>();
+        services.AddScoped<ContentPermanentDeletionJob>();
         services.AddScoped<SubscriptionRenewalReminderJob>();
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));

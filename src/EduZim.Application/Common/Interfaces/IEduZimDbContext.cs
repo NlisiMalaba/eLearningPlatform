@@ -8,6 +8,10 @@ public interface IEduZimDbContext
     DbSet<Tenant> Tenants { get; }
     DbSet<Subscription> Subscriptions { get; }
     DbSet<ContentItem> ContentItems { get; }
+    DbSet<Module> Modules { get; }
+    DbSet<ModuleContentItem> ModuleContentItems { get; }
+    DbSet<CaptionTrack> CaptionTracks { get; }
+    DbSet<Transcript> Transcripts { get; }
     DbSet<TenantInviteCode> TenantInviteCodes { get; }
     DbSet<ParentStudentLink> ParentStudentLinks { get; }
     DbSet<ApplicationUser> Users { get; }

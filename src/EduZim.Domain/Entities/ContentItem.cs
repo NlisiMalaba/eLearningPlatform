@@ -13,4 +13,10 @@ public class ContentItem : TenantEntity
     public ContentStatus Status { get; set; }
     public Guid UploadedByUserId { get; set; }
     public DateTime? ArchivedAt { get; set; }
+
+    /// <summary>Hangfire job id for permanent deletion after archive retention.</summary>
+    public string? PermanentDeletionHangfireJobId { get; set; }
+
+    public ICollection<CaptionTrack> CaptionTracks { get; set; } = new List<CaptionTrack>();
+    public Transcript? Transcript { get; set; }
 }

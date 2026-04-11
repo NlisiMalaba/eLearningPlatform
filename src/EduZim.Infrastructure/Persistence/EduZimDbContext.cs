@@ -22,6 +22,8 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<Tenant> Tenants => Set<Tenant>();
     public DbSet<Subscription> Subscriptions => Set<Subscription>();
     public DbSet<ContentItem> ContentItems => Set<ContentItem>();
+    public DbSet<CaptionTrack> CaptionTracks => Set<CaptionTrack>();
+    public DbSet<Transcript> Transcripts => Set<Transcript>();
     public DbSet<Module> Modules => Set<Module>();
     public DbSet<ModuleContentItem> ModuleContentItems => Set<ModuleContentItem>();
     public DbSet<Assessment> Assessments => Set<Assessment>();

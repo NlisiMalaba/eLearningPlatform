@@ -53,6 +53,23 @@ public static class TenantAccessHelper
                 null);
     }
 
+    /// <summary>Creating or archiving curriculum content: school admin, teacher, or platform admin for the tenant.</summary>
+    public static void EnsureCanManageSchoolContent(ICurrentUser user, Guid tenantId)
+    {
+        if (user.Role == UserRole.PlatformAdmin)
+            return;
+        if (user.TenantId != tenantId)
+            throw new TenantAccessViolationException(
+                "You do not have access to content for this tenant.",
+                tenantId,
+                tenantId);
+        if (user.Role is not (UserRole.SchoolAdmin or UserRole.Teacher))
+            throw new TenantAccessViolationException(
+                "You are not allowed to manage content for this tenant.",
+                tenantId,
+                tenantId);
+    }
+
     /// <summary>Billing (subscriptions, invoices): school admin, parent/guardian, or platform admin for the tenant.</summary>
     public static void EnsureCanManageBilling(ICurrentUser user, Guid tenantId)
     {

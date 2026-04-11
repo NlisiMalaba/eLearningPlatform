@@ -15,5 +15,6 @@ public sealed class ContentItemConfiguration : IEntityTypeConfiguration<ContentI
         builder.Property(c => c.Type).HasConversion<int>();
         builder.Property(c => c.Status).HasConversion<int>();
         builder.Property(c => c.StorageKey).HasMaxLength(1024);
+        builder.Property(c => c.PermanentDeletionHangfireJobId).HasMaxLength(128);
     }
 }

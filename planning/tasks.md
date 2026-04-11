@@ -131,18 +131,18 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 8: Invoice Created for Every Successful Payment — Validates: Requirements 2.7**
     - **Property 9: School Fee Calculation Correctness — Validates: Requirements 2.8**
 
-- [ ] 11. Content feature — commands, handlers, and endpoints
-  - [ ] 11.1 Implement Content command/query handlers
+- [x] 11. Content feature — commands, handlers, and endpoints
+  - [x] 11.1 Implement Content command/query handlers
     - Implement `UploadContentCommandHandler`: validate size limits (500 MB video, 50 MB audio), upload to S3 via `IStorageService`, persist `ContentItem`
     - Implement `GetSignedUrlQueryHandler` via `IStorageService`
     - Implement `CreateModuleCommandHandler` with grade level, subject, and sequence ordering
     - Implement `ArchiveContentCommandHandler`: set `Status = Archived`, `ArchivedAt = NOW()`; schedule Hangfire permanent-delete job at `ArchivedAt + 30 days`
     - Implement `GetCaptionsQueryHandler` and `GetTranscriptQueryHandler`
     - _Requirements: 7.1, 7.2, 7.3, 7.4, 14.4, 14.6_
-  - [ ] 11.2 Add Content API endpoints
+  - [x] 11.2 Add Content API endpoints
     - `POST /content/upload`, `GET /content/{contentId}`, `POST /modules`, `GET /modules/{moduleId}`, `DELETE /content/{contentId}`, `GET /content/{contentId}/captions`
     - _Requirements: 7.1, 7.3, 7.4_
-  - [ ]* 11.3 Write property tests for Content (Properties 10, 11, 18, 19, 38, 39)
+  - [x]* 11.3 Write property tests for Content (Properties 10, 11, 18, 19, 38, 39)
     - **Property 10: Pre-school Video Duration Limit — Validates: Requirements 3.3**
     - **Property 11: At Least One Game Per Foundational Concept — Validates: Requirements 3.5**
     - **Property 18: File Upload Size Enforcement — Validates: Requirements 7.1**
