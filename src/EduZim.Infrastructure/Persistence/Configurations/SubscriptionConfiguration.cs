@@ -13,6 +13,7 @@ public sealed class SubscriptionConfiguration : IEntityTypeConfiguration<Subscri
         builder.HasIndex(s => s.TenantId);
         builder.Property(s => s.Cycle).HasConversion<int>();
         builder.Property(s => s.Status).HasConversion<int>();
+        builder.Property(s => s.RenewalReminderSentForPeriodEndUtc).HasColumnName("renewal_reminder_sent_for_period_end_utc");
         builder.HasOne<Tenant>().WithMany().HasForeignKey(s => s.TenantId).OnDelete(DeleteBehavior.Restrict);
     }
 }

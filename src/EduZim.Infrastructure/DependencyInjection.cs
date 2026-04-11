@@ -6,6 +6,7 @@ using EduZim.Infrastructure.Billing;
 using EduZim.Infrastructure.Jobs;
 using EduZim.Domain.Entities;
 using EduZim.Infrastructure.Email;
+using EduZim.Infrastructure.Sms;
 using EduZim.Infrastructure.Audit;
 using EduZim.Infrastructure.Caching;
 using EduZim.Infrastructure.Identity;
@@ -55,6 +56,7 @@ public static class DependencyInjection
         services.AddScoped<IBillingPeriodService, BillingPeriodService>();
         services.AddScoped<IBillingInvoiceService, BillingInvoiceService>();
         services.AddSingleton<IInvoicePdfGenerator, QuestPdfInvoiceGenerator>();
+        services.AddScoped<ISubscriptionRenewalReminderService, SubscriptionRenewalReminderService>();
 
         services.AddIdentityCore<ApplicationUser>(options =>
         {
@@ -70,6 +72,7 @@ public static class DependencyInjection
             .AddDefaultTokenProviders();
 
         services.AddSingleton<IEmailService, NullEmailService>();
+        services.AddSingleton<ISmsService, NullSmsService>();
 
         services.AddOptions<JwtSettings>()
             .Bind(configuration.GetSection(JwtSettings.SectionName))
@@ -118,6 +121,7 @@ public static class DependencyInjection
         services.AddScoped<ITenantBackgroundJobs, TenantBackgroundJobs>();
         services.AddScoped<ITenantPermanentDeletionService, TenantPermanentDeletionService>();
         services.AddScoped<TenantPermanentDeletionJob>();
+        services.AddScoped<SubscriptionRenewalReminderJob>();
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();

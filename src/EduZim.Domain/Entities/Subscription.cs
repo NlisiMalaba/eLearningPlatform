@@ -12,4 +12,7 @@ public class Subscription
     public DateTime CurrentPeriodEnd { get; set; }
     public DateTime? GracePeriodEnd { get; set; }
     public int? StudentCount { get; set; }
+
+    /// <summary>When set to the current <see cref="CurrentPeriodEnd"/>, the renewal reminder for that period was already sent.</summary>
+    public DateTime? RenewalReminderSentForPeriodEndUtc { get; set; }
 }

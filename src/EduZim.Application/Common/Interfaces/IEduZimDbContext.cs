@@ -14,5 +14,8 @@ public interface IEduZimDbContext
     DbSet<Payment> Payments { get; }
     DbSet<SubscriptionInvoice> SubscriptionInvoices { get; }
 
+    /// <summary>Sets PostgreSQL <c>app.current_tenant_id</c> for row-level security (e.g. Hangfire jobs).</summary>
+    Task SetSessionTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default);
+
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }

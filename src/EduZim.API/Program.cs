@@ -3,8 +3,11 @@ using Asp.Versioning.ApiExplorer;
 using EduZim.API.ExceptionHandling;
 using EduZim.API.Middleware;
 using EduZim.Application;
+using EduZim.Application.Common.Configuration;
 using EduZim.Infrastructure;
+using EduZim.Infrastructure.Jobs;
 using Hangfire;
+using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.OpenApi;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
@@ -92,5 +95,15 @@ if (app.Environment.IsDevelopment())
 {
     app.MapHangfireDashboard("/hangfire");
 }
+
+var renewalHour = Math.Clamp(
+    app.Services.GetRequiredService<IOptions<BillingPricingOptions>>().Value.RenewalReminderUtcHour,
+    0,
+    23);
+RecurringJob.AddOrUpdate<SubscriptionRenewalReminderJob>(
+    "subscription-renewal-reminders",
+    job => job.RunAsync(),
+    Cron.Daily(renewalHour),
+    new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
 app.Run();

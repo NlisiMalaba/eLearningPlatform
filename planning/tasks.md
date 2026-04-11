@@ -118,7 +118,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement `HandlePaymentFailedCommandHandler`: transition to `GracePeriod`, set `GracePeriodEnd = NOW() + 7 days`, publish `PaymentFailedNotification`
     - Implement `GenerateInvoiceCommandHandler` producing a downloadable PDF invoice record
     - _Requirements: 2.1, 2.2, 2.3, 2.5, 2.7, 2.8_
-  - [ ] 10.2 Implement renewal reminder Hangfire job
+  - [x] 10.2 Implement renewal reminder Hangfire job
     - Schedule recurring job querying subscriptions expiring within 7 days; queue email + SMS renewal reminders
     - _Requirements: 2.4_
   - [ ] 10.3 Add Billing API endpoints

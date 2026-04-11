@@ -70,6 +70,7 @@ public sealed class HandlePaymentSucceededCommandHandler : IRequestHandler<Handl
 
         subscription.Status = SubscriptionStatus.Active;
         subscription.GracePeriodEnd = null;
+        subscription.RenewalReminderSentForPeriodEndUtc = null;
 
         var payment = new Payment
         {

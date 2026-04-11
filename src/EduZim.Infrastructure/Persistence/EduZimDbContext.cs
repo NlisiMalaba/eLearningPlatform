@@ -41,6 +41,13 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<SubscriptionInvoice> SubscriptionInvoices => Set<SubscriptionInvoice>();
 
+    public Task SetSessionTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
+    {
+        return Database.ExecuteSqlInterpolatedAsync(
+            $"SELECT set_config('app.current_tenant_id', {tenantId.ToString()}, false)",
+            cancellationToken);
+    }
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         base.OnModelCreating(modelBuilder);

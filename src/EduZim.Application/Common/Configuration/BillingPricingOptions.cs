@@ -12,4 +12,7 @@ public sealed class BillingPricingOptions
     public decimal SchoolMonthly { get; set; } = 8m;
     public decimal SchoolTermly { get; set; } = 22m;
     public decimal SchoolYearly { get; set; } = 75m;
+
+    /// <summary>UTC hour (0–23) for the daily Hangfire renewal reminder scan.</summary>
+    public int RenewalReminderUtcHour { get; set; } = 8;
 }
