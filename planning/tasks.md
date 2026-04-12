@@ -161,7 +161,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - [x] 12.2 Add Assessment API endpoints
     - `POST /assessments`, `POST /assessments/{id}/assign`, `POST /assessments/{id}/submit`, `GET /assessments/{id}/results/{studentId}`, `GET /assessments/{id}/class-results` (implemented under `api/v1/assessments`, same pattern as other controllers)
     - _Requirements: 7.5, 7.6, 9.1_
-  - [ ]* 12.3 Write property tests for Assessment (Properties 20, 24, 28)
+  - [x]* 12.3 Write property tests for Assessment (Properties 20, 24, 28)
     - **Property 20: Assessment Assignment Notifies All Enrolled Students — Validates: Requirements 7.6**
     - **Property 24: Assessment Attempt Record Completeness — Validates: Requirements 9.1**
     - **Property 28: Timed Assessment Auto-Submit — Validates: Requirements 9.8**
