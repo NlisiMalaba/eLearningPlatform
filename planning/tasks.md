@@ -150,16 +150,16 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 38: Closed Captions Required for Video Content — Validates: Requirements 14.4**
     - **Property 39: Audio Content Transcript Required — Validates: Requirements 14.6**
 
-- [ ] 12. Assessment feature — commands, handlers, and endpoints
-  - [ ] 12.1 Implement Assessment command/query handlers
+- [x] 12. Assessment feature — commands, handlers, and endpoints
+  - [x] 12.1 Implement Assessment command/query handlers
     - Implement `CreateAssessmentCommandHandler` supporting multiple-choice, true/false, and short-answer with optional `TimeLimitSeconds`
     - Implement `AssignAssessmentCommandHandler`: assign to class, publish `AssessmentAssignedNotification` handled by Notification handlers to create `AssessmentDue` notifications for all enrolled students
     - Implement `SubmitAssessmentCommandHandler`: calculate `ScorePercent`, record `TimeTakenSeconds` and `SubmittedAt`, return per-question feedback; reject late submissions; publish `AssessmentSubmittedNotification`
     - Implement `GetClassResultsQueryHandler` returning per-student scores, completion rates, and time-on-task
     - Schedule Hangfire auto-submit job at session start for timed assessments
     - _Requirements: 7.5, 7.6, 7.7, 9.1, 9.2, 9.8_
-  - [ ] 12.2 Add Assessment API endpoints
-    - `POST /assessments`, `POST /assessments/{id}/assign`, `POST /assessments/{id}/submit`, `GET /assessments/{id}/results/{studentId}`, `GET /assessments/{id}/class-results`
+  - [x] 12.2 Add Assessment API endpoints
+    - `POST /assessments`, `POST /assessments/{id}/assign`, `POST /assessments/{id}/submit`, `GET /assessments/{id}/results/{studentId}`, `GET /assessments/{id}/class-results` (implemented under `api/v1/assessments`, same pattern as other controllers)
     - _Requirements: 7.5, 7.6, 9.1_
   - [ ]* 12.3 Write property tests for Assessment (Properties 20, 24, 28)
     - **Property 20: Assessment Assignment Notifies All Enrolled Students — Validates: Requirements 7.6**

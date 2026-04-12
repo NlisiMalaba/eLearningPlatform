@@ -8,4 +8,5 @@ internal static class ApiRoutes
     public const string V1Billing = "api/v1/billing";
     public const string V1Content = "api/v1/content";
     public const string V1Modules = "api/v1/modules";
+    public const string V1Assessments = "api/v1/assessments";
 }

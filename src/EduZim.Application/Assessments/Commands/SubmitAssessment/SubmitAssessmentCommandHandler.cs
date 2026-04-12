@@ -96,6 +96,14 @@ public sealed class SubmitAssessmentCommandHandler : IRequestHandler<SubmitAsses
         if (attempt is null)
             throw new NotFoundException(nameof(AssessmentAttempt), request.AttemptId);
 
+        if (attempt.AssessmentId != request.AssessmentId)
+        {
+            throw new TenantAccessViolationException(
+                "The attempt does not belong to the assessment in the request path.",
+                request.TenantId,
+                request.AssessmentId);
+        }
+
         if (attempt.StudentId != _currentUser.UserId)
         {
             throw new TenantAccessViolationException(

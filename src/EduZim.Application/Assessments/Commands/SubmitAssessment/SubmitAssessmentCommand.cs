@@ -8,5 +8,6 @@ public sealed record SubmitAssessmentAnswerItem(Guid QuestionId, string? Answer)
 
 public sealed record SubmitAssessmentCommand(
     Guid TenantId,
+    Guid AssessmentId,
     Guid AttemptId,
     IReadOnlyList<SubmitAssessmentAnswerItem> Answers) : IRequest<SubmitAssessmentResultDto>, ITenantScopedRequest;
