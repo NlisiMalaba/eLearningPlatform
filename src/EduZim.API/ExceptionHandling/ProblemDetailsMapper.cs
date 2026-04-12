@@ -38,6 +38,15 @@ public static class ProblemDetailsMapper
                     Detail = ex.Message,
                     Type = "https://eduzim.co.zw/errors/not-found",
                 }),
+            PayloadTooLargeException ex => (
+                StatusCodes.Status413PayloadTooLarge,
+                new ProblemDetails
+                {
+                    Title = "Payload Too Large",
+                    Status = StatusCodes.Status413PayloadTooLarge,
+                    Detail = ex.Message,
+                    Type = "https://eduzim.co.zw/errors/payload-too-large",
+                }),
             ValidationException ex => (
                 StatusCodes.Status400BadRequest,
                 new ValidationProblemDetails(

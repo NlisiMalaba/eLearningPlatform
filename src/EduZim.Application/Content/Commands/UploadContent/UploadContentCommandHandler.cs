@@ -39,24 +39,14 @@ public sealed class UploadContentCommandHandler : IRequestHandler<UploadContentC
         var maxBytes = ContentLimits.MaxBytesFor(request.Type, _options);
         if (request.FileSizeBytes > maxBytes)
         {
-            throw new ValidationException(new Dictionary<string, string[]>
-            {
-                [nameof(request.FileSizeBytes)] =
-                [
-                    $"File size exceeds the maximum allowed for {request.Type} content ({maxBytes} bytes).",
-                ],
-            });
+            throw new PayloadTooLargeException(
+                $"File size exceeds the maximum allowed for {request.Type} content ({maxBytes} bytes).");
         }
 
         if (request.Content.CanSeek && request.Content.Length > maxBytes)
         {
-            throw new ValidationException(new Dictionary<string, string[]>
-            {
-                [nameof(request.FileSizeBytes)] =
-                [
-                    $"Stream length exceeds the maximum allowed for {request.Type} content ({maxBytes} bytes).",
-                ],
-            });
+            throw new PayloadTooLargeException(
+                $"Stream length exceeds the maximum allowed for {request.Type} content ({maxBytes} bytes).");
         }
 
         var id = Guid.NewGuid();

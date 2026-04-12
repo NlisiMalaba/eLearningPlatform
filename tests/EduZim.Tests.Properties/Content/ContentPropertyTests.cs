@@ -98,7 +98,7 @@ public sealed class ContentPropertyTests
         user.Role = UserRole.Teacher;
 
         var videoOver = 500L * 1024 * 1024 + 1;
-        await Assert.ThrowsAsync<ValidationException>(() =>
+        await Assert.ThrowsAsync<PayloadTooLargeException>(() =>
                 mediator.Send(
                     new UploadContentCommand(
                         tenantId,
@@ -114,7 +114,7 @@ public sealed class ContentPropertyTests
 
         storage.UploadedKeys.Clear();
         var audioOver = 50L * 1024 * 1024 + 1;
-        await Assert.ThrowsAsync<ValidationException>(() =>
+        await Assert.ThrowsAsync<PayloadTooLargeException>(() =>
                 mediator.Send(
                     new UploadContentCommand(
                         tenantId,
