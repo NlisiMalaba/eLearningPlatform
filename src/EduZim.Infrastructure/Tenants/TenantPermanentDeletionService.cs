@@ -51,6 +51,16 @@ public sealed class TenantPermanentDeletionService : ITenantPermanentDeletionSer
             .ConfigureAwait(false);
         await _db.AssessmentAttempts.Where(a => a.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);
+        await _db.AssessmentClassAssignments.Where(a => a.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await _db.ClassEnrollments.Where(e => e.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await _db.SchoolClasses.Where(c => c.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await _db.QuestionOptions.Where(o => o.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await _db.Questions.Where(q => q.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
         await _db.Assessments.Where(a => a.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);
         await _db.ModuleContentItems.Where(m => m.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)

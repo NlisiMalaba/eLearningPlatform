@@ -42,6 +42,9 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<ParentStudentLink> ParentStudentLinks => Set<ParentStudentLink>();
     public DbSet<Payment> Payments => Set<Payment>();
     public DbSet<SubscriptionInvoice> SubscriptionInvoices => Set<SubscriptionInvoice>();
+    public DbSet<SchoolClass> SchoolClasses => Set<SchoolClass>();
+    public DbSet<ClassEnrollment> ClassEnrollments => Set<ClassEnrollment>();
+    public DbSet<AssessmentClassAssignment> AssessmentClassAssignments => Set<AssessmentClassAssignment>();
 
     public Task SetSessionTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {
