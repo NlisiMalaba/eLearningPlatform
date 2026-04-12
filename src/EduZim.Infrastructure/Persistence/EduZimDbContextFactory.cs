@@ -8,9 +8,12 @@ public sealed class EduZimDbContextFactory : IDesignTimeDbContextFactory<EduZimD
 {
     public EduZimDbContext CreateDbContext(string[] args)
     {
+        // Align with appsettings.json DefaultConnection; override via ConnectionStrings__DefaultConnection.
+        var connectionString = Environment.GetEnvironmentVariable("ConnectionStrings__DefaultConnection")
+            ?? "Host=localhost;Port=5432;Database=EduZImDB;Username=postgres;Password=root123";
+
         var optionsBuilder = new DbContextOptionsBuilder<EduZimDbContext>();
-        optionsBuilder.UseNpgsql(
-            "Host=localhost;Port=5432;Database=eduzim;Username=eduzim;Password=eduzim_dev");
+        optionsBuilder.UseNpgsql(connectionString);
 
         var dataProtection = DataProtectionProvider.Create(
             new DirectoryInfo(Path.Combine(Path.GetTempPath(), "eduzim-ef-design")));
