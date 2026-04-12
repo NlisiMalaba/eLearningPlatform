@@ -27,6 +27,7 @@ internal static class AssessmentPropertyTestHost
         services.AddSingleton<NoOpAssessmentBackgroundJobs>();
         services.AddSingleton<IAssessmentBackgroundJobs>(sp => sp.GetRequiredService<NoOpAssessmentBackgroundJobs>());
         services.AddSingleton<ITenantBackgroundJobs, NoOpTenantBackgroundJobs>();
+        services.AddSingleton<ICacheService, EphemeralCacheService>();
 
         services.AddSingleton<MutableCurrentUser>();
         services.AddSingleton<ICurrentUser>(sp => sp.GetRequiredService<MutableCurrentUser>());

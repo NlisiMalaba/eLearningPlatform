@@ -70,6 +70,50 @@ public static class TenantAccessHelper
                 tenantId);
     }
 
+    /// <summary>Adaptive learning views for a student: teacher, school admin, the student, or a linked parent.</summary>
+    public static void EnsureCanViewStudentAdaptiveData(
+        ICurrentUser user,
+        Guid tenantId,
+        Guid studentUserId,
+        bool parentIsLinkedToStudent)
+    {
+        if (user.Role == UserRole.PlatformAdmin)
+            return;
+        EnsureCanAccessTenantScope(user, tenantId);
+        if (user.Role == UserRole.Student)
+        {
+            if (user.UserId != studentUserId)
+            {
+                throw new TenantAccessViolationException(
+                    "Students may only view their own adaptive learning data.",
+                    tenantId,
+                    studentUserId);
+            }
+
+            return;
+        }
+
+        if (user.Role is UserRole.Teacher or UserRole.SchoolAdmin)
+            return;
+        if (user.Role == UserRole.ParentGuardian)
+        {
+            if (!parentIsLinkedToStudent)
+            {
+                throw new TenantAccessViolationException(
+                    "Parents may only view adaptive data for linked students.",
+                    tenantId,
+                    studentUserId);
+            }
+
+            return;
+        }
+
+        throw new TenantAccessViolationException(
+            "This role cannot view adaptive learning data for this student.",
+            tenantId,
+            studentUserId);
+    }
+
     /// <summary>Billing (subscriptions, invoices): school admin, parent/guardian, or platform admin for the tenant.</summary>
     public static void EnsureCanManageBilling(ICurrentUser user, Guid tenantId)
     {

@@ -167,7 +167,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 28: Timed Assessment Auto-Submit — Validates: Requirements 9.8**
 
 - [ ] 13. Adaptive Learning feature — commands, handlers, and endpoints
-  - [ ] 13.1 Implement Adaptive Learning command/query handlers
+  - [x] 13.1 Implement Adaptive Learning command/query handlers
     - Implement `UpdateLearningProfileCommandHandler` as a `INotificationHandler<AssessmentSubmittedNotification>`; update cached learning profile in Redis via `ICacheService`
     - Implement `GetAdjustedDifficultyQueryHandler`: decrement difficulty in increments when on remedial path until score >= 70%
     - Implement `GetRecommendedPathQueryHandler`: include remedial content when `ScorePercent < 60`; include advanced extension when `ScorePercent >= 85`; block next grade-level module until all required assessments pass with >= 60%

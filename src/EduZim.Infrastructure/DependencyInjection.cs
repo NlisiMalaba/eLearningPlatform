@@ -147,6 +147,7 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentBackgroundJobs, AssessmentBackgroundJobs>();
         services.AddScoped<AssessmentTimedAutoSubmitJob>();
         services.AddScoped<SubscriptionRenewalReminderJob>();
+        services.AddScoped<AdaptiveLearningWeeklySummaryJob>();
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();

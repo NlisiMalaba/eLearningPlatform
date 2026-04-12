@@ -107,4 +107,10 @@ RecurringJob.AddOrUpdate<SubscriptionRenewalReminderJob>(
     Cron.Daily(renewalHour),
     new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
+RecurringJob.AddOrUpdate<AdaptiveLearningWeeklySummaryJob>(
+    "adaptive-weekly-summary-cache",
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Weekly(DayOfWeek.Sunday, 3),
+    new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
 app.Run();
