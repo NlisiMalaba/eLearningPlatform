@@ -16,6 +16,9 @@ TestResults/
 .idea/
 *.DotSettings.user
 
+## Cursor — project rules kept locally (not committed)
+.cursor/rules/
+
 ## OS
 Thumbs.db
 Desktop.ini
