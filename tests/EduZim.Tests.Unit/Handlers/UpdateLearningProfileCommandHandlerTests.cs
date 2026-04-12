@@ -1,3 +1,4 @@
+using EduZim.Application.AdaptiveLearning.DTOs;
 using EduZim.Application.AdaptiveLearning.Notifications;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Domain.Entities;
@@ -38,6 +39,8 @@ public sealed class UpdateLearningProfileCommandHandlerTests
         db.Setup(x => x.Assessments).Returns(assessments.AsQueryable().BuildMockDbSet().Object);
 
         Mock<ICacheService> cache = new();
+        cache.Setup(c => c.GetAsync<StudentLearningProfileDto>(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync((StudentLearningProfileDto?)null);
         cache.Setup(
                 c => c.SetAsync(
                     It.IsAny<string>(),

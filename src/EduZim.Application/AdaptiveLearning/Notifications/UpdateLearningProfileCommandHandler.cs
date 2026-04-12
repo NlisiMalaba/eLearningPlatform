@@ -46,26 +46,20 @@ public sealed class UpdateLearningProfileCommandHandler : INotificationHandler<A
         StudentLearningProfileDto? existing = await _cache.GetAsync<StudentLearningProfileDto>(key, ct)
             .ConfigureAwait(false);
 
-        int tier = existing?.DifficultyTier ?? 3;
-        DateTime utcNow = DateTime.UtcNow;
-        if (notification.ScorePercent < 70)
-            tier = Math.Max(1, tier - 1);
-        else if (notification.ScorePercent >= 85)
-            tier = Math.Min(5, tier + 1);
-
-        var profile = new StudentLearningProfileDto(
-            notification.StudentId,
-            utcNow,
-            notification.AssessmentId,
-            assessment.ModuleId,
-            notification.ScorePercent,
-            tier);
-
-        await _cache.SetAsync(key, profile, TimeSpan.FromDays(30), ct).ConfigureAwait(false);
+        await AdaptiveLearningProfileCacheUpdater.ApplyFromSubmittedAssessmentAsync(
+                _cache,
+                notification.TenantId,
+                notification.StudentId,
+                notification.AssessmentId,
+                assessment.ModuleId,
+                notification.ScorePercent,
+                existing,
+                ct)
+            .ConfigureAwait(false);
 
         _logger.LogDebug(
-            "Updated adaptive learning profile for student {StudentId} (tier {Tier}).",
+            "Updated adaptive learning profile for student {StudentId} after assessment {AssessmentId}.",
             notification.StudentId,
-            tier);
+            notification.AssessmentId);
     }
 }

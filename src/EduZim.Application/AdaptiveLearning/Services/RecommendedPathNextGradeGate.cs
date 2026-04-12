@@ -21,7 +21,20 @@ internal static class RecommendedPathNextGradeGate
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        Module? nextGradeModule = modules.FirstOrDefault(m => m.Grade > current.Grade);
+        List<GradeAdvancementGateRules.ModuleGateRow> rows = modules
+            .Select(m => new GradeAdvancementGateRules.ModuleGateRow(m.Id, m.Grade, m.IsRequired))
+            .ToList();
+
+        Module? nextGradeModule = null;
+        foreach (Module m in modules)
+        {
+            if (m.Grade > current.Grade)
+            {
+                nextGradeModule = m;
+                break;
+            }
+        }
+
         if (nextGradeModule is null)
             return (false, null);
 
@@ -29,6 +42,7 @@ internal static class RecommendedPathNextGradeGate
             .Where(m => m.IsRequired && m.Grade < nextGradeModule.Grade)
             .ToList();
 
+        Dictionary<Guid, IReadOnlyList<Guid>> assessmentIdsByModule = new();
         foreach (Module req in requiredPrior)
         {
             List<Guid> assessments = await db.Assessments
@@ -37,28 +51,32 @@ internal static class RecommendedPathNextGradeGate
                 .Select(a => a.Id)
                 .ToListAsync(ct)
                 .ConfigureAwait(false);
-
-            foreach (Guid aid in assessments)
-            {
-                bool passed = await db.AssessmentAttempts
-                    .AsNoTracking()
-                    .AnyAsync(
-                        a => a.TenantId == tenantId
-                            && a.StudentId == studentId
-                            && a.AssessmentId == aid
-                            && a.SubmittedAt != null
-                            && a.ScorePercent >= 60,
-                        ct)
-                    .ConfigureAwait(false);
-                if (!passed)
-                {
-                    return (
-                        true,
-                        $"Complete required assessments in grade with score at least 60% before grade {nextGradeModule.Grade} modules.");
-                }
-            }
+            assessmentIdsByModule[req.Id] = assessments;
         }
 
-        return (false, null);
+        List<Guid> allAssessmentIds = assessmentIdsByModule.Values.SelectMany(x => x).Distinct().ToList();
+        HashSet<Guid> passedAssessmentIds;
+        if (allAssessmentIds.Count == 0)
+        {
+            passedAssessmentIds = new HashSet<Guid>();
+        }
+        else
+        {
+            List<Guid> passed = await db.AssessmentAttempts
+                .AsNoTracking()
+                .Where(
+                    a => a.TenantId == tenantId
+                        && a.StudentId == studentId
+                        && a.SubmittedAt != null
+                        && a.ScorePercent >= 60
+                        && allAssessmentIds.Contains(a.AssessmentId))
+                .Select(a => a.AssessmentId)
+                .Distinct()
+                .ToListAsync(ct)
+                .ConfigureAwait(false);
+            passedAssessmentIds = passed.ToHashSet();
+        }
+
+        return GradeAdvancementGateRules.Evaluate(rows, current.Id, assessmentIdsByModule, passedAssessmentIds);
     }
 }

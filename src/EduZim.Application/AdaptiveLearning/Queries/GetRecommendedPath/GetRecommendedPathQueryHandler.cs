@@ -48,8 +48,16 @@ public sealed class GetRecommendedPathQueryHandler : IRequestHandler<GetRecommen
         int? latestScore = await LatestModuleAssessmentScoreAsync(request, ct).ConfigureAwait(false);
         List<PathItemRow> orderedItems = await LoadOrderedContentRowsAsync(request, ct).ConfigureAwait(false);
 
-        IReadOnlyList<RecommendedPathItemDto> remedial = BuildRemedial(orderedItems, latestScore);
-        IReadOnlyList<RecommendedPathItemDto> advanced = BuildAdvanced(orderedItems, latestScore);
+        List<(Guid ContentItemId, string Title)> orderedForRules = orderedItems
+            .Select(x => (x.ContentItemId, x.Title))
+            .ToList();
+
+        IReadOnlyList<RecommendedPathItemDto> remedial = AdaptivePathRecommendationRules.BuildRemedial(
+            orderedForRules,
+            latestScore);
+        IReadOnlyList<RecommendedPathItemDto> advanced = AdaptivePathRecommendationRules.BuildAdvanced(
+            orderedForRules,
+            latestScore);
 
         (bool locked, string? reason) = await RecommendedPathNextGradeGate
             .EvaluateAsync(_db, request.TenantId, request.StudentId, module, ct)
@@ -125,42 +133,6 @@ public sealed class GetRecommendedPathQueryHandler : IRequestHandler<GetRecommen
             .OrderBy(x => x.SequenceOrder)
             .ToListAsync(ct)
             .ConfigureAwait(false);
-    }
-
-    private static IReadOnlyList<RecommendedPathItemDto> BuildRemedial(
-        IReadOnlyList<PathItemRow> ordered,
-        int? latestScore)
-    {
-        if (ordered.Count == 0 || latestScore is null || latestScore >= 60)
-            return Array.Empty<RecommendedPathItemDto>();
-
-        int take = Math.Max(1, ordered.Count / 2);
-        return ordered
-            .Take(take)
-            .Select(
-                x => new RecommendedPathItemDto(
-                    x.ContentItemId,
-                    x.Title,
-                    "Remedial reinforcement (score under 60%)."))
-            .ToList();
-    }
-
-    private static IReadOnlyList<RecommendedPathItemDto> BuildAdvanced(
-        IReadOnlyList<PathItemRow> ordered,
-        int? latestScore)
-    {
-        if (ordered.Count == 0 || latestScore is null || latestScore < 85)
-            return Array.Empty<RecommendedPathItemDto>();
-
-        int take = Math.Min(2, ordered.Count);
-        return ordered
-            .Skip(Math.Max(0, ordered.Count - take))
-            .Select(
-                x => new RecommendedPathItemDto(
-                    x.ContentItemId,
-                    x.Title,
-                    "Advanced extension (score at or above 85%)."))
-            .ToList();
     }
 
     private sealed record PathItemRow(int SequenceOrder, Guid ContentItemId, string Title);
