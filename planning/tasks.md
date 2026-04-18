@@ -166,17 +166,17 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 24: Assessment Attempt Record Completeness — Validates: Requirements 9.1**
     - **Property 28: Timed Assessment Auto-Submit — Validates: Requirements 9.8**
 
-- [ ] 13. Adaptive Learning feature — commands, handlers, and endpoints
+- [x] 13. Adaptive Learning feature — commands, handlers, and endpoints
   - [x] 13.1 Implement Adaptive Learning command/query handlers
     - Implement `UpdateLearningProfileCommandHandler` as a `INotificationHandler<AssessmentSubmittedNotification>`; update cached learning profile in Redis via `ICacheService`
     - Implement `GetAdjustedDifficultyQueryHandler`: decrement difficulty in increments when on remedial path until score >= 70%
     - Implement `GetRecommendedPathQueryHandler`: include remedial content when `ScorePercent < 60`; include advanced extension when `ScorePercent >= 85`; block next grade-level module until all required assessments pass with >= 60%
     - Implement `GetWeeklySummaryQueryHandler` as a Hangfire recurring job; expose summary to teacher and parent
     - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5, 6.6_
-  - [ ] 13.2 Add Adaptive Learning API endpoints
+  - [x] 13.2 Add Adaptive Learning API endpoints
     - `GET /adaptive/{studentId}/path`, `GET /adaptive/{studentId}/summary`, `POST /adaptive/{studentId}/update`
     - _Requirements: 6.2, 6.3, 6.4_
-  - [ ]* 13.3 Write property tests for Adaptive Learning (Properties 15, 16, 17)
+  - [x]* 13.3 Write property tests for Adaptive Learning (Properties 15, 16, 17)
     - **Property 15: Remedial Content Recommendation Below 60% — Validates: Requirements 6.2**
     - **Property 16: Advanced Extension Offer Above 85% — Validates: Requirements 6.3**
     - **Property 17: No Grade Advancement Without Passing Score — Validates: Requirements 6.6**
