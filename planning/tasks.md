@@ -232,7 +232,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - _Requirements: 5.1, 5.7_
 
 - [ ] 18. Live Classroom feature — commands, handlers, SignalR hub, and endpoints
-  - [ ] 18.1 Implement Live Classroom command/query handlers
+  - [x] 18.1 Implement Live Classroom command/query handlers
     - Implement `ScheduleSessionCommandHandler`: create `ClassroomSession` record; publish `ClassroomScheduledNotification` handled by Notification handlers to send 24-hour advance notifications
     - Implement `GetJoinTokenQueryHandler` calling `IVideoService` (Daily.co / Jitsi)
     - Implement `EndSessionCommandHandler`: record attendance (join time + duration) for each participant; trigger recording retrieval from `IVideoService`

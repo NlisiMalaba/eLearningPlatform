@@ -21,6 +21,7 @@ using EduZim.Infrastructure.Gamification;
 using EduZim.Infrastructure.Ai;
 using EduZim.Infrastructure.Notifications;
 using EduZim.Infrastructure.Tenants;
+using EduZim.Infrastructure.Video;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -97,6 +98,7 @@ public static class DependencyInjection
 
         services.AddSingleton<IEmailService, NullEmailService>();
         services.AddSingleton<ISmsService, NullSmsService>();
+        services.AddSingleton<IVideoService, NullVideoService>();
         services.AddSingleton<AzureOpenAiKernelAccessor>();
         services.AddSingleton(AiResiliencePipeline.Create());
         services.AddScoped<IAiService, SemanticKernelAiService>();

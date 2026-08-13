@@ -53,6 +53,12 @@ public sealed class TenantPermanentDeletionService : ITenantPermanentDeletionSer
             .ConfigureAwait(false);
         await _db.AssessmentClassAssignments.Where(a => a.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);
+        await _db.AttendanceRecords.Where(a => a.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await _db.ClassroomParticipants.Where(p => p.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await _db.ClassroomSessions.Where(s => s.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
         await _db.ClassEnrollments.Where(e => e.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);
         await _db.SchoolClasses.Where(c => c.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
