@@ -50,6 +50,9 @@ public sealed class LoginCommandHandler : IRequestHandler<LoginCommand, LoginRes
         if (!check.Succeeded)
             return new LoginFailed(SignInWithPasswordStatus.InvalidCredentials);
 
+        user.LastLoginAt = DateTime.UtcNow;
+        await _userManager.UpdateAsync(user).ConfigureAwait(false);
+
         var (access, accessExp) = _accessTokenIssuer.IssueForUser(user);
         var (refresh, refreshExp) = await _refreshTokenService.IssueAsync(user.Id, cancellationToken).ConfigureAwait(false);
 

@@ -11,5 +11,6 @@ public sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Appl
         builder.Property(u => u.Role).HasConversion<int>();
         builder.Property(u => u.TenantId).HasColumnName("tenant_id");
         builder.HasIndex(u => u.TenantId);
+        builder.HasIndex(u => new { u.TenantId, u.Role, u.LastLoginAt });
     }
 }

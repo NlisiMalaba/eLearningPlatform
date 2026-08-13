@@ -207,7 +207,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - [x] 16.2 Implement SMS retry Hangfire job
     - On SMS send failure, schedule Hangfire retry job; increment `RetryCount` on each attempt; after 3 failures set `Status = Undelivered`
     - _Requirements: 15.3, 15.5_
-  - [ ] 16.3 Implement inactivity alert Hangfire job
+  - [x] 16.3 Implement inactivity alert Hangfire job
     - Recurring job querying students with `LastLoginAt < NOW() - 7 days`; publish `StudentInactiveNotification` handled by `QueueNotificationCommandHandler`
     - _Requirements: 10.6_
   - [ ] 16.4 Add Notification API endpoints

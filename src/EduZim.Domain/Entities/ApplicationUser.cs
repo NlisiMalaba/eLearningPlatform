@@ -14,4 +14,6 @@ public class ApplicationUser : IdentityUser<Guid>
     public UserRole Role { get; set; }
     public string? PreferredLanguage { get; set; }
     public string? FullName { get; set; }
+    public DateTime? LastLoginAt { get; set; }
+    public DateTime? LastInactivityAlertAt { get; set; }
 }

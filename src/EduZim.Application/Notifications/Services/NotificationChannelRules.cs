@@ -34,7 +34,9 @@ public static class NotificationChannelRules
     }
 
     public static bool IsCriticalSmsType(NotificationType type) =>
-        type is NotificationType.SubscriptionExpiry or NotificationType.LiveClassroomReminder;
+        type is NotificationType.SubscriptionExpiry
+            or NotificationType.LiveClassroomReminder
+            or NotificationType.InactivityAlert;
 
     public static string EmailSubject(NotificationType type) => type switch
     {

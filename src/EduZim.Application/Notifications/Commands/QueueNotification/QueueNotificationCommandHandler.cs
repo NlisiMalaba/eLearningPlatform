@@ -3,18 +3,22 @@ using EduZim.Application.Exceptions;
 using EduZim.Application.Notifications.Services;
 using EduZim.Domain.Entities;
 using EduZim.Domain.Enums;
+using EduZim.Domain.Events;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
 namespace EduZim.Application.Notifications.Commands.QueueNotification;
 
-public sealed class QueueNotificationCommandHandler : IRequestHandler<QueueNotificationCommand, Unit>
+public sealed class QueueNotificationCommandHandler :
+    IRequestHandler<QueueNotificationCommand, Unit>,
+    INotificationHandler<StudentInactiveNotification>
 {
     private readonly IEduZimDbContext _db;
     private readonly IEmailService _emailService;
     private readonly ISmsService _smsService;
     private readonly INotificationBackgroundJobs _jobs;
+    private readonly IMediator _mediator;
     private readonly ILogger<QueueNotificationCommandHandler> _logger;
 
     public QueueNotificationCommandHandler(
@@ -22,12 +26,14 @@ public sealed class QueueNotificationCommandHandler : IRequestHandler<QueueNotif
         IEmailService emailService,
         ISmsService smsService,
         INotificationBackgroundJobs jobs,
+        IMediator mediator,
         ILogger<QueueNotificationCommandHandler> logger)
     {
         _db = db;
         _emailService = emailService;
         _smsService = smsService;
         _jobs = jobs;
+        _mediator = mediator;
         _logger = logger;
     }
 
@@ -50,6 +56,9 @@ public sealed class QueueNotificationCommandHandler : IRequestHandler<QueueNotif
         _logger.LogInformation("Queued notification type {Type} for user {UserId}.", request.Type, request.UserId);
         return Unit.Value;
     }
+
+    public Task Handle(StudentInactiveNotification notification, CancellationToken ct) =>
+        InactivityAlertFanout.NotifyLinkedParentsAsync(_db, _mediator, _logger, notification, ct);
 
     private async Task<ApplicationUser> LoadUserAsync(QueueNotificationCommand request, CancellationToken ct)
     {

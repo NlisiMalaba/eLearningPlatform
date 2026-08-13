@@ -2,8 +2,11 @@ using EduZim.Application.Common.Interfaces;
 using EduZim.Application.Common.Models;
 using EduZim.Application.Exceptions;
 using EduZim.Application.Notifications.Commands.QueueNotification;
+using EduZim.Application.Notifications.Services;
 using EduZim.Domain.Entities;
 using EduZim.Domain.Enums;
+using EduZim.Domain.Events;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging.Abstractions;
 using MockQueryable.Moq;
@@ -232,6 +235,125 @@ public sealed class QueueNotificationCommandHandlerTests
             Times.Never);
     }
 
+    [Fact]
+    public async Task Student_inactive_notification_queues_alert_for_each_linked_parent()
+    {
+        Guid tenantId = Guid.NewGuid();
+        Guid studentId = Guid.NewGuid();
+        Guid parentA = Guid.NewGuid();
+        Guid parentB = Guid.NewGuid();
+        ApplicationUser student = Student(tenantId, studentId, DateTime.UtcNow.AddDays(-8));
+        Mock<IMediator> mediator = new();
+        mediator
+            .Setup(m => m.Send(It.IsAny<QueueNotificationCommand>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(MediatR.Unit.Value);
+        QueueNotificationCommandHandler handler = CreateHandler(
+            [student],
+            [],
+            [],
+            new Mock<IEmailService>(),
+            new Mock<ISmsService>(),
+            mediator: mediator,
+            parentLinks:
+            [
+                Link(tenantId, parentA, studentId),
+                Link(tenantId, parentB, studentId),
+            ]);
+
+        await handler.Handle(
+            new StudentInactiveNotification(studentId, tenantId, student.LastLoginAt),
+            CancellationToken.None);
+
+        mediator.Verify(
+            m => m.Send(
+                It.Is<QueueNotificationCommand>(
+                    c => c.TenantId == tenantId
+                        && c.Type == NotificationType.InactivityAlert
+                        && c.UserId == parentA
+                        && c.Message == InactivityAlertRules.ParentMessage()),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        mediator.Verify(
+            m => m.Send(
+                It.Is<QueueNotificationCommand>(
+                    c => c.UserId == parentB && c.Type == NotificationType.InactivityAlert),
+                It.IsAny<CancellationToken>()),
+            Times.Once);
+        Assert.NotNull(student.LastInactivityAlertAt);
+    }
+
+    [Fact]
+    public async Task Student_inactive_notification_skips_when_no_linked_parents()
+    {
+        Guid tenantId = Guid.NewGuid();
+        Guid studentId = Guid.NewGuid();
+        ApplicationUser student = Student(tenantId, studentId, DateTime.UtcNow.AddDays(-8));
+        Mock<IMediator> mediator = new();
+        QueueNotificationCommandHandler handler = CreateHandler(
+            [student],
+            [],
+            [],
+            new Mock<IEmailService>(),
+            new Mock<ISmsService>(),
+            mediator: mediator);
+
+        await handler.Handle(
+            new StudentInactiveNotification(studentId, tenantId, student.LastLoginAt),
+            CancellationToken.None);
+
+        mediator.Verify(
+            m => m.Send(It.IsAny<QueueNotificationCommand>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+        Assert.Null(student.LastInactivityAlertAt);
+    }
+
+    [Fact]
+    public async Task Student_inactive_notification_is_idempotent_after_alert()
+    {
+        Guid tenantId = Guid.NewGuid();
+        Guid studentId = Guid.NewGuid();
+        ApplicationUser student = Student(tenantId, studentId, DateTime.UtcNow.AddDays(-8));
+        student.LastInactivityAlertAt = DateTime.UtcNow.AddDays(-1);
+        Mock<IMediator> mediator = new();
+        QueueNotificationCommandHandler handler = CreateHandler(
+            [student],
+            [],
+            [],
+            new Mock<IEmailService>(),
+            new Mock<ISmsService>(),
+            mediator: mediator,
+            parentLinks: [Link(tenantId, Guid.NewGuid(), studentId)]);
+
+        await handler.Handle(
+            new StudentInactiveNotification(studentId, tenantId, student.LastLoginAt),
+            CancellationToken.None);
+
+        mediator.Verify(
+            m => m.Send(It.IsAny<QueueNotificationCommand>(), It.IsAny<CancellationToken>()),
+            Times.Never);
+    }
+
+    private static ApplicationUser Student(Guid tenantId, Guid userId, DateTime lastLoginAt)
+    {
+        ApplicationUser user = User(tenantId, userId, "stu@example.com", null);
+        user.LastLoginAt = lastLoginAt;
+        return user;
+    }
+
+    private static ParentStudentLink Link(Guid tenantId, Guid parentId, Guid studentId)
+    {
+        DateTime now = DateTime.UtcNow;
+        return new ParentStudentLink
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            ParentUserId = parentId,
+            StudentUserId = studentId,
+            CreatedAt = now,
+            UpdatedAt = now,
+        };
+    }
+
     private static ApplicationUser User(Guid tenantId, Guid userId, string? email, string? phone)
     {
         return new ApplicationUser
@@ -273,7 +395,9 @@ public sealed class QueueNotificationCommandHandlerTests
         List<Notification> captured,
         Mock<IEmailService> email,
         Mock<ISmsService> sms,
-        Mock<INotificationBackgroundJobs>? jobs = null)
+        Mock<INotificationBackgroundJobs>? jobs = null,
+        Mock<IMediator>? mediator = null,
+        List<ParentStudentLink>? parentLinks = null)
     {
         Mock<IEduZimDbContext> db = new();
         db.Setup(x => x.SetSessionTenantIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -281,6 +405,8 @@ public sealed class QueueNotificationCommandHandlerTests
         db.Setup(x => x.SaveChangesAsync(It.IsAny<CancellationToken>())).ReturnsAsync(1);
         db.Setup(x => x.Users).Returns(users.AsQueryable().BuildMockDbSet().Object);
         db.Setup(x => x.NotificationPreferences).Returns(preferences.AsQueryable().BuildMockDbSet().Object);
+        db.Setup(x => x.ParentStudentLinks)
+            .Returns((parentLinks ?? []).AsQueryable().BuildMockDbSet().Object);
 
         Mock<DbSet<Notification>> notifications = new List<Notification>().AsQueryable().BuildMockDbSet();
         notifications.Setup(s => s.AddAsync(It.IsAny<Notification>(), It.IsAny<CancellationToken>()))
@@ -290,11 +416,13 @@ public sealed class QueueNotificationCommandHandlerTests
         db.Setup(x => x.Notifications).Returns(notifications.Object);
 
         Mock<INotificationBackgroundJobs> backgroundJobs = jobs ?? new Mock<INotificationBackgroundJobs>();
+        Mock<IMediator> mediatorMock = mediator ?? new Mock<IMediator>();
         return new QueueNotificationCommandHandler(
             db.Object,
             email.Object,
             sms.Object,
             backgroundJobs.Object,
+            mediatorMock.Object,
             NullLogger<QueueNotificationCommandHandler>.Instance);
     }
 }
