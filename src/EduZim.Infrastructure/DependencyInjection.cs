@@ -18,6 +18,7 @@ using EduZim.Infrastructure.Content;
 using EduZim.Infrastructure.Storage;
 using EduZim.Infrastructure.Assessments;
 using EduZim.Infrastructure.Gamification;
+using EduZim.Infrastructure.Ai;
 using EduZim.Infrastructure.Notifications;
 using EduZim.Infrastructure.Tenants;
 using Hangfire;
@@ -55,6 +56,7 @@ public static class DependencyInjection
             options.AddInterceptors(sp.GetRequiredService<TenantConnectionInterceptor>());
         });
 
+        services.Configure<AzureOpenAiOptions>(configuration.GetSection(AzureOpenAiOptions.SectionName));
         services.Configure<IdentityAppSettings>(configuration.GetSection(IdentityAppSettings.SectionName));
         services.Configure<TenantLifecycleSettings>(configuration.GetSection(TenantLifecycleSettings.SectionName));
         services.Configure<BillingPricingOptions>(configuration.GetSection(BillingPricingOptions.SectionName));
@@ -95,6 +97,9 @@ public static class DependencyInjection
 
         services.AddSingleton<IEmailService, NullEmailService>();
         services.AddSingleton<ISmsService, NullSmsService>();
+        services.AddSingleton<AzureOpenAiKernelAccessor>();
+        services.AddSingleton(AiResiliencePipeline.Create());
+        services.AddScoped<IAiService, SemanticKernelAiService>();
 
         services.AddOptions<JwtSettings>()
             .Bind(configuration.GetSection(JwtSettings.SectionName))

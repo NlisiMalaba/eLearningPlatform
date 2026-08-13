@@ -30,6 +30,7 @@ public interface IEduZimDbContext
     DbSet<Badge> Badges { get; }
     DbSet<Notification> Notifications { get; }
     DbSet<NotificationPreference> NotificationPreferences { get; }
+    DbSet<ZimBotInteraction> ZimBotInteractions { get; }
 
     /// <summary>Sets PostgreSQL <c>app.current_tenant_id</c> for row-level security (e.g. Hangfire jobs).</summary>
     Task SetSessionTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default);

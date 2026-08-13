@@ -218,8 +218,8 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 40: Notification Routing Respects User Preferences — Validates: Requirements 15.4**
     - **Property 41: SMS Retry Logic — Validates: Requirements 15.5**
 
-- [ ] 17. ZimBot feature — commands, handlers, and endpoints
-  - [ ] 17.1 Implement ZimBot command/query handlers
+- [x] 17. ZimBot feature — commands, handlers, and endpoints
+  - [x] 17.1 Implement ZimBot command/query handlers
     - Implement `ChatCommandHandler` using `IAiService` (Azure OpenAI / Semantic Kernel); include student's grade level and current module context in system prompt
     - Implement hint-only mode: detect assessment-answer requests and respond with a guiding hint
     - Implement multilingual response based on student's `PreferredLanguage`
@@ -227,7 +227,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Persist every interaction to `ZimBotInteraction` records scoped to tenant
     - Implement `GetInteractionLogsQueryHandler` for teacher review
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
-  - [ ] 17.2 Add ZimBot API endpoints
+  - [x] 17.2 Add ZimBot API endpoints
     - `POST /zimbot/chat`, `GET /zimbot/logs/{tenantId}`
     - _Requirements: 5.1, 5.7_
 
