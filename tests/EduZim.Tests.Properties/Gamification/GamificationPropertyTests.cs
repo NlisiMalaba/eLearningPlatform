@@ -1,110 +1,155 @@
 using EduZim.Application.Gamification.DTOs;
-using EduZim.Application.Gamification.Services;
+using EduZim.Application.Gamification.Queries.GetLeaderboard;
+using EduZim.Domain.Entities;
 using EduZim.Domain.Enums;
+using EduZim.Domain.Events;
+using EduZim.Infrastructure.Persistence;
+using EduZim.Tests.Properties.Tenants;
 using FsCheck;
 using FsCheck.Xunit;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace EduZim.Tests.Properties.Gamification;
 
+/// <summary>Feature: elearning-app-zimbabwe — Gamification properties 25, 26, 27.</summary>
 public sealed class GamificationPropertyTests
 {
+    private const int SpecBaseAward = 10;
+    private const int SpecBonusThreshold = 85;
+    private const decimal SpecBonusMultiplier = 1.5m;
+
     // Feature: elearning-app-zimbabwe, Property 25: Points Awarded on Module and Assessment Completion — Validates: Requirements 9.3
     [Property(MaxTest = 100)]
-    public void Property25_module_and_assessment_awards_meet_base_and_bonus_rules(NonNegativeInt scoreGen)
+    public async Task Property25_completion_increases_total_points_with_bonus_at_or_above_85(
+        NonNegativeInt startGen,
+        NonNegativeInt scoreGen,
+        bool moduleCompletion)
     {
+        int starting = startGen.Get % 400;
         int score = scoreGen.Get % 101;
-        int moduleAward = PointsAwardRules.ForModuleCompletion();
-        int assessmentAward = PointsAwardRules.ForAssessment(score);
+        using ServiceProvider provider = GamificationPropertyTestHost.Create();
+        using IServiceScope scope = provider.CreateScope();
+        EduZimDbContext db = scope.ServiceProvider.GetRequiredService<EduZimDbContext>();
+        IPublisher publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
 
-        Assert.True(moduleAward >= PointsAwardRules.ModuleCompletionBasePoints);
-        Assert.True(assessmentAward >= PointsAwardRules.AssessmentCompletionBasePoints);
-        if (score >= PointsAwardRules.HighScoreThresholdPercent)
-        {
-            Assert.Equal(
-                PointsAwardRules.ApplyBonusMultiplier(PointsAwardRules.AssessmentCompletionBasePoints),
-                assessmentAward);
-        }
-        else
-        {
-            Assert.Equal(PointsAwardRules.AssessmentCompletionBasePoints, assessmentAward);
-        }
+        Guid tenantId = Guid.NewGuid();
+        Guid studentId = Guid.NewGuid();
+        await GamificationPropertyTestHost.SeedStartingPointsAsync(db, tenantId, studentId, starting)
+            .ConfigureAwait(false);
+
+        int expectedDelta = moduleCompletion ? OracleModuleAward() : OracleAssessmentAward(score);
+        await PublishCompletionAsync(publisher, tenantId, studentId, moduleCompletion, score)
+            .ConfigureAwait(false);
+
+        int actual = await db.StudentPoints.AsNoTracking()
+            .Where(p => p.TenantId == tenantId && p.StudentId == studentId)
+            .Select(p => p.TotalPoints)
+            .SingleAsync()
+            .ConfigureAwait(false);
+
+        Assert.Equal(starting + expectedDelta, actual);
+        Assert.True(expectedDelta >= SpecBaseAward);
+        if (!moduleCompletion && score >= SpecBonusThreshold)
+            Assert.Equal(OracleBonus(SpecBaseAward), expectedDelta);
     }
 
     // Feature: elearning-app-zimbabwe, Property 26: Badge Awarded on Milestone Events — Validates: Requirements 9.4, 9.6
     [Property(MaxTest = 100)]
-    public void Property26_milestone_events_produce_matching_badge_types(
-        byte moduleCountRaw,
-        bool firstModule,
-        bool fiveDays,
-        bool subjectMastery,
-        bool gradeCompletion)
+    public async Task Property26_milestone_creates_badge_and_queues_certificate(byte milestoneKindRaw)
     {
-        int moduleCount = Math.Clamp((moduleCountRaw % 6) + 1, 1, 6);
-        List<BadgeMilestoneRules.ModuleRow> modules = new();
-        HashSet<Guid> completed = new();
-        string subject = "Math";
-        GradeLevel grade = GradeLevel.Grade3;
-        for (int i = 0; i < moduleCount; i++)
-        {
-            Guid id = Guid.NewGuid();
-            modules.Add(new BadgeMilestoneRules.ModuleRow(id, subject, grade));
-            if (subjectMastery || gradeCompletion || (firstModule && i == 0))
-                completed.Add(id);
-        }
+        BadgeType expected = (BadgeType)(milestoneKindRaw % 4);
+        using ServiceProvider provider = GamificationPropertyTestHost.Create();
+        using IServiceScope scope = provider.CreateScope();
+        EduZimDbContext db = scope.ServiceProvider.GetRequiredService<EduZimDbContext>();
+        IPublisher publisher = scope.ServiceProvider.GetRequiredService<IPublisher>();
+        RecordingGamificationBackgroundJobs jobs =
+            provider.GetRequiredService<RecordingGamificationBackgroundJobs>();
 
-        if (firstModule && completed.Count == 0)
-            completed.Add(modules[0].Id);
+        Guid tenantId = Guid.NewGuid();
+        Guid studentId = Guid.NewGuid();
+        await GamificationPropertySeeds.SeedMilestoneAsync(db, publisher, tenantId, studentId, expected)
+            .ConfigureAwait(false);
 
-        List<DateOnly> dates = new();
-        DateOnly start = new(2026, 3, 1);
-        int dayCount = fiveDays ? BadgeMilestoneRules.ConsecutiveDaysRequired : 2;
-        for (int i = 0; i < dayCount; i++)
-            dates.Add(start.AddDays(i));
+        List<Badge> badges = await db.Badges.AsNoTracking()
+            .Where(b => b.TenantId == tenantId && b.StudentId == studentId)
+            .ToListAsync()
+            .ConfigureAwait(false);
 
-        IReadOnlyList<BadgeType> awards = BadgeMilestoneRules.DetermineNewAwards(
-            modules,
-            completed,
-            dates,
-            alreadyEarned: new HashSet<BadgeType>());
-
-        if (firstModule || subjectMastery || gradeCompletion)
-            Assert.Contains(BadgeType.FirstModule, awards);
-        if (fiveDays)
-            Assert.Contains(BadgeType.FiveConsecutiveDays, awards);
-        if ((subjectMastery || gradeCompletion) && moduleCount >= 1)
-        {
-            Assert.Contains(BadgeType.SubjectMastery, awards);
-            Assert.Contains(BadgeType.GradeCompletion, awards);
-        }
-
-        Assert.Empty(
-            BadgeMilestoneRules.DetermineNewAwards(modules, completed, dates, alreadyEarned: awards.ToHashSet()));
+        Assert.Contains(badges, b => b.Type == expected);
+        Assert.Equal(badges.Count, jobs.Queued.Count);
+        Assert.All(
+            badges,
+            b => Assert.Contains(jobs.Queued, q => q.BadgeId == b.Id && q.StudentId == studentId && q.TenantId == tenantId));
     }
 
     // Feature: elearning-app-zimbabwe, Property 27: Leaderboard Tenant Isolation — Validates: Requirements 9.5
     [Property(MaxTest = 100)]
-    public void Property27_leaderboard_entries_all_belong_to_requesting_tenant(
+    public async Task Property27_leaderboard_contains_only_requesting_tenant(
         byte homeCountRaw,
         byte otherCountRaw,
         byte limitRaw)
     {
+        int homeCount = homeCountRaw % 12;
+        int otherCount = otherCountRaw % 12;
+        int limit = (limitRaw % 100) + 1;
         Guid tenantA = Guid.NewGuid();
         Guid tenantB = Guid.NewGuid();
-        int homeCount = homeCountRaw % 20;
-        int otherCount = otherCountRaw % 20;
-        int limit = (limitRaw % 100) + 1;
 
-        List<LeaderboardBuilder.PointsRow> rows = new();
-        for (int i = 0; i < homeCount; i++)
-            rows.Add(new LeaderboardBuilder.PointsRow(Guid.NewGuid(), i + 1, tenantA, $"a-{i}"));
-        for (int i = 0; i < otherCount; i++)
-            rows.Add(new LeaderboardBuilder.PointsRow(Guid.NewGuid(), 1000 + i, tenantB, $"b-{i}"));
+        using ServiceProvider provider = GamificationPropertyTestHost.Create();
+        using IServiceScope scope = provider.CreateScope();
+        EduZimDbContext db = scope.ServiceProvider.GetRequiredService<EduZimDbContext>();
+        IMediator mediator = scope.ServiceProvider.GetRequiredService<IMediator>();
+        MutableCurrentUser current = provider.GetRequiredService<MutableCurrentUser>();
+        current.UserId = Guid.NewGuid();
+        current.TenantId = tenantA;
+        current.Role = UserRole.Teacher;
 
-        LeaderboardDto dto = LeaderboardBuilder.Build(rows, tenantA, limit);
+        HashSet<Guid> homeIds = await GamificationPropertySeeds
+            .SeedMixedTenantPointsAsync(db, tenantA, tenantB, homeCount, otherCount)
+            .ConfigureAwait(false);
 
-        Assert.All(dto.Entries, e => Assert.Equal(tenantA, e.TenantId));
-        Assert.DoesNotContain(dto.Entries, e => e.TenantId == tenantB);
-        Assert.True(dto.Entries.Count <= Math.Min(limit, homeCount));
+        LeaderboardDto dto = await mediator
+            .Send(new GetLeaderboardQuery(tenantA, limit), CancellationToken.None)
+            .ConfigureAwait(false);
+
         Assert.Equal(tenantA, dto.TenantId);
+        Assert.All(dto.Entries, e => Assert.Equal(tenantA, e.TenantId));
+        Assert.All(dto.Entries, e => Assert.Contains(e.StudentId, homeIds));
+        Assert.True(dto.Entries.Count <= Math.Min(limit, homeCount));
+        Assert.DoesNotContain(dto.Entries, e => e.TenantId == tenantB);
+    }
+
+    private static int OracleModuleAward() => SpecBaseAward;
+
+    private static int OracleAssessmentAward(int scorePercent) =>
+        scorePercent >= SpecBonusThreshold ? OracleBonus(SpecBaseAward) : SpecBaseAward;
+
+    private static int OracleBonus(int basePoints) =>
+        (int)decimal.Round(basePoints * SpecBonusMultiplier, MidpointRounding.AwayFromZero);
+
+    private static Task PublishCompletionAsync(
+        IPublisher publisher,
+        Guid tenantId,
+        Guid studentId,
+        bool moduleCompletion,
+        int score)
+    {
+        if (moduleCompletion)
+        {
+            return publisher.Publish(
+                new ModuleCompletedNotification(studentId, Guid.NewGuid(), tenantId),
+                CancellationToken.None);
+        }
+
+        return publisher.Publish(
+            new AssessmentSubmittedNotification(
+                studentId,
+                Guid.NewGuid(),
+                Guid.NewGuid(),
+                tenantId,
+                score),
+            CancellationToken.None);
     }
 }

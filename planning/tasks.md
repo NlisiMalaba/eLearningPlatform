@@ -181,16 +181,16 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 16: Advanced Extension Offer Above 85% — Validates: Requirements 6.3**
     - **Property 17: No Grade Advancement Without Passing Score — Validates: Requirements 6.6**
 
-- [ ] 14. Gamification feature — commands, handlers, and endpoints
-  - [ ] 14.1 Implement Gamification command/query handlers
+- [x] 14. Gamification feature — commands, handlers, and endpoints
+  - [x] 14.1 Implement Gamification command/query handlers
     - Implement `AwardPointsCommandHandler` as a `INotificationHandler<ModuleCompletedNotification>` and `INotificationHandler<AssessmentSubmittedNotification>`; apply bonus multiplier for scores >= 85%
     - Implement `CheckAndAwardBadgesCommandHandler` for all four milestone types: `FirstModule`, `FiveConsecutiveDays`, `SubjectMastery`, `GradeCompletion`; on badge award, queue certificate generation job and publish `BadgeAwardedNotification`
     - Implement `GetLeaderboardQueryHandler` with RLS ensuring only students from the requesting tenant appear
     - _Requirements: 9.3, 9.4, 9.5, 9.6_
-  - [ ] 14.2 Add Gamification API endpoints
+  - [x] 14.2 Add Gamification API endpoints
     - `GET /gamification/{studentId}/points`, `GET /gamification/{studentId}/badges`, `GET /gamification/leaderboard/{tenantId}`
     - _Requirements: 9.3, 9.4, 9.5_
-  - [ ]* 14.3 Write property tests for Gamification (Properties 25, 26, 27)
+  - [x]* 14.3 Write property tests for Gamification (Properties 25, 26, 27)
     - **Property 25: Points Awarded on Module and Assessment Completion — Validates: Requirements 9.3**
     - **Property 26: Badge Awarded on Milestone Events — Validates: Requirements 9.4, 9.6**
     - **Property 27: Leaderboard Tenant Isolation — Validates: Requirements 9.5**
