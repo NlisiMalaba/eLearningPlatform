@@ -1,5 +1,4 @@
 using EduZim.Application.Common.Interfaces;
-using EduZim.Application.Common.Models;
 using EduZim.Application.Exceptions;
 using EduZim.Application.Notifications.Services;
 using EduZim.Domain.Entities;
@@ -15,17 +14,20 @@ public sealed class QueueNotificationCommandHandler : IRequestHandler<QueueNotif
     private readonly IEduZimDbContext _db;
     private readonly IEmailService _emailService;
     private readonly ISmsService _smsService;
+    private readonly INotificationBackgroundJobs _jobs;
     private readonly ILogger<QueueNotificationCommandHandler> _logger;
 
     public QueueNotificationCommandHandler(
         IEduZimDbContext db,
         IEmailService emailService,
         ISmsService smsService,
+        INotificationBackgroundJobs jobs,
         ILogger<QueueNotificationCommandHandler> logger)
     {
         _db = db;
         _emailService = emailService;
         _smsService = smsService;
+        _jobs = jobs;
         _logger = logger;
     }
 
@@ -39,9 +41,12 @@ public sealed class QueueNotificationCommandHandler : IRequestHandler<QueueNotif
 
         await TryDispatchInAppAsync(request, preference, now, ct).ConfigureAwait(false);
         await TryDispatchEmailAsync(request, user, preference, now, ct).ConfigureAwait(false);
-        await TryDispatchSmsAsync(request, user, preference, now, ct).ConfigureAwait(false);
+        Guid? failedSmsId = await TryDispatchSmsAsync(request, user, preference, now, ct).ConfigureAwait(false);
 
         await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        if (failedSmsId is Guid smsId)
+            _jobs.ScheduleSmsRetry(request.TenantId, smsId);
+
         _logger.LogInformation("Queued notification type {Type} for user {UserId}.", request.Type, request.UserId);
         return Unit.Value;
     }
@@ -96,11 +101,13 @@ public sealed class QueueNotificationCommandHandler : IRequestHandler<QueueNotif
             return;
         }
 
-        NotificationStatus status = await SendEmailAsync(request, user.Email, ct).ConfigureAwait(false);
+        NotificationStatus status = await NotificationDelivery
+            .SendEmailAsync(_emailService, _logger, request.Type, user.Email, request.Message, ct)
+            .ConfigureAwait(false);
         await AddRowAsync(request, NotificationChannel.Email, status, now, ct).ConfigureAwait(false);
     }
 
-    private async Task TryDispatchSmsAsync(
+    private async Task<Guid?> TryDispatchSmsAsync(
         QueueNotificationCommand request,
         ApplicationUser user,
         NotificationPreference? preference,
@@ -108,60 +115,22 @@ public sealed class QueueNotificationCommandHandler : IRequestHandler<QueueNotif
         CancellationToken ct)
     {
         if (!NotificationChannelRules.IsEnabled(preference, request.Type, NotificationChannel.Sms))
-            return;
+            return null;
         if (string.IsNullOrWhiteSpace(user.PhoneNumber))
         {
             _logger.LogDebug("Skipping SMS notification; recipient has no phone number.");
-            return;
+            return null;
         }
 
-        NotificationStatus status = await SendSmsAsync(request, user.PhoneNumber, ct).ConfigureAwait(false);
-        await AddRowAsync(request, NotificationChannel.Sms, status, now, ct).ConfigureAwait(false);
+        NotificationStatus status = await NotificationDelivery
+            .SendSmsAsync(_smsService, _logger, request.Type, user.PhoneNumber, request.Message, ct)
+            .ConfigureAwait(false);
+        Notification row = await AddRowAsync(request, NotificationChannel.Sms, status, now, ct)
+            .ConfigureAwait(false);
+        return status == NotificationStatus.Failed ? row.Id : null;
     }
 
-    private async Task<NotificationStatus> SendEmailAsync(
-        QueueNotificationCommand request,
-        string email,
-        CancellationToken ct)
-    {
-        try
-        {
-            await _emailService
-                .SendAsync(
-                    email,
-                    NotificationChannelRules.EmailSubject(request.Type),
-                    NotificationChannelRules.EmailHtmlBody(request.Message),
-                    ct)
-                .ConfigureAwait(false);
-            return NotificationStatus.Delivered;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Email notification failed for type {Type}.", request.Type);
-            return NotificationStatus.Failed;
-        }
-    }
-
-    private async Task<NotificationStatus> SendSmsAsync(
-        QueueNotificationCommand request,
-        string phoneNumber,
-        CancellationToken ct)
-    {
-        try
-        {
-            SmsResult result = await _smsService
-                .SendAsync(phoneNumber, NotificationChannelRules.TruncateSms(request.Message), ct)
-                .ConfigureAwait(false);
-            return result.Success ? NotificationStatus.Delivered : NotificationStatus.Failed;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "SMS notification failed for type {Type}.", request.Type);
-            return NotificationStatus.Failed;
-        }
-    }
-
-    private async Task AddRowAsync(
+    private async Task<Notification> AddRowAsync(
         QueueNotificationCommand request,
         NotificationChannel channel,
         NotificationStatus status,
@@ -183,5 +152,6 @@ public sealed class QueueNotificationCommandHandler : IRequestHandler<QueueNotif
             UpdatedAt = now,
         };
         await _db.Notifications.AddAsync(row, ct).ConfigureAwait(false);
+        return row;
     }
 }

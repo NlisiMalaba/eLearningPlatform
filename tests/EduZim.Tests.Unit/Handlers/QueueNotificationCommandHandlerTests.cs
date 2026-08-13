@@ -154,12 +154,14 @@ public sealed class QueueNotificationCommandHandlerTests
         Mock<ISmsService> sms = new();
         sms.Setup(s => s.SendAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(new SmsResult { Success = false, ErrorMessage = "gateway down" });
+        Mock<INotificationBackgroundJobs> jobs = new();
         QueueNotificationCommandHandler handler = CreateHandler(
             [User(tenantId, userId, "a@example.com", "+263771000000")],
             [Preference(tenantId, userId, NotificationType.LiveClassroomReminder, false, false, true)],
             captured,
             new Mock<IEmailService>(),
-            sms);
+            sms,
+            jobs);
 
         await handler.Handle(
             new QueueNotificationCommand(tenantId, userId, NotificationType.LiveClassroomReminder, "Starts soon"),
@@ -169,6 +171,7 @@ public sealed class QueueNotificationCommandHandlerTests
         Assert.Equal(NotificationChannel.Sms, smsRow.Channel);
         Assert.Equal(NotificationStatus.Failed, smsRow.Status);
         Assert.Equal(0, smsRow.RetryCount);
+        jobs.Verify(j => j.ScheduleSmsRetry(tenantId, smsRow.Id), Times.Once);
     }
 
     [Fact]
@@ -269,7 +272,8 @@ public sealed class QueueNotificationCommandHandlerTests
         List<NotificationPreference> preferences,
         List<Notification> captured,
         Mock<IEmailService> email,
-        Mock<ISmsService> sms)
+        Mock<ISmsService> sms,
+        Mock<INotificationBackgroundJobs>? jobs = null)
     {
         Mock<IEduZimDbContext> db = new();
         db.Setup(x => x.SetSessionTenantIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -285,10 +289,12 @@ public sealed class QueueNotificationCommandHandlerTests
                 (Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry<Notification>)null!));
         db.Setup(x => x.Notifications).Returns(notifications.Object);
 
+        Mock<INotificationBackgroundJobs> backgroundJobs = jobs ?? new Mock<INotificationBackgroundJobs>();
         return new QueueNotificationCommandHandler(
             db.Object,
             email.Object,
             sms.Object,
+            backgroundJobs.Object,
             NullLogger<QueueNotificationCommandHandler>.Instance);
     }
 }

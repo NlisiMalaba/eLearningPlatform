@@ -18,6 +18,7 @@ using EduZim.Infrastructure.Content;
 using EduZim.Infrastructure.Storage;
 using EduZim.Infrastructure.Assessments;
 using EduZim.Infrastructure.Gamification;
+using EduZim.Infrastructure.Notifications;
 using EduZim.Infrastructure.Tenants;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -148,6 +149,8 @@ public static class DependencyInjection
         services.AddScoped<IAssessmentBackgroundJobs, AssessmentBackgroundJobs>();
         services.AddScoped<AssessmentTimedAutoSubmitJob>();
         services.AddScoped<IGamificationBackgroundJobs, GamificationBackgroundJobs>();
+        services.AddScoped<INotificationBackgroundJobs, NotificationBackgroundJobs>();
+        services.AddScoped<RetryFailedSmsJob>();
         services.AddScoped<BadgeCertificateGenerationService>();
         services.AddScoped<GenerateBadgeCertificateJob>();
         services.AddScoped<SubscriptionRenewalReminderJob>();
