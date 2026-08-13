@@ -26,6 +26,8 @@ public interface IEduZimDbContext
     DbSet<ClassEnrollment> ClassEnrollments { get; }
     DbSet<AssessmentClassAssignment> AssessmentClassAssignments { get; }
     DbSet<StudentProgress> StudentProgresses { get; }
+    DbSet<StudentPoints> StudentPoints { get; }
+    DbSet<Badge> Badges { get; }
     DbSet<Notification> Notifications { get; }
 
     /// <summary>Sets PostgreSQL <c>app.current_tenant_id</c> for row-level security (e.g. Hangfire jobs).</summary>

@@ -110,7 +110,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 30: Parent Invite Code Round Trip — Validates: Requirements 10.3**
     - **Property 7: Subscription Data Preservation — Validates: Requirements 2.6, 11.6**
 
-- [ ] 10. Billing feature — commands, handlers, and endpoints
+- [x] 10. Billing feature — commands, handlers, and endpoints
   - [x] 10.1 Implement Billing command/query handlers
     - Implement `CreateSubscriptionCommandHandler` for monthly, termly, and yearly cycles
     - Implement `CalculateSchoolFeeQueryHandler` as `UnitPrice(cycle) * studentCount`

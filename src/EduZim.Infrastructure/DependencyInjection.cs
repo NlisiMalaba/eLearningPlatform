@@ -17,6 +17,7 @@ using Amazon.S3;
 using EduZim.Infrastructure.Content;
 using EduZim.Infrastructure.Storage;
 using EduZim.Infrastructure.Assessments;
+using EduZim.Infrastructure.Gamification;
 using EduZim.Infrastructure.Tenants;
 using Hangfire;
 using Hangfire.PostgreSql;
@@ -146,6 +147,9 @@ public static class DependencyInjection
         services.AddScoped<ContentPermanentDeletionJob>();
         services.AddScoped<IAssessmentBackgroundJobs, AssessmentBackgroundJobs>();
         services.AddScoped<AssessmentTimedAutoSubmitJob>();
+        services.AddScoped<IGamificationBackgroundJobs, GamificationBackgroundJobs>();
+        services.AddScoped<BadgeCertificateGenerationService>();
+        services.AddScoped<GenerateBadgeCertificateJob>();
         services.AddScoped<SubscriptionRenewalReminderJob>();
         services.AddScoped<AdaptiveLearningWeeklySummaryJob>();
 

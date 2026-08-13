@@ -130,4 +130,19 @@ public static class TenantAccessHelper
                 tenantId,
                 tenantId);
     }
+
+    /// <summary>School leaderboard: students, teachers, and school admins in the tenant (requirement 9.5).</summary>
+    public static void EnsureCanViewLeaderboard(ICurrentUser user, Guid tenantId)
+    {
+        if (user.Role == UserRole.PlatformAdmin)
+            return;
+        EnsureCanAccessTenantScope(user, tenantId);
+        if (user.Role is UserRole.Student or UserRole.Teacher or UserRole.SchoolAdmin)
+            return;
+
+        throw new TenantAccessViolationException(
+            "This role cannot view the tenant leaderboard.",
+            tenantId,
+            tenantId);
+    }
 }
