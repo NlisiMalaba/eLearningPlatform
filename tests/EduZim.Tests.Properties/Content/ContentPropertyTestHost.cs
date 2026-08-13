@@ -3,6 +3,7 @@ using EduZim.Application.Common.Configuration;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Domain.Entities;
 using EduZim.Infrastructure.Persistence;
+using EduZim.Tests.Properties.Gamification;
 using EduZim.Tests.Properties.Tenants;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -36,6 +37,7 @@ internal static class ContentPropertyTestHost
         var jobs = recordingJobs ?? new RecordingContentBackgroundJobs();
         services.AddSingleton(_ => jobs);
         services.AddSingleton<IContentBackgroundJobs>(sp => sp.GetRequiredService<RecordingContentBackgroundJobs>());
+        services.AddSingleton<IGamificationBackgroundJobs, NoOpGamificationBackgroundJobs>();
 
         services.AddSingleton<FakeStorageService>();
         services.AddSingleton<IStorageService>(sp => sp.GetRequiredService<FakeStorageService>());

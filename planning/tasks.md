@@ -195,11 +195,11 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 26: Badge Awarded on Milestone Events — Validates: Requirements 9.4, 9.6**
     - **Property 27: Leaderboard Tenant Isolation — Validates: Requirements 9.5**
 
-- [ ] 15. Checkpoint — core feature handlers
+- [x] 15. Checkpoint — core feature handlers
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 16. Notification feature — commands, handlers, and endpoints
-  - [ ] 16.1 Implement Notification command/query handlers
+  - [x] 16.1 Implement Notification command/query handlers
     - Implement `QueueNotificationCommandHandler`: route to in-app, email (`IEmailService`), or SMS (`ISmsService`) based on user's `NotificationPreferences`
     - Implement in-app notification storage and `GetInAppNotificationsQueryHandler`
     - Implement `UpdateNotificationPreferencesCommandHandler`

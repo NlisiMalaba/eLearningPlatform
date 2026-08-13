@@ -3,6 +3,7 @@ using EduZim.Application.Common.Configuration;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Domain.Entities;
 using EduZim.Infrastructure.Persistence;
+using EduZim.Tests.Properties.Gamification;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -31,6 +32,7 @@ internal static class TenantPropertyTestHost
         services.AddSingleton<MutableCurrentUser>();
         services.AddSingleton<ICurrentUser>(sp => sp.GetRequiredService<MutableCurrentUser>());
         services.AddSingleton<ITenantBackgroundJobs, NoOpTenantBackgroundJobs>();
+        services.AddSingleton<IGamificationBackgroundJobs, NoOpGamificationBackgroundJobs>();
         services.AddScoped<IEduZimDbContext>(sp => sp.GetRequiredService<EduZimDbContext>());
 
         services

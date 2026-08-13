@@ -35,6 +35,7 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<StudentPoints> StudentPoints => Set<StudentPoints>();
     public DbSet<Badge> Badges => Set<Badge>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
     public DbSet<OfflineSyncQueue> OfflineSyncQueues => Set<OfflineSyncQueue>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
