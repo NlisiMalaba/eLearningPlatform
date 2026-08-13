@@ -6,6 +6,7 @@ using EduZim.Application;
 using EduZim.Application.Common.Configuration;
 using EduZim.Infrastructure;
 using EduZim.Infrastructure.Jobs;
+using EduZim.Infrastructure.Hubs;
 using Hangfire;
 using Microsoft.Extensions.Options;
 using Microsoft.AspNetCore.OpenApi;
@@ -91,6 +92,7 @@ app.UseMiddleware<TenantMiddleware>();
 app.UseMiddleware<AuditMiddleware>();
 
 app.MapControllers();
+app.MapHub<ClassroomHub>(ClassroomHubRoutes.Path).RequireAuthorization();
 
 if (app.Environment.IsDevelopment())
 {

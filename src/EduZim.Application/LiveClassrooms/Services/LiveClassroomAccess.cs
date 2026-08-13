@@ -11,21 +11,11 @@ public static class LiveClassroomAccess
     public static void EnsureCanSchedule(ICurrentUser user, Guid tenantId) =>
         TenantAccessHelper.EnsureCanManageSchoolContent(user, tenantId);
 
-    public static void EnsureCanEnd(ICurrentUser user, Guid tenantId, ClassroomSession session)
-    {
-        if (user.Role == UserRole.PlatformAdmin)
-            return;
-        TenantAccessHelper.EnsureCanAccessTenantScope(user, tenantId);
-        if (user.UserId == session.TeacherUserId)
-            return;
-        if (user.Role == UserRole.SchoolAdmin)
-            return;
+    public static void EnsureCanEnd(ICurrentUser user, Guid tenantId, ClassroomSession session) =>
+        EnsureSessionOperator(user, tenantId, session, "You are not allowed to end this classroom session.");
 
-        throw new TenantAccessViolationException(
-            "You are not allowed to end this classroom session.",
-            tenantId,
-            session.Id);
-    }
+    public static void EnsureCanControl(ICurrentUser user, Guid tenantId, ClassroomSession session) =>
+        EnsureSessionOperator(user, tenantId, session, "You are not allowed to control this classroom session.");
 
     public static void EnsureCanJoin(ICurrentUser user, Guid tenantId, ClassroomSession session, bool isEnrolled)
     {
@@ -54,4 +44,21 @@ public static class LiveClassroomAccess
 
     public static void EnsureCanViewAttendance(ICurrentUser user, Guid tenantId, ClassroomSession session) =>
         EnsureCanEnd(user, tenantId, session);
+
+    private static void EnsureSessionOperator(
+        ICurrentUser user,
+        Guid tenantId,
+        ClassroomSession session,
+        string message)
+    {
+        if (user.Role == UserRole.PlatformAdmin)
+            return;
+        TenantAccessHelper.EnsureCanAccessTenantScope(user, tenantId);
+        if (user.UserId == session.TeacherUserId)
+            return;
+        if (user.Role == UserRole.SchoolAdmin)
+            return;
+
+        throw new TenantAccessViolationException(message, tenantId, session.Id);
+    }
 }

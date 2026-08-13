@@ -22,10 +22,12 @@ using EduZim.Infrastructure.Ai;
 using EduZim.Infrastructure.Notifications;
 using EduZim.Infrastructure.Tenants;
 using EduZim.Infrastructure.Video;
+using EduZim.Infrastructure.Hubs;
 using Hangfire;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.SignalR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
@@ -127,6 +129,20 @@ public static class DependencyInjection
                     ValidateLifetime = true,
                     ClockSkew = TimeSpan.FromMinutes(2),
                 };
+                options.Events = new JwtBearerEvents
+                {
+                    OnMessageReceived = context =>
+                    {
+                        string? accessToken = context.Request.Query["access_token"];
+                        if (!string.IsNullOrEmpty(accessToken)
+                            && context.HttpContext.Request.Path.StartsWithSegments(ClassroomHubRoutes.Path))
+                        {
+                            context.Token = accessToken;
+                        }
+
+                        return Task.CompletedTask;
+                    },
+                };
             });
 
         services.AddScoped<JwtAccessTokenIssuer>();
@@ -166,6 +182,20 @@ public static class DependencyInjection
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();
+
+        services.AddSignalR(options =>
+        {
+            options.KeepAliveInterval = TimeSpan.FromSeconds(15);
+            options.ClientTimeoutInterval = TimeSpan.FromSeconds(60);
+            options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+            options.MaximumParallelInvocationsPerClient = 2;
+            options.MaximumReceiveMessageSize = 32 * 1024;
+        })
+            .AddHubOptions<ClassroomHub>(options =>
+            {
+                options.AddFilter<ClassroomHubCurrentUserFilter>();
+            });
+        services.AddScoped<ClassroomHubCurrentUserFilter>();
 
         return services;
     }

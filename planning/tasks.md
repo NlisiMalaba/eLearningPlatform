@@ -231,21 +231,21 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - `POST /zimbot/chat`, `GET /zimbot/logs/{tenantId}`
     - _Requirements: 5.1, 5.7_
 
-- [ ] 18. Live Classroom feature — commands, handlers, SignalR hub, and endpoints
+  - [x] 18. Live Classroom feature — commands, handlers, SignalR hub, and endpoints
   - [x] 18.1 Implement Live Classroom command/query handlers
     - Implement `ScheduleSessionCommandHandler`: create `ClassroomSession` record; publish `ClassroomScheduledNotification` handled by Notification handlers to send 24-hour advance notifications
     - Implement `GetJoinTokenQueryHandler` calling `IVideoService` (Daily.co / Jitsi)
     - Implement `EndSessionCommandHandler`: record attendance (join time + duration) for each participant; trigger recording retrieval from `IVideoService`
     - Implement `GetRecordingUrlQueryHandler`: return URL only within 30 days of `SessionEndTime`; return null after expiry
     - _Requirements: 13.1, 13.2, 13.5, 13.6, 13.7_
-  - [ ] 18.2 Implement SignalR hub for real-time session control
+  - [x] 18.2 Implement SignalR hub for real-time session control
     - Implement `ClassroomHub` in Infrastructure for participant presence, screen share signalling, and teacher audio/video mute controls
     - Support minimum 50 concurrent participants
     - _Requirements: 13.3, 13.4, 13.6_
-  - [ ] 18.3 Add Live Classroom API endpoints
+  - [x] 18.3 Add Live Classroom API endpoints
     - `POST /classrooms`, `GET /classrooms/{id}/join`, `POST /classrooms/{id}/end`, `GET /classrooms/{id}/attendance`, `GET /classrooms/{id}/recording`
     - _Requirements: 13.1, 13.5, 13.7_
-  - [ ]* 18.4 Write property tests for Live Classroom (Properties 34, 35, 36)
+  - [x]* 18.4 Write property tests for Live Classroom (Properties 34, 35, 36)
     - **Property 34: Live Classroom Notification Lead Time — Validates: Requirements 13.2**
     - **Property 35: Attendance Record on Session End — Validates: Requirements 13.5**
     - **Property 36: Recording Availability Window — Validates: Requirements 13.7**

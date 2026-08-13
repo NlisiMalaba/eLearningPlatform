@@ -1,5 +1,6 @@
 using System.Reflection;
 using EduZim.Application.Common.Behaviours;
+using EduZim.Application.LiveClassrooms.Services;
 using FluentValidation;
 using MediatR;
 using Microsoft.Extensions.DependencyInjection;
@@ -15,6 +16,8 @@ public static class DependencyInjection
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehaviour<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehaviour<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(TenantScopeBehaviour<,>));
+        services.AddSingleton<IClassroomPresenceTracker, ClassroomPresenceTracker>();
+        services.AddScoped<IClassroomRealtimeService, ClassroomRealtimeService>();
         return services;
     }
 }
