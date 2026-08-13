@@ -198,7 +198,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
 - [x] 15. Checkpoint — core feature handlers
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 16. Notification feature — commands, handlers, and endpoints
+- [x] 16. Notification feature — commands, handlers, and endpoints
   - [x] 16.1 Implement Notification command/query handlers
     - Implement `QueueNotificationCommandHandler`: route to in-app, email (`IEmailService`), or SMS (`ISmsService`) based on user's `NotificationPreferences`
     - Implement in-app notification storage and `GetInAppNotificationsQueryHandler`
@@ -210,10 +210,10 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - [x] 16.3 Implement inactivity alert Hangfire job
     - Recurring job querying students with `LastLoginAt < NOW() - 7 days`; publish `StudentInactiveNotification` handled by `QueueNotificationCommandHandler`
     - _Requirements: 10.6_
-  - [ ] 16.4 Add Notification API endpoints
+  - [x] 16.4 Add Notification API endpoints
     - `GET /notifications/{userId}`, `PUT /notifications/{id}/read`, `PUT /users/{userId}/notification-preferences`
     - _Requirements: 15.1, 15.4_
-  - [ ]* 16.5 Write property tests for Notification (Properties 32, 40, 41)
+  - [x]* 16.5 Write property tests for Notification (Properties 32, 40, 41)
     - **Property 32: Inactivity Notification After 7 Days — Validates: Requirements 10.6**
     - **Property 40: Notification Routing Respects User Preferences — Validates: Requirements 15.4**
     - **Property 41: SMS Retry Logic — Validates: Requirements 15.5**

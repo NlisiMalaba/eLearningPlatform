@@ -11,4 +11,6 @@ internal static class ApiRoutes
     public const string V1Assessments = "api/v1/assessments";
     public const string V1Adaptive = "api/v1/adaptive";
     public const string V1Gamification = "api/v1/gamification";
+    public const string V1Notifications = "api/v1/notifications";
+    public const string V1Users = "api/v1/users";
 }

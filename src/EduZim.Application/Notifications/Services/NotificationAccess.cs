@@ -38,4 +38,19 @@ internal static class NotificationAccess
             tenantId,
             targetUserId);
     }
+
+    public static void EnsureCanMarkRead(ICurrentUser user, Guid tenantId, Guid targetUserId)
+    {
+        if (user.Role == UserRole.PlatformAdmin)
+            return;
+
+        TenantAccessHelper.EnsureCanAccessTenantScope(user, tenantId);
+        if (user.UserId == targetUserId)
+            return;
+
+        throw new TenantAccessViolationException(
+            "You may only mark your own notifications as read.",
+            tenantId,
+            targetUserId);
+    }
 }
