@@ -87,6 +87,8 @@ public sealed class TenantPermanentDeletionService : ITenantPermanentDeletionSer
             .ConfigureAwait(false);
         await _db.ZimBotInteractions.Where(z => z.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);
+        await _db.SyncConflictLogs.Where(s => s.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
+            .ConfigureAwait(false);
         await _db.OfflineSyncQueues.Where(o => o.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)
             .ConfigureAwait(false);
         await _db.AuditLogs.Where(a => a.TenantId == tenantId).ExecuteDeleteAsync(cancellationToken)

@@ -41,6 +41,7 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<ClassroomParticipant> ClassroomParticipants => Set<ClassroomParticipant>();
     public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
     public DbSet<OfflineSyncQueue> OfflineSyncQueues => Set<OfflineSyncQueue>();
+    public DbSet<SyncConflictLog> SyncConflictLogs => Set<SyncConflictLog>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<TenantInviteCode> TenantInviteCodes => Set<TenantInviteCode>();

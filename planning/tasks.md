@@ -250,13 +250,13 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 35: Attendance Record on Session End — Validates: Requirements 13.5**
     - **Property 36: Recording Availability Window — Validates: Requirements 13.7**
 
-- [ ] 19. Sync feature — commands and handlers
-  - [ ] 19.1 Implement Sync command handlers
+- [x] 19. Sync feature — commands and handlers
+  - [x] 19.1 Implement Sync command handlers
     - Implement `ProcessOfflineQueueCommandHandler`: read pending `OfflineSyncQueue` records; apply to `StudentProgress` and `AssessmentAttempt` tables
     - Implement `ResolveConflictCommandHandler`: compare `LocalTimestamp` against server-side record; retain later timestamp (last-write-wins); write `SyncConflictLog` entry for every conflict
     - Expose `POST /sync/upload` endpoint for mobile/PWA to submit offline queue on connectivity restore
     - _Requirements: 12.2, 12.5_
-  - [ ]* 19.2 Write property test for Sync (Property 33)
+  - [x]* 19.2 Write property test for Sync (Property 33)
     - **Property 33: Offline Sync Conflict Resolution by Timestamp — Validates: Requirements 12.5**
 
 - [ ] 20. Marketplace feature — commands, handlers, and endpoints

@@ -34,6 +34,8 @@ public interface IEduZimDbContext
     DbSet<ClassroomSession> ClassroomSessions { get; }
     DbSet<ClassroomParticipant> ClassroomParticipants { get; }
     DbSet<AttendanceRecord> AttendanceRecords { get; }
+    DbSet<OfflineSyncQueue> OfflineSyncQueues { get; }
+    DbSet<SyncConflictLog> SyncConflictLogs { get; }
 
     /// <summary>Sets PostgreSQL <c>app.current_tenant_id</c> for row-level security (e.g. Hangfire jobs).</summary>
     Task SetSessionTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default);
