@@ -78,13 +78,13 @@ internal static class ProgressTestData
         };
     }
 
-    public static Tenant ActiveTenant(Guid tenantId)
+    public static Tenant ActiveTenant(Guid tenantId, TenantTier tier = TenantTier.School)
     {
         return new Tenant
         {
             Id = tenantId,
             Name = "School",
-            Tier = TenantTier.School,
+            Tier = tier,
             Status = TenantStatus.Active,
             Branding = new BrandingSettings { SchoolName = "School", PrimaryColour = "#1976D2" },
             CreatedAt = DateTime.UtcNow,
@@ -108,8 +108,13 @@ internal static class ProgressTestData
         SessionStatus status,
         DateOnly sessionDate,
         int accumulatedSeconds,
-        DateTime lastHeartbeatAt)
+        DateTime lastHeartbeatAt,
+        DateTime? lastInteractionAt = null,
+        DateTime? segmentStartedAt = null,
+        bool restPromptRequired = false)
     {
+        DateTime interactionAt = lastInteractionAt ?? lastHeartbeatAt;
+        DateTime segmentAt = segmentStartedAt ?? lastHeartbeatAt;
         return new StudentSession
         {
             Id = Guid.NewGuid(),
@@ -119,7 +124,10 @@ internal static class ProgressTestData
             SessionDate = sessionDate,
             StartedAt = lastHeartbeatAt,
             LastHeartbeatAt = lastHeartbeatAt,
+            LastInteractionAt = interactionAt,
+            SegmentStartedAt = segmentAt,
             AccumulatedSeconds = accumulatedSeconds,
+            RestPromptRequired = restPromptRequired,
             CreatedAt = lastHeartbeatAt,
             UpdatedAt = lastHeartbeatAt,
         };

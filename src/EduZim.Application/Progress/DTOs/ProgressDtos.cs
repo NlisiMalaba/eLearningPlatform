@@ -45,4 +45,7 @@ public sealed record StudentSessionDto(
     DateOnly SessionDate,
     int AccumulatedSeconds,
     int UsedTodaySeconds,
-    bool LimitReached);
+    bool LimitReached,
+    bool RestPromptRequired,
+    bool ResumePromptRequired,
+    int ContinuousInteractionSeconds);

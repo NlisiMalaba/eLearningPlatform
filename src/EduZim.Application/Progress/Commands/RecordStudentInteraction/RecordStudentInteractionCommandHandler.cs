@@ -8,26 +8,26 @@ using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 
-namespace EduZim.Application.Progress.Commands.RecordStudentSessionHeartbeat;
+namespace EduZim.Application.Progress.Commands.RecordStudentInteraction;
 
-public sealed class RecordStudentSessionHeartbeatCommandHandler
-    : IRequestHandler<RecordStudentSessionHeartbeatCommand, StudentSessionDto>
+public sealed class RecordStudentInteractionCommandHandler
+    : IRequestHandler<RecordStudentInteractionCommand, StudentSessionDto>
 {
     private readonly IEduZimDbContext _db;
     private readonly ICurrentUser _currentUser;
-    private readonly ILogger<RecordStudentSessionHeartbeatCommandHandler> _logger;
+    private readonly ILogger<RecordStudentInteractionCommandHandler> _logger;
 
-    public RecordStudentSessionHeartbeatCommandHandler(
+    public RecordStudentInteractionCommandHandler(
         IEduZimDbContext db,
         ICurrentUser currentUser,
-        ILogger<RecordStudentSessionHeartbeatCommandHandler> logger)
+        ILogger<RecordStudentInteractionCommandHandler> logger)
     {
         _db = db;
         _currentUser = currentUser;
         _logger = logger;
     }
 
-    public async Task<StudentSessionDto> Handle(RecordStudentSessionHeartbeatCommand request, CancellationToken ct)
+    public async Task<StudentSessionDto> Handle(RecordStudentInteractionCommand request, CancellationToken ct)
     {
         ScreenTimeAccess.EnsureCanOperateSession(_currentUser, request.TenantId, request.StudentId);
         await _db.SetSessionTenantIdAsync(request.TenantId, ct).ConfigureAwait(false);
@@ -41,20 +41,21 @@ public sealed class RecordStudentSessionHeartbeatCommandHandler
         DateOnly today = ScreenTimeLimitRules.CalendarDay(utcNow);
         ScreenTimeSessionMaintenance.CloseStaleSessions(sessions, today, utcNow);
         StudentSession session = FindActive(sessions, request.StudentId, today);
+        bool restAlreadyRequired = session.RestPromptRequired;
 
-        ApplyTick(session, sessions, limitSeconds, today, utcNow);
-        PreschoolSessionApplier.ApplyHeartbeat(session, tier, utcNow);
+        PreschoolSessionApplier.ApplyInteraction(session, tier, utcNow);
         await _db.SaveChangesAsync(ct).ConfigureAwait(false);
+        if (!restAlreadyRequired)
+            LogRestPromptIfNeeded(session, request.StudentId);
 
         int used = ScreenTimeLimitRules.UsedTodaySeconds(
             sessions.Select(StudentSessionMapper.ToSlice).ToList(),
             today,
             utcNow);
-        LogIfPaused(session, request.StudentId, limitSeconds, used);
         return StudentSessionMapper.ToDto(session, used, limitSeconds, utcNow);
     }
 
-    private async Task<int?> LoadLimitAsync(RecordStudentSessionHeartbeatCommand request, CancellationToken ct)
+    private async Task<int?> LoadLimitAsync(RecordStudentInteractionCommand request, CancellationToken ct)
     {
         ApplicationUser? student = await _db.Users
             .AsNoTracking()
@@ -71,7 +72,7 @@ public sealed class RecordStudentSessionHeartbeatCommandHandler
     }
 
     private async Task<List<StudentSession>> LoadSessionsAsync(
-        RecordStudentSessionHeartbeatCommand request,
+        RecordStudentInteractionCommand request,
         CancellationToken ct)
     {
         return await _db.StudentSessions
@@ -90,46 +91,14 @@ public sealed class RecordStudentSessionHeartbeatCommandHandler
         return session;
     }
 
-    private static void ApplyTick(
-        StudentSession session,
-        List<StudentSession> sessions,
-        int? limitSeconds,
-        DateOnly today,
-        DateTime utcNow)
+    private void LogRestPromptIfNeeded(StudentSession session, Guid studentId)
     {
-        int usedByOthers = ScreenTimeLimitRules.UsedTodaySeconds(
-            sessions.Where(s => s.Id != session.Id).Select(StudentSessionMapper.ToSlice).ToList(),
-            today,
-            utcNow);
-        ScreenTimeLimitRules.TickResult tick = ScreenTimeLimitRules.Tick(
-            session.AccumulatedSeconds,
-            session.LastHeartbeatAt,
-            utcNow,
-            usedByOthers,
-            limitSeconds);
-        session.AccumulatedSeconds = tick.AccumulatedSeconds;
-        session.LastHeartbeatAt = utcNow;
-        session.UpdatedAt = utcNow;
-        if (tick.Pause)
-            session.Status = SessionStatus.Paused;
-    }
-
-    private void LogIfPaused(StudentSession session, Guid studentId, int? limitSeconds, int used)
-    {
-        if (session.Status != SessionStatus.Paused)
+        if (!session.RestPromptRequired)
             return;
-
-        if (ScreenTimeLimitRules.IsLimitReached(limitSeconds, used))
-        {
-            _logger.LogInformation(
-                "Paused learning session for student {StudentId}; daily screen time limit reached.",
-                studentId);
-            return;
-        }
 
         _logger.LogInformation(
-            "Paused learning session for student {StudentId}; no interaction for {IdleSeconds} seconds.",
+            "Rest prompt required for preschool session of student {StudentId} after {Seconds} seconds.",
             studentId,
-            PreschoolSessionRules.InactivityPauseAfterSeconds);
+            PreschoolSessionRules.RestPromptAfterSeconds);
     }
 }

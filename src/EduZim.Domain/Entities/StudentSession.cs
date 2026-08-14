@@ -10,6 +10,11 @@ public class StudentSession : TenantEntity
     public DateOnly SessionDate { get; set; }
     public DateTime StartedAt { get; set; }
     public DateTime LastHeartbeatAt { get; set; }
+    public DateTime? LastInteractionAt { get; set; }
+    public DateTime? SegmentStartedAt { get; set; }
     public DateTime? EndedAt { get; set; }
     public int AccumulatedSeconds { get; set; }
+
+    /// <summary>True when a preschool session has reached the 20-minute continuous-interaction rest prompt.</summary>
+    public bool RestPromptRequired { get; set; }
 }

@@ -117,6 +117,6 @@ public sealed class StartStudentSessionCommandHandler
             sessions.Select(StudentSessionMapper.ToSlice).ToList(),
             today,
             utcNow);
-        return StudentSessionMapper.ToDto(session, used, limitSeconds);
+        return StudentSessionMapper.ToDto(session, used, limitSeconds, utcNow);
     }
 }

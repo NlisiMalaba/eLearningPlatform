@@ -17,9 +17,50 @@ using Microsoft.Extensions.DependencyInjection;
 
 namespace EduZim.Tests.Properties.Progress;
 
-/// <summary>Feature: elearning-app-zimbabwe — Progress properties 13, 14, 29, 31.</summary>
+/// <summary>Feature: elearning-app-zimbabwe — Progress properties 12, 13, 14, 29, 31.</summary>
 public sealed class ProgressPropertyTests
 {
+    // Feature: elearning-app-zimbabwe, Property 12: Session Inactivity Pause — Validates: Requirements 3.7
+    [Property(MaxTest = 100)]
+    public async Task Property12_active_toddler_session_pauses_after_sixty_seconds_without_interaction(
+        byte idleExtraRaw,
+        byte accumulatedRaw)
+    {
+        int idleSeconds = PreschoolSessionRules.InactivityPauseAfterSeconds + (idleExtraRaw % 120);
+        using ServiceProvider provider = ProgressPropertyTestHost.Create();
+        using IServiceScope scope = provider.CreateScope();
+        (EduZimDbContext db, IMediator mediator, _, MutableCurrentUser current) =
+            ProgressPropertyFlow.Resolve(provider, scope);
+
+        Guid tenantId = Guid.NewGuid();
+        Guid studentId = Guid.NewGuid();
+        DateTime utcNow = DateTime.UtcNow;
+        DateOnly today = ScreenTimeLimitRules.CalendarDay(utcNow);
+        await ProgressPropertySeeds.SeedTenantAsync(db, tenantId, TenantTier.PreSchool).ConfigureAwait(false);
+        await ProgressPropertySeeds.SeedStudentAsync(db, tenantId, studentId).ConfigureAwait(false);
+        await ProgressPropertySeeds
+            .SeedSessionAsync(
+                db,
+                tenantId,
+                studentId,
+                SessionStatus.Active,
+                today,
+                accumulatedSeconds: accumulatedRaw,
+                lastHeartbeatAt: utcNow,
+                lastInteractionAt: utcNow.AddSeconds(-idleSeconds))
+            .ConfigureAwait(false);
+
+        ProgressPropertyFlow.AsStudent(current, tenantId, studentId);
+        StudentSessionDto dto = await mediator
+            .Send(new RecordStudentSessionHeartbeatCommand(tenantId, studentId), CancellationToken.None)
+            .ConfigureAwait(false);
+
+        Assert.Equal(SessionStatus.Paused, dto.Status);
+        Assert.False(dto.LimitReached);
+        StudentSession row = await db.StudentSessions.SingleAsync().ConfigureAwait(false);
+        Assert.Equal(SessionStatus.Paused, row.Status);
+    }
+
     // Feature: elearning-app-zimbabwe, Property 13: Module Completion Unlocks Next Module — Validates: Requirements 4.4
     [Property(MaxTest = 100)]
     public async Task Property13_completing_module_unlocks_next_in_sequence(byte lengthRaw, byte indexRaw)

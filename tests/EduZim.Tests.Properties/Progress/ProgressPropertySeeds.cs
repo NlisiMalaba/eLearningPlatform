@@ -6,6 +6,25 @@ namespace EduZim.Tests.Properties.Progress;
 
 internal static class ProgressPropertySeeds
 {
+    public static async Task SeedTenantAsync(
+        EduZimDbContext db,
+        Guid tenantId,
+        TenantTier tier = TenantTier.School)
+    {
+        await db.Tenants.AddAsync(
+                new Tenant
+                {
+                    Id = tenantId,
+                    Name = "Preschool",
+                    Tier = tier,
+                    Status = TenantStatus.Active,
+                    Branding = new BrandingSettings { SchoolName = "Preschool", PrimaryColour = "#1976D2" },
+                    CreatedAt = DateTime.UtcNow,
+                })
+            .ConfigureAwait(false);
+        await db.SaveChangesAsync().ConfigureAwait(false);
+    }
+
     public static async Task SeedStudentAsync(
         EduZimDbContext db,
         Guid tenantId,
@@ -124,7 +143,8 @@ internal static class ProgressPropertySeeds
         SessionStatus status,
         DateOnly sessionDate,
         int accumulatedSeconds,
-        DateTime lastHeartbeatAt)
+        DateTime lastHeartbeatAt,
+        DateTime? lastInteractionAt = null)
     {
         await db.StudentSessions.AddAsync(
                 new StudentSession
@@ -136,6 +156,8 @@ internal static class ProgressPropertySeeds
                     SessionDate = sessionDate,
                     StartedAt = lastHeartbeatAt,
                     LastHeartbeatAt = lastHeartbeatAt,
+                    LastInteractionAt = lastInteractionAt,
+                    SegmentStartedAt = lastHeartbeatAt,
                     AccumulatedSeconds = accumulatedSeconds,
                     CreatedAt = lastHeartbeatAt,
                     UpdatedAt = lastHeartbeatAt,

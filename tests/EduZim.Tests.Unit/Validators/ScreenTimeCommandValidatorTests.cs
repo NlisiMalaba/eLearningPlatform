@@ -1,4 +1,6 @@
+using EduZim.Application.Progress.Commands.RecordStudentInteraction;
 using EduZim.Application.Progress.Commands.RecordStudentSessionHeartbeat;
+using EduZim.Application.Progress.Commands.ResumeStudentSession;
 using EduZim.Application.Progress.Commands.SetDailyScreenTimeLimit;
 using EduZim.Application.Progress.Commands.StartStudentSession;
 
@@ -45,9 +47,27 @@ public sealed class ScreenTimeCommandValidatorTests
     [Fact]
     public async Task Heartbeat_valid_command_passes()
     {
-        var validator = new RecordStudentSessionHeartbeatCommandValidator();
+        RecordStudentSessionHeartbeatCommandValidator validator = new();
         FluentValidation.Results.ValidationResult result = await validator.ValidateAsync(
             new RecordStudentSessionHeartbeatCommand(Guid.NewGuid(), Guid.NewGuid()));
+        Assert.True(result.IsValid);
+    }
+
+    [Fact]
+    public async Task Interaction_empty_student_fails()
+    {
+        RecordStudentInteractionCommandValidator validator = new();
+        FluentValidation.Results.ValidationResult result = await validator.ValidateAsync(
+            new RecordStudentInteractionCommand(Guid.NewGuid(), Guid.Empty));
+        Assert.False(result.IsValid);
+    }
+
+    [Fact]
+    public async Task Resume_valid_command_passes()
+    {
+        ResumeStudentSessionCommandValidator validator = new();
+        FluentValidation.Results.ValidationResult result = await validator.ValidateAsync(
+            new ResumeStudentSessionCommand(Guid.NewGuid(), Guid.NewGuid()));
         Assert.True(result.IsValid);
     }
 }

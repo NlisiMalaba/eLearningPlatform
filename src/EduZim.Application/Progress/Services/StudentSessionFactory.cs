@@ -16,7 +16,10 @@ internal static class StudentSessionFactory
             SessionDate = ScreenTimeLimitRules.CalendarDay(utcNow),
             StartedAt = utcNow,
             LastHeartbeatAt = utcNow,
+            LastInteractionAt = utcNow,
+            SegmentStartedAt = utcNow,
             AccumulatedSeconds = 0,
+            RestPromptRequired = false,
             CreatedAt = utcNow,
             UpdatedAt = utcNow,
         };

@@ -296,15 +296,15 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 29: Parent Dashboard Data Completeness — Validates: Requirements 10.1**
     - **Property 31: Screen Time Limit Enforcement — Validates: Requirements 10.5**
 
-- [ ] 22. Pre-school session management
-  - [ ] 22.1 Implement session segment and inactivity handlers
+- [x] 22. Pre-school session management
+  - [x] 22.1 Implement session segment and inactivity handlers
     - Track continuous interaction time per toddler session; display rest prompt after 20 minutes of continuous interaction
     - Transition session `Status` to `Paused` after 60 seconds of no interaction events
     - _Requirements: 3.6, 3.7_
-  - [ ]* 22.2 Write property test for session management (Property 12)
+  - [x]* 22.2 Write property test for session management (Property 12)
     - **Property 12: Session Inactivity Pause — Validates: Requirements 3.7**
 
-- [ ] 23. Checkpoint — feature handlers complete
+- [x] 23. Checkpoint — feature handlers complete
   - Ensure all tests pass, ask the user if questions arise.
 
 - [ ] 24. React Web PWA — foundation and authentication
