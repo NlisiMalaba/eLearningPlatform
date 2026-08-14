@@ -20,6 +20,7 @@ describe("isPublicPath", () => {
   it("allows offline fallback, API, and PWA assets", () => {
     expect(isPublicPath("/~offline")).toBe(true);
     expect(isPublicPath("/api/v1/sync/upload")).toBe(true);
+    expect(isPublicPath("/api/auth/login")).toBe(true);
     expect(isPublicPath("/sw.js")).toBe(true);
     expect(isPublicPath("/manifest.webmanifest")).toBe(true);
     expect(isPublicPath("/icons/icon-192")).toBe(true);

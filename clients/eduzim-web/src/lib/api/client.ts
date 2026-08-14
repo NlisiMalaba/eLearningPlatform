@@ -1,18 +1,50 @@
 import { getClientApiBaseUrl } from "@/lib/config";
 import { ApiError, isBrowserOffline, NetworkError } from "@/lib/api/errors";
+import { refreshSession } from "@/lib/auth/authService";
+import { isAuthPath } from "@/lib/auth/routes";
+import { refreshSessionOnce } from "@/lib/auth/refreshOnce";
+import { notifySessionExpired } from "@/lib/auth/sessionEvents";
+import { safeRedirectPath } from "@/lib/auth/safeRedirect";
 
 type JsonValue = Record<string, unknown> | unknown[] | string | number | boolean | null;
 
-export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
+type ApiFetchInit = RequestInit & {
+  skipAuthRefresh?: boolean;
+};
+
+export async function apiFetch<T>(path: string, init?: ApiFetchInit): Promise<T> {
   if (isBrowserOffline()) {
     throw new NetworkError("Offline");
   }
 
-  const url = `${getClientApiBaseUrl()}${path}`;
+  const response = await send(path, init);
 
-  let response: Response;
+  if (response.status === 401) {
+    if (!init?.skipAuthRefresh) {
+      const refreshed = await refreshSessionOnce(() => refreshSession());
+      if (refreshed) {
+        return apiFetch<T>(path, { ...init, skipAuthRefresh: true });
+      }
+    }
+
+    redirectToLogin();
+  }
+
+  if (!response.ok) {
+    throw new ApiError(response.status, await readErrorDetail(response));
+  }
+
+  if (response.status === 204) {
+    return undefined as T;
+  }
+
+  return (await response.json()) as T;
+}
+
+async function send(path: string, init?: RequestInit): Promise<Response> {
+  const url = `${getClientApiBaseUrl()}${path}`;
   try {
-    response = await fetch(url, {
+    return await fetch(url, {
       ...init,
       credentials: "include",
       headers: {
@@ -28,17 +60,19 @@ export async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> 
 
     throw new NetworkError(error instanceof Error ? error.message : "Network request failed");
   }
+}
 
-  if (!response.ok) {
-    const detail = await readErrorDetail(response);
-    throw new ApiError(response.status, detail);
+function redirectToLogin(): void {
+  if (typeof window === "undefined") {
+    return;
   }
 
-  if (response.status === 204) {
-    return undefined as T;
+  const pathname = window.location.pathname;
+  if (isAuthPath(pathname)) {
+    return;
   }
 
-  return (await response.json()) as T;
+  notifySessionExpired(safeRedirectPath(pathname));
 }
 
 async function readErrorDetail(response: Response): Promise<string> {

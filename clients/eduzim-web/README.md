@@ -9,3 +9,5 @@ Next.js App Router client for EduZim. Offline module content is cached by Serwis
 - `npm test` — unit tests
 
 Set `EDUZIM_API_URL` (see `.env.example`) so the same-origin `/api/v1/*` proxy can reach EduZim.API.
+
+JWTs are stored in httpOnly cookies by `/api/auth/*` route handlers. Do not read tokens from JavaScript.

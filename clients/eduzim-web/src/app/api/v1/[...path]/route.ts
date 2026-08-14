@@ -41,6 +41,18 @@ export async function DELETE(request: NextRequest, context: RouteContext) {
 
 async function proxyRequest(request: NextRequest, context: RouteContext): Promise<NextResponse> {
   const { path } = await context.params;
+  if (isTokenLeakPath(request.method, path)) {
+    return NextResponse.json(
+      {
+        type: "https://eduzim.co.zw/errors/not-found",
+        title: "Not found",
+        status: 404,
+        detail: "Use the /api/auth cookie endpoints for sign-in.",
+      },
+      { status: 404 },
+    );
+  }
+
   const targetUrl = buildTargetUrl(path, request.nextUrl.search);
   const headers = buildForwardHeaders(request);
 
@@ -102,4 +114,13 @@ function buildForwardHeaders(request: NextRequest): Headers {
   }
 
   return headers;
+}
+
+function isTokenLeakPath(method: string, path: string[]): boolean {
+  if (method !== "POST" || path[0] !== "auth") {
+    return false;
+  }
+
+  const action = path[1];
+  return action === "login" || action === "refresh" || action === "logout" || action === "revoke";
 }

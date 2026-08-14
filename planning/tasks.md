@@ -313,7 +313,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Use App Router route groups `(auth)` and `(app)` with `middleware.ts` for protected-route redirects
     - Implement offline indicator banner shown when `navigator.onLine = false`; queue failed mutations in IndexedDB and sync via `POST /sync/upload` on reconnect
     - _Requirements: 12.3, 12.4_
-  - [ ] 24.2 Implement authentication screens and JWT management
+  - [x] 24.2 Implement authentication screens and JWT management
     - Implement App Router pages for login, registration, email verification, and SSO redirect
     - Store JWT and refresh token in httpOnly cookies; implement silent token refresh; `middleware.ts` redirects to login on token expiry
     - _Requirements: 1.1, 1.2, 1.6_
