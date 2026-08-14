@@ -16,6 +16,7 @@ const withSerwist = withSerwistInit({
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
+  transpilePackages: ["three"],
 };
 
 export default withSerwist(nextConfig);

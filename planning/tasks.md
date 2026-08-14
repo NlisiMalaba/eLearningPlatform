@@ -325,7 +325,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 37: Font Size Preference Validation — Validates: Requirements 14.3**
 
 - [ ] 25. Next.js Web PWA — student learning experience
-  - [ ] 25.1 Implement module viewer with content type renderers
+  - [x] 25.1 Implement module viewer with content type renderers
     - Implement Client Component renderers for video (with closed captions), PDF, audio (with transcript link), and quiz content types
     - Implement 3D scene viewer with rotate/zoom/interact controls using Three.js or Babylon.js (`'use client'`)
     - _Requirements: 4.2, 4.3, 4.5, 14.4, 14.6_

@@ -5,6 +5,7 @@ using EduZim.Application.Content.Commands.ArchiveContent;
 using EduZim.Application.Content.Commands.UploadContent;
 using EduZim.Application.Content.Queries.GetCaptions;
 using EduZim.Application.Content.Queries.GetContentById;
+using EduZim.Application.Content.Queries.GetTranscript;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Application.Tenants;
 using EduZim.Domain.Enums;
@@ -120,6 +121,25 @@ public sealed class ContentController : ControllerBase
 
         var items = await _mediator.Send(new GetCaptionsQuery(resolvedTenantId, contentId), cancellationToken);
         return Ok(items);
+    }
+
+    [HttpGet("{contentId:guid}/transcript")]
+    [ProducesResponseType(typeof(TranscriptSignedUrlDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetTranscript(
+        Guid contentId,
+        [FromQuery] Guid? tenantId,
+        CancellationToken cancellationToken)
+    {
+        if (ValidateTenantQuery(tenantId) is { } err)
+            return err;
+
+        var resolvedTenantId = ResolveTenantId(tenantId);
+        TenantAccessHelper.EnsureCanAccessTenantScope(_currentUser, resolvedTenantId);
+
+        TranscriptSignedUrlDto dto = await _mediator.Send(
+            new GetTranscriptQuery(resolvedTenantId, contentId),
+            cancellationToken);
+        return Ok(dto);
     }
 
     private IActionResult? ValidateTenantQuery(Guid? tenantId)

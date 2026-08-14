@@ -18,4 +18,5 @@ public sealed class ModuleContentItemDetailDto
     public Guid ContentItemId { get; init; }
     public int SequenceOrder { get; init; }
     public string Title { get; init; } = default!;
+    public ContentType Type { get; init; }
 }
