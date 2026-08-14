@@ -38,6 +38,9 @@ function TeacherHome() {
         <a href="/teacher/modules" className="font-medium text-[#0B6E4F] underline">
           {t("teacher.nav.modules")}
         </a>
+        <a href="/teacher/assessments" className="font-medium text-[#0B6E4F] underline">
+          {t("teacher.nav.assessments")}
+        </a>
       </div>
     </>
   );

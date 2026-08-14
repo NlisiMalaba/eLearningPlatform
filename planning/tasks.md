@@ -343,7 +343,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement file upload UI (drag-and-drop) with client-side size validation before upload
     - Implement module builder: create/reorder content items, assign grade and subject, publish to tenant or submit to marketplace
     - _Requirements: 7.1, 7.2, 7.3, 8.1_
-  - [ ] 26.2 Implement assessment builder and results dashboard
+  - [x] 26.2 Implement assessment builder and results dashboard
     - Implement question editor for multiple-choice, true/false, and short-answer types with optional time limit
     - Implement class results view with per-student scores, completion rates, and time-on-task table
     - _Requirements: 7.5, 7.6, 7.7_
