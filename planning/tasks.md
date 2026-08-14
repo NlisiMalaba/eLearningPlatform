@@ -259,7 +259,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - [x]* 19.2 Write property test for Sync (Property 33)
     - **Property 33: Offline Sync Conflict Resolution by Timestamp — Validates: Requirements 12.5**
 
-- [ ] 20. Marketplace feature — commands, handlers, and endpoints
+- [x] 20. Marketplace feature — commands, handlers, and endpoints
   - [x] 20.1 Implement Marketplace command/query handlers
     - Implement `SubmitContentPackCommandHandler`: create pack with `Status = PendingReview`
     - Implement `ApproveContentPackCommandHandler` (Platform Admin): transition to `Approved`; only `Approved` packs appear in `BrowseContentPacksQueryHandler`
@@ -269,10 +269,10 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement `RemoveContentPackCommandHandler` (Platform Admin): remove violating pack and notify submitting teacher
     - Ensure all pack responses include non-empty `SchoolName` and `TeacherName`
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
-  - [ ] 20.2 Add Marketplace API endpoints
+  - [x] 20.2 Add Marketplace API endpoints
     - `POST /marketplace/packs`, `GET /marketplace/packs`, `POST /marketplace/packs/{id}/request-access`, `POST /marketplace/packs/{id}/approve-access`, `POST /marketplace/packs/{id}/rate`, `DELETE /marketplace/packs/{id}`
     - _Requirements: 8.1, 8.2, 8.3_
-  - [ ]* 20.3 Write property tests for Marketplace (Properties 21, 22, 23)
+  - [x]* 20.3 Write property tests for Marketplace (Properties 21, 22, 23)
     - **Property 21: Marketplace Submission Requires Admin Review — Validates: Requirements 8.2**
     - **Property 22: Cross-Tenant Content Access Requires Approval — Validates: Requirements 8.3, 8.4**
     - **Property 23: Marketplace Attribution Completeness — Validates: Requirements 8.5**
