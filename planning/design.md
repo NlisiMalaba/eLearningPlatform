@@ -7,7 +7,7 @@ EduZim is a Zimbabwe-focused eLearning platform serving two tiers:
 - **Pre-school Tier** (ages 2–5): A consumer product subscribed to by parents, delivering foundational learning through 3D animations, audio, games, and AI tutoring.
 - **School Tier** (ECD Grade 0 – Grade 7): A multi-tenant B2B product where each subscribing school operates in a fully isolated data environment, with teachers, students, parents, and admins all scoped to their tenant.
 
-The backend is a **single deployable ASP.NET Core (.NET 10+) application** structured using Clean Architecture. The frontend is **React** (web PWA) and **React Native** (mobile). Real-time features use **SignalR**. Background processing uses **Hangfire**. Data is stored in a single **PostgreSQL** database with Row-Level Security (RLS) enforcing multi-tenant isolation. **Entity Framework Core** (`EduZimDbContext`) is the ORM. **Redis** provides distributed caching. **S3-compatible object storage** (MinIO or AWS S3) holds media assets. In-process event handling uses **MediatR** notifications.
+The backend is a **single deployable ASP.NET Core (.NET 10+) application** structured using Clean Architecture. The frontend is **Next.js** (web PWA, App Router) and **React Native** (mobile). Real-time features use **SignalR**. Background processing uses **Hangfire**. Data is stored in a single **PostgreSQL** database with Row-Level Security (RLS) enforcing multi-tenant isolation. **Entity Framework Core** (`EduZimDbContext`) is the ORM. **Redis** provides distributed caching. **S3-compatible object storage** (MinIO or AWS S3) holds media assets. In-process event handling uses **MediatR** notifications.
 
 ---
 
@@ -23,7 +23,7 @@ EduZim.sln
     EduZim.Infrastructure/  ← EF Core, repositories, external integrations, Hangfire, Redis, S3, SignalR
     EduZim.API/             ← ASP.NET Core minimal API endpoints, middleware, JWT auth
   clients/
-    eduzim-web/             ← React PWA
+    eduzim-web/             ← Next.js PWA (App Router)
     eduzim-mobile/          ← React Native
   tests/
     EduZim.Tests.Unit/
@@ -49,7 +49,7 @@ EduZim.API  →  EduZim.Application  →  EduZim.Domain
 ```mermaid
 graph TB
     subgraph Clients
-        WEB[React Web PWA]
+        WEB[Next.js Web PWA]
         MOB[React Native Mobile]
     end
 

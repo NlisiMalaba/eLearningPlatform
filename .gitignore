@@ -19,6 +19,11 @@ TestResults/
 ## Cursor — project rules kept locally (not committed)
 .cursor/rules/
 
+## Node / Next.js
+node_modules/
+.next/
+out/
+
 ## OS
 Thumbs.db
 Desktop.ini

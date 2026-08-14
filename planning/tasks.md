@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a React Web PWA and React Native mobile app. The solution has four layers: Domain → Application → Infrastructure → API. Tasks are sequenced: solution scaffold → domain → application → infrastructure → API → frontends → testing.
+Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a Next.js Web PWA and React Native mobile app. The solution has four layers: Domain → Application → Infrastructure → API. Tasks are sequenced: solution scaffold → domain → application → infrastructure → API → frontends → testing.
 
 ## Tasks
 
@@ -307,14 +307,15 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
 - [x] 23. Checkpoint — feature handlers complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 24. React Web PWA — foundation and authentication
-  - [ ] 24.1 Scaffold React Web PWA with PWA caching and offline support
-    - Create React app with Vite; configure service worker for PWA caching of module content
-    - Implement offline indicator banner shown when `navigator.onLine = false`
+- [ ] 24. Next.js Web PWA — foundation and authentication
+  - [x] 24.1 Scaffold Next.js App Router PWA with caching and offline support
+    - Create Next.js app (App Router, TypeScript) in `clients/eduzim-web`; configure Serwist/Workbox service worker for PWA caching of module content
+    - Use App Router route groups `(auth)` and `(app)` with `middleware.ts` for protected-route redirects
+    - Implement offline indicator banner shown when `navigator.onLine = false`; queue failed mutations in IndexedDB and sync via `POST /sync/upload` on reconnect
     - _Requirements: 12.3, 12.4_
   - [ ] 24.2 Implement authentication screens and JWT management
-    - Implement login, registration, email verification, and SSO redirect screens
-    - Store JWT and refresh token securely; implement silent token refresh; redirect to login on token expiry
+    - Implement App Router pages for login, registration, email verification, and SSO redirect
+    - Store JWT and refresh token in httpOnly cookies; implement silent token refresh; `middleware.ts` redirects to login on token expiry
     - _Requirements: 1.1, 1.2, 1.6_
   - [ ] 24.3 Implement accessibility settings
     - Implement high-contrast mode toggle, font size selector (Small/Medium/Large/ExtraLarge), and text-to-speech activation button in a settings panel
@@ -323,21 +324,21 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - [ ]* 24.4 Write property test for font size validation (Property 37)
     - **Property 37: Font Size Preference Validation — Validates: Requirements 14.3**
 
-- [ ] 25. React Web PWA — student learning experience
+- [ ] 25. Next.js Web PWA — student learning experience
   - [ ] 25.1 Implement module viewer with content type renderers
-    - Implement renderers for video (with closed captions), PDF, audio (with transcript link), and quiz content types
-    - Implement 3D scene viewer with rotate/zoom/interact controls using Three.js or Babylon.js
+    - Implement Client Component renderers for video (with closed captions), PDF, audio (with transcript link), and quiz content types
+    - Implement 3D scene viewer with rotate/zoom/interact controls using Three.js or Babylon.js (`'use client'`)
     - _Requirements: 4.2, 4.3, 4.5, 14.4, 14.6_
   - [ ] 25.2 Implement ZimBot chat widget
-    - Implement a persistent ZimBot button on all learning screens; render a chat panel with message history and language selector
+    - Implement a persistent ZimBot Client Component on all learning screens; render a chat panel with message history and language selector
     - Display fallback message when ZimBot is unavailable
     - _Requirements: 5.1, 5.2, 5.3, 5.8_
   - [ ] 25.3 Implement student dashboard with progress display
-    - Render per-subject progress percentage bars and recent activity feed
+    - Render per-subject progress percentage bars and recent activity feed (Server Components for initial data, Client Components for live updates)
     - Display gamification points, earned badges, and leaderboard position
     - _Requirements: 4.8, 9.3, 9.4, 9.5_
 
-- [ ] 26. React Web PWA — teacher and admin screens
+- [ ] 26. Next.js Web PWA — teacher and admin screens
   - [ ] 26.1 Implement teacher content editor and module management
     - Implement file upload UI (drag-and-drop) with client-side size validation before upload
     - Implement module builder: create/reorder content items, assign grade and subject, publish to tenant or submit to marketplace
@@ -351,14 +352,14 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement branding settings form (logo upload, school name, primary colour picker)
     - _Requirements: 11.4, 11.5_
 
-- [ ] 27. React Web PWA — parent dashboard and live classroom
+- [ ] 27. Next.js Web PWA — parent dashboard and live classroom
   - [ ] 27.1 Implement parent dashboard
     - Render linked students' grade, subjects, recent activity, progress percentage, badges, and weekly summary
     - Implement screen time limit configuration control
     - _Requirements: 10.1, 10.4, 10.5_
   - [ ] 27.2 Implement live classroom join and SignalR integration
     - Implement classroom join flow using the join token from the Live Classroom API
-    - Integrate Daily.co or Jitsi embed; connect to `ClassroomHub` SignalR for presence and teacher controls
+    - Integrate Daily.co or Jitsi embed in a Client Component; connect to `ClassroomHub` SignalR for presence and teacher controls
     - _Requirements: 13.3, 13.4, 13.6_
 
 - [ ] 28. React Native Mobile app
@@ -398,7 +399,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Ensure payment notifications trigger tenant status updates and subscriber notifications within 60 seconds
     - _Requirements: 2.3, 2.5_
   - [ ] 30.5 Wire offline sync trigger on connectivity restore
-    - Implement connectivity listener in React Native and PWA that calls `POST /sync/upload` when `navigator.onLine` transitions to `true`
+    - Implement connectivity listener in React Native and the Next.js PWA that calls `POST /sync/upload` when `navigator.onLine` transitions to `true`
     - _Requirements: 12.2_
 
 - [ ] 31. FsCheck custom arbitraries and test project setup
