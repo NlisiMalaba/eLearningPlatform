@@ -35,7 +35,13 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<StudentPoints> StudentPoints => Set<StudentPoints>();
     public DbSet<Badge> Badges => Set<Badge>();
     public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationPreference> NotificationPreferences => Set<NotificationPreference>();
+    public DbSet<ZimBotInteraction> ZimBotInteractions => Set<ZimBotInteraction>();
+    public DbSet<ClassroomSession> ClassroomSessions => Set<ClassroomSession>();
+    public DbSet<ClassroomParticipant> ClassroomParticipants => Set<ClassroomParticipant>();
+    public DbSet<AttendanceRecord> AttendanceRecords => Set<AttendanceRecord>();
     public DbSet<OfflineSyncQueue> OfflineSyncQueues => Set<OfflineSyncQueue>();
+    public DbSet<SyncConflictLog> SyncConflictLogs => Set<SyncConflictLog>();
     public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
     public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
     public DbSet<TenantInviteCode> TenantInviteCodes => Set<TenantInviteCode>();
@@ -45,6 +51,10 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<SchoolClass> SchoolClasses => Set<SchoolClass>();
     public DbSet<ClassEnrollment> ClassEnrollments => Set<ClassEnrollment>();
     public DbSet<AssessmentClassAssignment> AssessmentClassAssignments => Set<AssessmentClassAssignment>();
+    public DbSet<ContentPack> ContentPacks => Set<ContentPack>();
+    public DbSet<ContentPackItem> ContentPackItems => Set<ContentPackItem>();
+    public DbSet<ContentPackAccessRequest> ContentPackAccessRequests => Set<ContentPackAccessRequest>();
+    public DbSet<ContentPackRating> ContentPackRatings => Set<ContentPackRating>();
 
     public Task SetSessionTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {

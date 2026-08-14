@@ -4,6 +4,7 @@ using EduZim.Application.Common.Configuration;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Domain.Entities;
 using EduZim.Infrastructure.Persistence;
+using EduZim.Tests.Properties.Gamification;
 using EduZim.Tests.Properties.Tenants;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -45,6 +46,7 @@ internal static class BillingPropertyTestHost
         services.AddSingleton<MutableCurrentUser>();
         services.AddSingleton<ICurrentUser>(sp => sp.GetRequiredService<MutableCurrentUser>());
         services.AddSingleton<ITenantBackgroundJobs, NoOpTenantBackgroundJobs>();
+        services.AddSingleton<IGamificationBackgroundJobs, NoOpGamificationBackgroundJobs>();
         services.AddScoped<IEduZimDbContext>(sp => sp.GetRequiredService<EduZimDbContext>());
         services.AddScoped<IUnitOfWork, UnitOfWork>();
         services.AddScoped<IBillingPricingService, BillingPricingService>();

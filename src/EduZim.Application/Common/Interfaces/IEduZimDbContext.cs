@@ -26,7 +26,20 @@ public interface IEduZimDbContext
     DbSet<ClassEnrollment> ClassEnrollments { get; }
     DbSet<AssessmentClassAssignment> AssessmentClassAssignments { get; }
     DbSet<StudentProgress> StudentProgresses { get; }
+    DbSet<StudentPoints> StudentPoints { get; }
+    DbSet<Badge> Badges { get; }
     DbSet<Notification> Notifications { get; }
+    DbSet<NotificationPreference> NotificationPreferences { get; }
+    DbSet<ZimBotInteraction> ZimBotInteractions { get; }
+    DbSet<ClassroomSession> ClassroomSessions { get; }
+    DbSet<ClassroomParticipant> ClassroomParticipants { get; }
+    DbSet<AttendanceRecord> AttendanceRecords { get; }
+    DbSet<OfflineSyncQueue> OfflineSyncQueues { get; }
+    DbSet<SyncConflictLog> SyncConflictLogs { get; }
+    DbSet<ContentPack> ContentPacks { get; }
+    DbSet<ContentPackItem> ContentPackItems { get; }
+    DbSet<ContentPackAccessRequest> ContentPackAccessRequests { get; }
+    DbSet<ContentPackRating> ContentPackRatings { get; }
 
     /// <summary>Sets PostgreSQL <c>app.current_tenant_id</c> for row-level security (e.g. Hangfire jobs).</summary>
     Task SetSessionTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default);

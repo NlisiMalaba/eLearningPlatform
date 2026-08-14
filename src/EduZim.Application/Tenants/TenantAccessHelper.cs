@@ -75,7 +75,33 @@ public static class TenantAccessHelper
         ICurrentUser user,
         Guid tenantId,
         Guid studentUserId,
-        bool parentIsLinkedToStudent)
+        bool parentIsLinkedToStudent) =>
+        EnsureCanViewStudentScopedRecord(
+            user,
+            tenantId,
+            studentUserId,
+            parentIsLinkedToStudent,
+            "adaptive learning data");
+
+    /// <summary>Points and badges for a student: teacher, school admin, the student, or a linked parent.</summary>
+    public static void EnsureCanViewStudentGamificationData(
+        ICurrentUser user,
+        Guid tenantId,
+        Guid studentUserId,
+        bool parentIsLinkedToStudent) =>
+        EnsureCanViewStudentScopedRecord(
+            user,
+            tenantId,
+            studentUserId,
+            parentIsLinkedToStudent,
+            "gamification data");
+
+    private static void EnsureCanViewStudentScopedRecord(
+        ICurrentUser user,
+        Guid tenantId,
+        Guid studentUserId,
+        bool parentIsLinkedToStudent,
+        string resourceLabel)
     {
         if (user.Role == UserRole.PlatformAdmin)
             return;
@@ -85,7 +111,7 @@ public static class TenantAccessHelper
             if (user.UserId != studentUserId)
             {
                 throw new TenantAccessViolationException(
-                    "Students may only view their own adaptive learning data.",
+                    $"Students may only view their own {resourceLabel}.",
                     tenantId,
                     studentUserId);
             }
@@ -100,7 +126,7 @@ public static class TenantAccessHelper
             if (!parentIsLinkedToStudent)
             {
                 throw new TenantAccessViolationException(
-                    "Parents may only view adaptive data for linked students.",
+                    $"Parents may only view {resourceLabel} for linked students.",
                     tenantId,
                     studentUserId);
             }
@@ -109,7 +135,7 @@ public static class TenantAccessHelper
         }
 
         throw new TenantAccessViolationException(
-            "This role cannot view adaptive learning data for this student.",
+            $"This role cannot view {resourceLabel} for this student.",
             tenantId,
             studentUserId);
     }
@@ -129,5 +155,20 @@ public static class TenantAccessHelper
                 "You are not allowed to manage billing for this tenant.",
                 tenantId,
                 tenantId);
+    }
+
+    /// <summary>School leaderboard: students, teachers, and school admins in the tenant (requirement 9.5).</summary>
+    public static void EnsureCanViewLeaderboard(ICurrentUser user, Guid tenantId)
+    {
+        if (user.Role == UserRole.PlatformAdmin)
+            return;
+        EnsureCanAccessTenantScope(user, tenantId);
+        if (user.Role is UserRole.Student or UserRole.Teacher or UserRole.SchoolAdmin)
+            return;
+
+        throw new TenantAccessViolationException(
+            "This role cannot view the tenant leaderboard.",
+            tenantId,
+            tenantId);
     }
 }

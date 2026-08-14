@@ -3,6 +3,7 @@ using EduZim.Application.Common.Interfaces;
 using EduZim.Domain.Entities;
 using EduZim.Domain.Enums;
 using EduZim.Infrastructure.Persistence;
+using EduZim.Tests.Properties.Gamification;
 using EduZim.Tests.Properties.Tenants;
 using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
@@ -26,6 +27,7 @@ internal static class AssessmentPropertyTestHost
 
         services.AddSingleton<NoOpAssessmentBackgroundJobs>();
         services.AddSingleton<IAssessmentBackgroundJobs>(sp => sp.GetRequiredService<NoOpAssessmentBackgroundJobs>());
+        services.AddSingleton<IGamificationBackgroundJobs, NoOpGamificationBackgroundJobs>();
         services.AddSingleton<ITenantBackgroundJobs, NoOpTenantBackgroundJobs>();
         services.AddSingleton<ICacheService, EphemeralCacheService>();
 

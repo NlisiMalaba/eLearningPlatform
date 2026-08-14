@@ -75,6 +75,12 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                     b.Property<string>("FullName")
                         .HasColumnType("text");
 
+                    b.Property<DateTime?>("LastInactivityAlertAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime?>("LastLoginAt")
+                        .HasColumnType("timestamp with time zone");
+
                     b.Property<bool>("LockoutEnabled")
                         .HasColumnType("boolean");
 
@@ -128,6 +134,8 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "Role", "LastLoginAt");
 
                     b.ToTable("AspNetUsers", (string)null);
                 });
@@ -261,6 +269,44 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("AssessmentClassAssignments");
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.AttendanceRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClassroomSessionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("DurationSeconds")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("JoinTimeUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StudentUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ClassroomSessionId", "StudentUserId")
+                        .IsUnique();
+
+                    b.ToTable("AttendanceRecords");
                 });
 
             modelBuilder.Entity("EduZim.Domain.Entities.AuditLog", b =>
@@ -406,6 +452,90 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                     b.ToTable("ClassEnrollments");
                 });
 
+            modelBuilder.Entity("EduZim.Domain.Entities.ClassroomParticipant", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ClassroomSessionId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("JoinedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "ClassroomSessionId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ClassroomParticipants");
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.ClassroomSession", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("PlannedEndAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("RecordingUrl")
+                        .HasMaxLength(2048)
+                        .HasColumnType("character varying(2048)");
+
+                    b.Property<string>("RoomId")
+                        .IsRequired()
+                        .HasMaxLength(128)
+                        .HasColumnType("character varying(128)");
+
+                    b.Property<Guid>("SchoolClassId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("SessionEndTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("StartAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("TeacherUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "SchoolClassId", "StartAtUtc");
+
+                    b.ToTable("ClassroomSessions");
+                });
+
             modelBuilder.Entity("EduZim.Domain.Entities.ContentItem", b =>
                 {
                     b.Property<Guid>("Id")
@@ -463,6 +593,179 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("ContentItems");
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.ContentPack", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<DateTime?>("RemovedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("SchoolName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("SubmittedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("TeacherName")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(256)
+                        .HasColumnType("character varying(256)");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("ContentPacks");
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.ContentPackAccessRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContentPackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("RequestedByUserId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("RequestingTenantId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime?>("ReviewedAtUtc")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Status")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RequestingTenantId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("ContentPackId", "RequestingTenantId")
+                        .IsUnique();
+
+                    b.ToTable("ContentPackAccessRequests");
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.ContentPackItem", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContentItemId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContentPackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("SequenceOrder")
+                        .HasColumnType("integer");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContentItemId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("ContentPackId", "ContentItemId")
+                        .IsUnique();
+
+                    b.ToTable("ContentPackItems");
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.ContentPackRating", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ContentPackId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<int>("Rating")
+                        .HasColumnType("integer");
+
+                    b.Property<string>("Review")
+                        .HasMaxLength(2000)
+                        .HasColumnType("character varying(2000)");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("ContentPackId", "UserId")
+                        .IsUnique();
+
+                    b.ToTable("ContentPackRatings");
                 });
 
             modelBuilder.Entity("EduZim.Domain.Entities.Module", b =>
@@ -587,6 +890,47 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                     b.HasIndex("TenantId");
 
                     b.ToTable("Notifications");
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.NotificationPreference", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("EmailEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("InAppEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("SmsEnabled")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<int>("Type")
+                        .HasColumnType("integer");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("UserId")
+                        .HasColumnType("uuid");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "UserId", "Type")
+                        .IsUnique();
+
+                    b.ToTable("NotificationPreferences");
                 });
 
             modelBuilder.Entity("EduZim.Domain.Entities.OfflineSyncQueue", b =>
@@ -969,6 +1313,59 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                     b.ToTable("SubscriptionInvoices", (string)null);
                 });
 
+            modelBuilder.Entity("EduZim.Domain.Entities.SyncConflictLog", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("LocalTimestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("LocalWon")
+                        .HasColumnType("boolean");
+
+                    b.Property<Guid>("OfflineSyncQueueId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("ResourceId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("ResourceType")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)");
+
+                    b.Property<DateTime>("RetainedTimestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<DateTime>("ServerTimestamp")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OfflineSyncQueueId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "StudentId", "CreatedAt");
+
+                    b.ToTable("SyncConflictLogs");
+                });
+
             modelBuilder.Entity("EduZim.Domain.Entities.Tenant", b =>
                 {
                     b.Property<Guid>("Id")
@@ -1077,6 +1474,61 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("Transcripts");
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.ZimBotInteraction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("IsLowConfidence")
+                        .HasColumnType("boolean");
+
+                    b.Property<string>("Language")
+                        .IsRequired()
+                        .HasMaxLength(32)
+                        .HasColumnType("character varying(32)");
+
+                    b.Property<Guid?>("ModuleId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Question")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("character varying(4000)");
+
+                    b.Property<string>("Response")
+                        .IsRequired()
+                        .HasMaxLength(8000)
+                        .HasColumnType("character varying(8000)");
+
+                    b.Property<Guid>("StudentId")
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<DateTime>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<bool>("UsedFallback")
+                        .HasColumnType("boolean");
+
+                    b.Property<bool>("UsedHintMode")
+                        .HasColumnType("boolean");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("TenantId", "StudentId", "CreatedAt");
+
+                    b.ToTable("ZimBotInteractions");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole<System.Guid>", b =>
@@ -1280,6 +1732,39 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("EduZim.Domain.Entities.ContentPackAccessRequest", b =>
+                {
+                    b.HasOne("EduZim.Domain.Entities.ContentPack", null)
+                        .WithMany("AccessRequests")
+                        .HasForeignKey("ContentPackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.ContentPackItem", b =>
+                {
+                    b.HasOne("EduZim.Domain.Entities.ContentItem", null)
+                        .WithMany()
+                        .HasForeignKey("ContentItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("EduZim.Domain.Entities.ContentPack", null)
+                        .WithMany("Items")
+                        .HasForeignKey("ContentPackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.ContentPackRating", b =>
+                {
+                    b.HasOne("EduZim.Domain.Entities.ContentPack", null)
+                        .WithMany("Ratings")
+                        .HasForeignKey("ContentPackId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("EduZim.Domain.Entities.ModuleContentItem", b =>
                 {
                     b.HasOne("EduZim.Domain.Entities.ContentItem", null)
@@ -1351,6 +1836,15 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                     b.HasOne("EduZim.Domain.Entities.Subscription", null)
                         .WithMany()
                         .HasForeignKey("SubscriptionId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.SyncConflictLog", b =>
+                {
+                    b.HasOne("EduZim.Domain.Entities.OfflineSyncQueue", null)
+                        .WithMany()
+                        .HasForeignKey("OfflineSyncQueueId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
                 });
@@ -1476,6 +1970,15 @@ namespace EduZim.Infrastructure.Persistence.Migrations
                     b.Navigation("CaptionTracks");
 
                     b.Navigation("Transcript");
+                });
+
+            modelBuilder.Entity("EduZim.Domain.Entities.ContentPack", b =>
+                {
+                    b.Navigation("AccessRequests");
+
+                    b.Navigation("Items");
+
+                    b.Navigation("Ratings");
                 });
 
             modelBuilder.Entity("EduZim.Domain.Entities.Module", b =>

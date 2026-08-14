@@ -110,7 +110,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 30: Parent Invite Code Round Trip — Validates: Requirements 10.3**
     - **Property 7: Subscription Data Preservation — Validates: Requirements 2.6, 11.6**
 
-- [ ] 10. Billing feature — commands, handlers, and endpoints
+- [x] 10. Billing feature — commands, handlers, and endpoints
   - [x] 10.1 Implement Billing command/query handlers
     - Implement `CreateSubscriptionCommandHandler` for monthly, termly, and yearly cycles
     - Implement `CalculateSchoolFeeQueryHandler` as `UnitPrice(cycle) * studentCount`
@@ -181,45 +181,45 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 16: Advanced Extension Offer Above 85% — Validates: Requirements 6.3**
     - **Property 17: No Grade Advancement Without Passing Score — Validates: Requirements 6.6**
 
-- [ ] 14. Gamification feature — commands, handlers, and endpoints
-  - [ ] 14.1 Implement Gamification command/query handlers
+- [x] 14. Gamification feature — commands, handlers, and endpoints
+  - [x] 14.1 Implement Gamification command/query handlers
     - Implement `AwardPointsCommandHandler` as a `INotificationHandler<ModuleCompletedNotification>` and `INotificationHandler<AssessmentSubmittedNotification>`; apply bonus multiplier for scores >= 85%
     - Implement `CheckAndAwardBadgesCommandHandler` for all four milestone types: `FirstModule`, `FiveConsecutiveDays`, `SubjectMastery`, `GradeCompletion`; on badge award, queue certificate generation job and publish `BadgeAwardedNotification`
     - Implement `GetLeaderboardQueryHandler` with RLS ensuring only students from the requesting tenant appear
     - _Requirements: 9.3, 9.4, 9.5, 9.6_
-  - [ ] 14.2 Add Gamification API endpoints
+  - [x] 14.2 Add Gamification API endpoints
     - `GET /gamification/{studentId}/points`, `GET /gamification/{studentId}/badges`, `GET /gamification/leaderboard/{tenantId}`
     - _Requirements: 9.3, 9.4, 9.5_
-  - [ ]* 14.3 Write property tests for Gamification (Properties 25, 26, 27)
+  - [x]* 14.3 Write property tests for Gamification (Properties 25, 26, 27)
     - **Property 25: Points Awarded on Module and Assessment Completion — Validates: Requirements 9.3**
     - **Property 26: Badge Awarded on Milestone Events — Validates: Requirements 9.4, 9.6**
     - **Property 27: Leaderboard Tenant Isolation — Validates: Requirements 9.5**
 
-- [ ] 15. Checkpoint — core feature handlers
+- [x] 15. Checkpoint — core feature handlers
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 16. Notification feature — commands, handlers, and endpoints
-  - [ ] 16.1 Implement Notification command/query handlers
+- [x] 16. Notification feature — commands, handlers, and endpoints
+  - [x] 16.1 Implement Notification command/query handlers
     - Implement `QueueNotificationCommandHandler`: route to in-app, email (`IEmailService`), or SMS (`ISmsService`) based on user's `NotificationPreferences`
     - Implement in-app notification storage and `GetInAppNotificationsQueryHandler`
     - Implement `UpdateNotificationPreferencesCommandHandler`
     - _Requirements: 15.1, 15.2, 15.4_
-  - [ ] 16.2 Implement SMS retry Hangfire job
+  - [x] 16.2 Implement SMS retry Hangfire job
     - On SMS send failure, schedule Hangfire retry job; increment `RetryCount` on each attempt; after 3 failures set `Status = Undelivered`
     - _Requirements: 15.3, 15.5_
-  - [ ] 16.3 Implement inactivity alert Hangfire job
+  - [x] 16.3 Implement inactivity alert Hangfire job
     - Recurring job querying students with `LastLoginAt < NOW() - 7 days`; publish `StudentInactiveNotification` handled by `QueueNotificationCommandHandler`
     - _Requirements: 10.6_
-  - [ ] 16.4 Add Notification API endpoints
+  - [x] 16.4 Add Notification API endpoints
     - `GET /notifications/{userId}`, `PUT /notifications/{id}/read`, `PUT /users/{userId}/notification-preferences`
     - _Requirements: 15.1, 15.4_
-  - [ ]* 16.5 Write property tests for Notification (Properties 32, 40, 41)
+  - [x]* 16.5 Write property tests for Notification (Properties 32, 40, 41)
     - **Property 32: Inactivity Notification After 7 Days — Validates: Requirements 10.6**
     - **Property 40: Notification Routing Respects User Preferences — Validates: Requirements 15.4**
     - **Property 41: SMS Retry Logic — Validates: Requirements 15.5**
 
-- [ ] 17. ZimBot feature — commands, handlers, and endpoints
-  - [ ] 17.1 Implement ZimBot command/query handlers
+- [x] 17. ZimBot feature — commands, handlers, and endpoints
+  - [x] 17.1 Implement ZimBot command/query handlers
     - Implement `ChatCommandHandler` using `IAiService` (Azure OpenAI / Semantic Kernel); include student's grade level and current module context in system prompt
     - Implement hint-only mode: detect assessment-answer requests and respond with a guiding hint
     - Implement multilingual response based on student's `PreferredLanguage`
@@ -227,40 +227,40 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Persist every interaction to `ZimBotInteraction` records scoped to tenant
     - Implement `GetInteractionLogsQueryHandler` for teacher review
     - _Requirements: 5.1, 5.2, 5.3, 5.4, 5.5, 5.6, 5.7, 5.8_
-  - [ ] 17.2 Add ZimBot API endpoints
+  - [x] 17.2 Add ZimBot API endpoints
     - `POST /zimbot/chat`, `GET /zimbot/logs/{tenantId}`
     - _Requirements: 5.1, 5.7_
 
-- [ ] 18. Live Classroom feature — commands, handlers, SignalR hub, and endpoints
-  - [ ] 18.1 Implement Live Classroom command/query handlers
+  - [x] 18. Live Classroom feature — commands, handlers, SignalR hub, and endpoints
+  - [x] 18.1 Implement Live Classroom command/query handlers
     - Implement `ScheduleSessionCommandHandler`: create `ClassroomSession` record; publish `ClassroomScheduledNotification` handled by Notification handlers to send 24-hour advance notifications
     - Implement `GetJoinTokenQueryHandler` calling `IVideoService` (Daily.co / Jitsi)
     - Implement `EndSessionCommandHandler`: record attendance (join time + duration) for each participant; trigger recording retrieval from `IVideoService`
     - Implement `GetRecordingUrlQueryHandler`: return URL only within 30 days of `SessionEndTime`; return null after expiry
     - _Requirements: 13.1, 13.2, 13.5, 13.6, 13.7_
-  - [ ] 18.2 Implement SignalR hub for real-time session control
+  - [x] 18.2 Implement SignalR hub for real-time session control
     - Implement `ClassroomHub` in Infrastructure for participant presence, screen share signalling, and teacher audio/video mute controls
     - Support minimum 50 concurrent participants
     - _Requirements: 13.3, 13.4, 13.6_
-  - [ ] 18.3 Add Live Classroom API endpoints
+  - [x] 18.3 Add Live Classroom API endpoints
     - `POST /classrooms`, `GET /classrooms/{id}/join`, `POST /classrooms/{id}/end`, `GET /classrooms/{id}/attendance`, `GET /classrooms/{id}/recording`
     - _Requirements: 13.1, 13.5, 13.7_
-  - [ ]* 18.4 Write property tests for Live Classroom (Properties 34, 35, 36)
+  - [x]* 18.4 Write property tests for Live Classroom (Properties 34, 35, 36)
     - **Property 34: Live Classroom Notification Lead Time — Validates: Requirements 13.2**
     - **Property 35: Attendance Record on Session End — Validates: Requirements 13.5**
     - **Property 36: Recording Availability Window — Validates: Requirements 13.7**
 
-- [ ] 19. Sync feature — commands and handlers
-  - [ ] 19.1 Implement Sync command handlers
+- [x] 19. Sync feature — commands and handlers
+  - [x] 19.1 Implement Sync command handlers
     - Implement `ProcessOfflineQueueCommandHandler`: read pending `OfflineSyncQueue` records; apply to `StudentProgress` and `AssessmentAttempt` tables
     - Implement `ResolveConflictCommandHandler`: compare `LocalTimestamp` against server-side record; retain later timestamp (last-write-wins); write `SyncConflictLog` entry for every conflict
     - Expose `POST /sync/upload` endpoint for mobile/PWA to submit offline queue on connectivity restore
     - _Requirements: 12.2, 12.5_
-  - [ ]* 19.2 Write property test for Sync (Property 33)
+  - [x]* 19.2 Write property test for Sync (Property 33)
     - **Property 33: Offline Sync Conflict Resolution by Timestamp — Validates: Requirements 12.5**
 
-- [ ] 20. Marketplace feature — commands, handlers, and endpoints
-  - [ ] 20.1 Implement Marketplace command/query handlers
+- [x] 20. Marketplace feature — commands, handlers, and endpoints
+  - [x] 20.1 Implement Marketplace command/query handlers
     - Implement `SubmitContentPackCommandHandler`: create pack with `Status = PendingReview`
     - Implement `ApproveContentPackCommandHandler` (Platform Admin): transition to `Approved`; only `Approved` packs appear in `BrowseContentPacksQueryHandler`
     - Implement `RequestAccessCommandHandler`: notify originating teacher
@@ -269,10 +269,10 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement `RemoveContentPackCommandHandler` (Platform Admin): remove violating pack and notify submitting teacher
     - Ensure all pack responses include non-empty `SchoolName` and `TeacherName`
     - _Requirements: 8.1, 8.2, 8.3, 8.4, 8.5, 8.6, 8.7_
-  - [ ] 20.2 Add Marketplace API endpoints
+  - [x] 20.2 Add Marketplace API endpoints
     - `POST /marketplace/packs`, `GET /marketplace/packs`, `POST /marketplace/packs/{id}/request-access`, `POST /marketplace/packs/{id}/approve-access`, `POST /marketplace/packs/{id}/rate`, `DELETE /marketplace/packs/{id}`
     - _Requirements: 8.1, 8.2, 8.3_
-  - [ ]* 20.3 Write property tests for Marketplace (Properties 21, 22, 23)
+  - [x]* 20.3 Write property tests for Marketplace (Properties 21, 22, 23)
     - **Property 21: Marketplace Submission Requires Admin Review — Validates: Requirements 8.2**
     - **Property 22: Cross-Tenant Content Access Requires Approval — Validates: Requirements 8.3, 8.4**
     - **Property 23: Marketplace Attribution Completeness — Validates: Requirements 8.5**
