@@ -1,11 +1,12 @@
 using Asp.Versioning;
 using EduZim.API.Contracts;
 using EduZim.API.Routing;
-using EduZim.Application.Content.Commands.CreateModule;
-using EduZim.Application.Content.Queries.GetModuleById;
 using EduZim.Application.Common.Interfaces;
+using EduZim.Application.Content.Commands.CreateModule;
+using EduZim.Application.Content.Commands.SetModuleContentItems;
+using EduZim.Application.Content.Queries.GetModuleById;
+using EduZim.Application.Content.Queries.ListModules;
 using EduZim.Application.Tenants;
-using EduZim.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -28,6 +29,20 @@ public sealed class ModulesController : ControllerBase
         _currentUser = currentUser;
     }
 
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<ModuleListItemDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> List([FromQuery] Guid? tenantId, CancellationToken cancellationToken)
+    {
+        if (TenantError(tenantId) is { } err)
+            return err;
+
+        IReadOnlyList<ModuleListItemDto> items = await _mediator.Send(
+                new ListModulesQuery(TenantId(tenantId)),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(items);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(CreateModuleResponse), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateModule(
@@ -35,25 +50,22 @@ public sealed class ModulesController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (ValidateTenantQuery(tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        var resolvedTenantId = ResolveTenantId(tenantId);
+        Guid resolvedTenantId = TenantId(tenantId);
         TenantAccessHelper.EnsureCanManageSchoolContent(_currentUser, resolvedTenantId);
-
-        var id = await _mediator.Send(
-            new CreateModuleCommand(
-                resolvedTenantId,
-                request.Title,
-                request.Grade,
-                request.Subject,
-                request.SequenceOrder,
-                request.IsRequired),
-            cancellationToken);
-
-        return Created(
-            $"/{ApiRoutes.V1Modules}/{id}",
-            new CreateModuleResponse { ModuleId = id });
+        Guid id = await _mediator.Send(
+                new CreateModuleCommand(
+                    resolvedTenantId,
+                    request.Title,
+                    request.Grade,
+                    request.Subject,
+                    request.SequenceOrder,
+                    request.IsRequired),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Created($"/{ApiRoutes.V1Modules}/{id}", new CreateModuleResponse { ModuleId = id });
     }
 
     [HttpGet("{moduleId:guid}")]
@@ -63,49 +75,37 @@ public sealed class ModulesController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (ValidateTenantQuery(tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        var resolvedTenantId = ResolveTenantId(tenantId);
-        TenantAccessHelper.EnsureCanAccessTenantScope(_currentUser, resolvedTenantId);
-
-        var dto = await _mediator.Send(new GetModuleByIdQuery(resolvedTenantId, moduleId), cancellationToken);
+        ModuleDetailDto dto = await _mediator.Send(
+                new GetModuleByIdQuery(TenantId(tenantId), moduleId),
+                cancellationToken)
+            .ConfigureAwait(false);
         return Ok(dto);
     }
 
-    private IActionResult? ValidateTenantQuery(Guid? tenantId)
+    [HttpPut("{moduleId:guid}/content-items")]
+    [ProducesResponseType(typeof(ModuleDetailDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SetContentItems(
+        Guid moduleId,
+        [FromBody] SetModuleContentItemsRequest request,
+        [FromQuery] Guid? tenantId,
+        CancellationToken cancellationToken)
     {
-        if (_currentUser.Role == UserRole.PlatformAdmin)
-        {
-            if (tenantId is null)
-            {
-                return Problem(
-                    title: "Tenant required",
-                    detail: "Provide tenantId (query) when using platform administrator credentials.",
-                    statusCode: StatusCodes.Status400BadRequest);
-            }
+        if (TenantError(tenantId) is { } err)
+            return err;
 
-            return null;
-        }
-
-        if (_currentUser.TenantId is null)
-            return Forbid();
-
-        if (tenantId.HasValue && tenantId.Value != _currentUser.TenantId.Value)
-        {
-            return Problem(
-                title: "Tenant mismatch",
-                detail: "tenantId does not match the authenticated user's tenant.",
-                statusCode: StatusCodes.Status403Forbidden);
-        }
-
-        return null;
+        ModuleDetailDto dto = await _mediator.Send(
+                new SetModuleContentItemsCommand(TenantId(tenantId), moduleId, request.ContentItemIds),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(dto);
     }
 
-    private Guid ResolveTenantId(Guid? tenantId)
-    {
-        return _currentUser.Role == UserRole.PlatformAdmin
-            ? tenantId!.Value
-            : _currentUser.TenantId!.Value;
-    }
+    private IActionResult? TenantError(Guid? tenantId) =>
+        TenantQueryResolution.ValidateTenantQuery(this, _currentUser, tenantId);
+
+    private Guid TenantId(Guid? tenantId) =>
+        TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
 }

@@ -44,12 +44,13 @@ export async function apiFetch<T>(path: string, init?: ApiFetchInit): Promise<T>
 async function send(path: string, init?: RequestInit): Promise<Response> {
   const url = `${getClientApiBaseUrl()}${path}`;
   try {
-    return await fetch(url, {
+        const isFormData = typeof FormData !== "undefined" && init?.body instanceof FormData;
+        return await fetch(url, {
       ...init,
       credentials: "include",
       headers: {
         Accept: "application/json",
-        ...(init?.body ? { "Content-Type": "application/json" } : {}),
+        ...(init?.body && !isFormData ? { "Content-Type": "application/json" } : {}),
         ...init?.headers,
       },
     });

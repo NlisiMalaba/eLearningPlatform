@@ -43,3 +43,9 @@ public sealed class CreateModuleResponse
 {
     public Guid ModuleId { get; init; }
 }
+
+public sealed class SetModuleContentItemsRequest
+{
+    [Required]
+    public List<Guid> ContentItemIds { get; set; } = [];
+}

@@ -24,4 +24,27 @@ public sealed class ContentEndpointsTests : IClassFixture<WebApplicationFactory<
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
+
+    [Fact]
+    public async Task Get_content_list_without_auth_returns_unauthorized()
+    {
+        HttpClient client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+
+        HttpResponseMessage response = await client.GetAsync("/api/v1.0/content");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Post_publish_without_auth_returns_unauthorized()
+    {
+        HttpClient client = _factory.CreateClient(
+            new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
+        Guid contentId = Guid.NewGuid();
+
+        HttpResponseMessage response = await client.PostAsync($"/api/v1.0/content/{contentId}/publish", content: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
 }

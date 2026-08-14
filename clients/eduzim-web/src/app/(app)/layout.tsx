@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AccessibilitySettingsDialog } from "@/components/accessibility/AccessibilitySettingsDialog";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { TeacherStudioNav } from "@/components/teacher/TeacherStudioNav";
 import { ZimBotWidget } from "@/components/zimbot/ZimBotWidget";
 import { t } from "@/lib/i18n/t";
 
@@ -13,7 +14,8 @@ export default function AppLayout({ children }: AppLayoutProps) {
     <div className="flex flex-1 flex-col">
       <header className="flex items-center justify-between border-b border-black/5 bg-white px-4 py-3">
         <p className="text-lg font-semibold tracking-tight text-[#0B6E4F]">{t("app.name")}</p>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-3">
+          <TeacherStudioNav />
           <AccessibilitySettingsDialog />
           <SignOutButton />
         </div>

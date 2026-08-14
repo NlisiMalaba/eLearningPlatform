@@ -339,7 +339,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - _Requirements: 4.8, 9.3, 9.4, 9.5_
 
 - [ ] 26. Next.js Web PWA — teacher and admin screens
-  - [ ] 26.1 Implement teacher content editor and module management
+  - [x] 26.1 Implement teacher content editor and module management
     - Implement file upload UI (drag-and-drop) with client-side size validation before upload
     - Implement module builder: create/reorder content items, assign grade and subject, publish to tenant or submit to marketplace
     - _Requirements: 7.1, 7.2, 7.3, 8.1_

@@ -1,14 +1,15 @@
 using Asp.Versioning;
 using EduZim.API.Contracts;
 using EduZim.API.Routing;
+using EduZim.Application.Common.Interfaces;
 using EduZim.Application.Content.Commands.ArchiveContent;
+using EduZim.Application.Content.Commands.PublishContent;
 using EduZim.Application.Content.Commands.UploadContent;
 using EduZim.Application.Content.Queries.GetCaptions;
 using EduZim.Application.Content.Queries.GetContentById;
 using EduZim.Application.Content.Queries.GetTranscript;
-using EduZim.Application.Common.Interfaces;
+using EduZim.Application.Content.Queries.ListContent;
 using EduZim.Application.Tenants;
-using EduZim.Domain.Enums;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -31,6 +32,20 @@ public sealed class ContentController : ControllerBase
         _currentUser = currentUser;
     }
 
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<ContentListItemDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> List([FromQuery] Guid? tenantId, CancellationToken cancellationToken)
+    {
+        if (TenantError(tenantId) is { } err)
+            return err;
+
+        IReadOnlyList<ContentListItemDto> items = await _mediator.Send(
+                new ListContentQuery(TenantId(tenantId)),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(items);
+    }
+
     [HttpPost("upload")]
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(UploadContentResponse), StatusCodes.Status201Created)]
@@ -39,37 +54,33 @@ public sealed class ContentController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (ValidateTenantQuery(tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        var resolvedTenantId = ResolveTenantId(tenantId);
+        Guid resolvedTenantId = TenantId(tenantId);
         TenantAccessHelper.EnsureCanManageSchoolContent(_currentUser, resolvedTenantId);
-
         if (form.File is not { Length: > 0 })
             return Problem(
                 title: "File required",
                 detail: "Upload a non-empty file.",
                 statusCode: StatusCodes.Status400BadRequest);
 
-        await using var stream = form.File.OpenReadStream();
-        var contentType = string.IsNullOrWhiteSpace(form.File.ContentType)
+        await using Stream stream = form.File.OpenReadStream();
+        string contentType = string.IsNullOrWhiteSpace(form.File.ContentType)
             ? "application/octet-stream"
             : form.File.ContentType;
-
-        var id = await _mediator.Send(
-            new UploadContentCommand(
-                resolvedTenantId,
-                form.Title,
-                form.Type,
-                form.Language,
-                form.File.Length,
-                stream,
-                contentType),
-            cancellationToken);
-
-        return Created(
-            $"/{ApiRoutes.V1Content}/{id}",
-            new UploadContentResponse { ContentId = id });
+        Guid id = await _mediator.Send(
+                new UploadContentCommand(
+                    resolvedTenantId,
+                    form.Title,
+                    form.Type,
+                    form.Language,
+                    form.File.Length,
+                    stream,
+                    contentType),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Created($"/{ApiRoutes.V1Content}/{id}", new UploadContentResponse { ContentId = id });
     }
 
     [HttpGet("{contentId:guid}")]
@@ -79,13 +90,30 @@ public sealed class ContentController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (ValidateTenantQuery(tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        var resolvedTenantId = ResolveTenantId(tenantId);
-        TenantAccessHelper.EnsureCanAccessTenantScope(_currentUser, resolvedTenantId);
+        ContentDetailDto dto = await _mediator.Send(
+                new GetContentByIdQuery(TenantId(tenantId), contentId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(dto);
+    }
 
-        var dto = await _mediator.Send(new GetContentByIdQuery(resolvedTenantId, contentId), cancellationToken);
+    [HttpPost("{contentId:guid}/publish")]
+    [ProducesResponseType(typeof(ContentDetailDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> Publish(
+        Guid contentId,
+        [FromQuery] Guid? tenantId,
+        CancellationToken cancellationToken)
+    {
+        if (TenantError(tenantId) is { } err)
+            return err;
+
+        ContentDetailDto dto = await _mediator.Send(
+                new PublishContentCommand(TenantId(tenantId), contentId),
+                cancellationToken)
+            .ConfigureAwait(false);
         return Ok(dto);
     }
 
@@ -96,13 +124,13 @@ public sealed class ContentController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (ValidateTenantQuery(tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        var resolvedTenantId = ResolveTenantId(tenantId);
+        Guid resolvedTenantId = TenantId(tenantId);
         TenantAccessHelper.EnsureCanManageSchoolContent(_currentUser, resolvedTenantId);
-
-        await _mediator.Send(new ArchiveContentCommand(resolvedTenantId, contentId), cancellationToken);
+        await _mediator.Send(new ArchiveContentCommand(resolvedTenantId, contentId), cancellationToken)
+            .ConfigureAwait(false);
         return NoContent();
     }
 
@@ -113,13 +141,13 @@ public sealed class ContentController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (ValidateTenantQuery(tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        var resolvedTenantId = ResolveTenantId(tenantId);
-        TenantAccessHelper.EnsureCanAccessTenantScope(_currentUser, resolvedTenantId);
-
-        var items = await _mediator.Send(new GetCaptionsQuery(resolvedTenantId, contentId), cancellationToken);
+        IReadOnlyList<CaptionTrackSignedUrlDto> items = await _mediator.Send(
+                new GetCaptionsQuery(TenantId(tenantId), contentId),
+                cancellationToken)
+            .ConfigureAwait(false);
         return Ok(items);
     }
 
@@ -130,51 +158,19 @@ public sealed class ContentController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (ValidateTenantQuery(tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        var resolvedTenantId = ResolveTenantId(tenantId);
-        TenantAccessHelper.EnsureCanAccessTenantScope(_currentUser, resolvedTenantId);
-
         TranscriptSignedUrlDto dto = await _mediator.Send(
-            new GetTranscriptQuery(resolvedTenantId, contentId),
-            cancellationToken);
+                new GetTranscriptQuery(TenantId(tenantId), contentId),
+                cancellationToken)
+            .ConfigureAwait(false);
         return Ok(dto);
     }
 
-    private IActionResult? ValidateTenantQuery(Guid? tenantId)
-    {
-        if (_currentUser.Role == UserRole.PlatformAdmin)
-        {
-            if (tenantId is null)
-            {
-                return Problem(
-                    title: "Tenant required",
-                    detail: "Provide tenantId (query) when using platform administrator credentials.",
-                    statusCode: StatusCodes.Status400BadRequest);
-            }
+    private IActionResult? TenantError(Guid? tenantId) =>
+        TenantQueryResolution.ValidateTenantQuery(this, _currentUser, tenantId);
 
-            return null;
-        }
-
-        if (_currentUser.TenantId is null)
-            return Forbid();
-
-        if (tenantId.HasValue && tenantId.Value != _currentUser.TenantId.Value)
-        {
-            return Problem(
-                title: "Tenant mismatch",
-                detail: "tenantId does not match the authenticated user's tenant.",
-                statusCode: StatusCodes.Status403Forbidden);
-        }
-
-        return null;
-    }
-
-    private Guid ResolveTenantId(Guid? tenantId)
-    {
-        return _currentUser.Role == UserRole.PlatformAdmin
-            ? tenantId!.Value
-            : _currentUser.TenantId!.Value;
-    }
+    private Guid TenantId(Guid? tenantId) =>
+        TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
 }
