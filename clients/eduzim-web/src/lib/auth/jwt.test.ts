@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeJwtExpiry, isJwtExpired, readJwtRole, readJwtUserId } from "@/lib/auth/jwt";
+import { decodeJwtExpiry, isJwtExpired, readJwtRole, readJwtTenantId, readJwtUserId } from "@/lib/auth/jwt";
 
 function jwtWithPayload(payload: Record<string, unknown>): string {
   const encoded = Buffer.from(JSON.stringify(payload), "utf8").toString("base64url");
@@ -42,5 +42,11 @@ describe("JWT identity claims", () => {
     const token = jwtWithPayload({ nameid: userId, role: "Student", exp: 1_800_000_000 });
     expect(readJwtUserId(token)).toBe(userId);
     expect(readJwtRole(token)).toBe("Student");
+  });
+
+  it("reads tenant_id when present", () => {
+    const tenantId = "22222222-2222-2222-2222-222222222222";
+    const token = jwtWithPayload({ tenant_id: tenantId, exp: 1_800_000_000 });
+    expect(readJwtTenantId(token)).toBe(tenantId);
   });
 });

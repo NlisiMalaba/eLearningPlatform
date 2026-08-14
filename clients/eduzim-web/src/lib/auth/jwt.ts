@@ -50,6 +50,15 @@ export function readJwtRole(token: string): string | null {
   return value && value.length > 0 ? value : null;
 }
 
+export function readJwtTenantId(token: string): string | null {
+  const payload = decodeJwtPayload(token);
+  if (!payload) {
+    return null;
+  }
+
+  return firstGuid(payload, ["tenant_id"]);
+}
+
 export function isJwtExpired(
   token: string,
   nowMs: number = Date.now(),

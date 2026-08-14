@@ -10,6 +10,7 @@ export type SessionInfo = {
   accessTokenExpiresAt?: string;
   userId?: string;
   role?: string;
+  tenantId?: string;
 };
 
 export type PublicRegisterRole = "ParentGuardian" | "SchoolAdmin";

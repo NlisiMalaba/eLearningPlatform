@@ -324,7 +324,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
   - [x]* 24.4 Write property test for font size validation (Property 37)
     - **Property 37: Font Size Preference Validation — Validates: Requirements 14.3**
 
-- [ ] 25. Next.js Web PWA — student learning experience
+- [x] 25. Next.js Web PWA — student learning experience
   - [x] 25.1 Implement module viewer with content type renderers
     - Implement Client Component renderers for video (with closed captions), PDF, audio (with transcript link), and quiz content types
     - Implement 3D scene viewer with rotate/zoom/interact controls using Three.js or Babylon.js (`'use client'`)
@@ -333,7 +333,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement a persistent ZimBot Client Component on all learning screens; render a chat panel with message history and language selector
     - Display fallback message when ZimBot is unavailable
     - _Requirements: 5.1, 5.2, 5.3, 5.8_
-  - [ ] 25.3 Implement student dashboard with progress display
+  - [x] 25.3 Implement student dashboard with progress display
     - Render per-subject progress percentage bars and recent activity feed (Server Components for initial data, Client Components for live updates)
     - Display gamification points, earned badges, and leaderboard position
     - _Requirements: 4.8, 9.3, 9.4, 9.5_

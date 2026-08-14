@@ -1,4 +1,4 @@
-import { decodeJwtExpiry, readJwtRole, readJwtUserId } from "@/lib/auth/jwt";
+import { decodeJwtExpiry, readJwtRole, readJwtTenantId, readJwtUserId } from "@/lib/auth/jwt";
 import type { SessionInfo } from "@/lib/auth/types";
 
 export function sessionInfoFromAccessToken(accessToken: string): SessionInfo {
@@ -7,5 +7,6 @@ export function sessionInfoFromAccessToken(accessToken: string): SessionInfo {
     accessTokenExpiresAt: decodeJwtExpiry(accessToken)?.toISOString(),
     userId: readJwtUserId(accessToken) ?? undefined,
     role: readJwtRole(accessToken) ?? undefined,
+    tenantId: readJwtTenantId(accessToken) ?? undefined,
   };
 }
