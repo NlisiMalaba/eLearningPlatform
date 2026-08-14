@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ACCESS_TOKEN_COOKIE, REFRESH_TOKEN_COOKIE } from "@/lib/auth/cookies";
 import { applyAuthCookies, clearAuthCookies } from "@/lib/auth/sessionCookies";
-import { decodeJwtExpiry, isJwtExpired } from "@/lib/auth/jwt";
+import { isJwtExpired } from "@/lib/auth/jwt";
+import { sessionInfoFromAccessToken } from "@/lib/auth/sessionInfo";
 import { parseTokenPair, postUpstreamJson } from "@/lib/auth/upstreamAuth";
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
@@ -9,10 +10,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
   const refreshToken = request.cookies.get(REFRESH_TOKEN_COOKIE)?.value;
 
   if (accessToken && !isJwtExpired(accessToken)) {
-    return NextResponse.json({
-      authenticated: true,
-      accessTokenExpiresAt: decodeJwtExpiry(accessToken)?.toISOString(),
-    });
+    return NextResponse.json(sessionInfoFromAccessToken(accessToken));
   }
 
   if (!refreshToken) {
@@ -29,10 +27,7 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return response;
   }
 
-  const response = NextResponse.json({
-    authenticated: true,
-    accessTokenExpiresAt: tokens.accessTokenExpiresAt.toISOString(),
-  });
+  const response = NextResponse.json(sessionInfoFromAccessToken(tokens.accessToken));
   applyAuthCookies(response, tokens);
   return response;
 }

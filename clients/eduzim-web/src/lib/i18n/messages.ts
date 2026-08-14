@@ -89,6 +89,29 @@ export const en = {
   "content.scene.label": "3D scene",
   "content.scene.hint": "Drag to rotate, scroll to zoom, and click objects to highlight them. Arrow keys rotate; plus and minus zoom.",
   "content.scene.reset": "Reset view",
+  "zimbot.launcher": "Ask ZimBot",
+  "zimbot.title": "ZimBot",
+  "zimbot.close": "Close",
+  "zimbot.language": "Reply language",
+  "zimbot.lang.english": "English",
+  "zimbot.lang.shona": "Shona",
+  "zimbot.lang.ndebele": "Ndebele",
+  "zimbot.lang.kalanga": "Kalanga",
+  "zimbot.empty": "Ask a question about this module. ZimBot will guide you.",
+  "zimbot.thinking": "ZimBot is thinking…",
+  "zimbot.input": "Your question",
+  "zimbot.placeholder": "How does this concept work?",
+  "zimbot.send": "Send",
+  "zimbot.error": "ZimBot could not answer that. Try again.",
+  "zimbot.unavailable":
+    "ZimBot is temporarily unavailable. You can keep learning with static help resources.",
+  "zimbot.helpLink": "Open help resources",
+  "help.title": "Help resources",
+  "help.intro":
+    "If ZimBot is unavailable, use these steps while you wait, then try again.",
+  "help.tip.module": "Re-read the current module explanation, captions, or transcript.",
+  "help.tip.teacher": "Ask your teacher about anything you still find unclear.",
+  "help.tip.retry": "Send your question to ZimBot again when the service is back.",
 } as const;
 
 export const sn = {
@@ -182,6 +205,29 @@ export const sn = {
   "content.scene.label": "Chiitiko che3D",
   "content.scene.hint": "Kwevera kuti utenderedze, skirora kuti uwedzere saizi, uye tinya zvinhu. Miseve inotenderedza; plus ne minus zvinowedzera kana kuderedza.",
   "content.scene.reset": "Dzosa maonero",
+  "zimbot.launcher": "Bvunza ZimBot",
+  "zimbot.title": "ZimBot",
+  "zimbot.close": "Vhara",
+  "zimbot.language": "Mutauro wemhinduro",
+  "zimbot.lang.english": "Chirungu",
+  "zimbot.lang.shona": "ChiShona",
+  "zimbot.lang.ndebele": "IsiNdebele",
+  "zimbot.lang.kalanga": "ChiKalanga",
+  "zimbot.empty": "Bvunza mubvunzo pamusoro pemodule iyi. ZimBot ichakutungamira.",
+  "zimbot.thinking": "ZimBot iri kufunga…",
+  "zimbot.input": "Mubvunzo wako",
+  "zimbot.placeholder": "Chidzidzo ichi chinoshanda sei?",
+  "zimbot.send": "Tumira",
+  "zimbot.error": "ZimBot haina kukwanisa kupindura. Edza zvakare.",
+  "zimbot.unavailable":
+    "ZimBot haipo izvozvi. Ungaenderera mberi nekudzidza uchishandisa rubatsiro rwakanyorwa.",
+  "zimbot.helpLink": "Vhura rubatsiro",
+  "help.title": "Rubatsiro",
+  "help.intro":
+    "Kana ZimBot isipo, shandisa nhanho idzi uchimirira, wobva waedza zvakare.",
+  "help.tip.module": "Verenga zvakare tsanangudzo, captions, kana transcript yemodule.",
+  "help.tip.teacher": "Bvunza mudzidzisi wako pane zvaunenge usinganzwisise.",
+  "help.tip.retry": "Tumira mubvunzo kuZimBot zvakare kana service yadzoka.",
 } as const;
 
 export type MessageKey = keyof typeof en;

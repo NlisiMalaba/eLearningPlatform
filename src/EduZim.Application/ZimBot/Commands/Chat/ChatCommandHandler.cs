@@ -41,7 +41,8 @@ public sealed class ChatCommandHandler : IRequestHandler<ChatCommand, ZimBotChat
         ApplicationUser student = await LoadStudentAsync(request, ct).ConfigureAwait(false);
         Module? module = await LoadModuleAsync(request, ct).ConfigureAwait(false);
         bool hintMode = request.InAssessment || AssessmentHintDetector.IsAnswerRequest(request.Message);
-        string language = ZimBotLanguage.Resolve(student.PreferredLanguage);
+        string language = ZimBotLanguage.Resolve(
+            string.IsNullOrWhiteSpace(request.Language) ? student.PreferredLanguage : request.Language);
         string systemPrompt = ZimBotPromptBuilder.Build(language, module, hintMode);
 
         string raw = await _ai.ChatAsync(systemPrompt, request.Message, ct).ConfigureAwait(false);

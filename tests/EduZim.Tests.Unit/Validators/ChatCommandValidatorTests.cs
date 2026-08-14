@@ -29,4 +29,18 @@ public sealed class ChatCommandValidatorTests
         FluentValidation.Results.ValidationResult result = await _validator.ValidateAsync(command);
         Assert.False(result.IsValid);
     }
+
+    [Fact]
+    public async Task Language_longer_than_32_fails()
+    {
+        ChatCommand command = new(
+            Guid.NewGuid(),
+            Guid.NewGuid(),
+            "Hello",
+            null,
+            false,
+            new string('x', 33));
+        FluentValidation.Results.ValidationResult result = await _validator.ValidateAsync(command);
+        Assert.False(result.IsValid);
+    }
 }

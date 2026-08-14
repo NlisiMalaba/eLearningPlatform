@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { AccessibilitySettingsDialog } from "@/components/accessibility/AccessibilitySettingsDialog";
 import { SignOutButton } from "@/components/auth/SignOutButton";
+import { ZimBotWidget } from "@/components/zimbot/ZimBotWidget";
 import { t } from "@/lib/i18n/t";
 
 type AppLayoutProps = {
@@ -20,6 +21,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <main id="main-content" className="flex-1 px-4 py-6">
         {children}
       </main>
+      <ZimBotWidget />
     </div>
   );
 }

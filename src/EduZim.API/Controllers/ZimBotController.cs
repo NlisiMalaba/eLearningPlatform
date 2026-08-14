@@ -43,7 +43,8 @@ public sealed class ZimBotController : ControllerBase
                     request.StudentId,
                     request.Message,
                     request.ModuleId,
-                    request.InAssessment),
+                    request.InAssessment,
+                    request.Language),
                 cancellationToken)
             .ConfigureAwait(false);
         return Ok(dto);

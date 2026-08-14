@@ -9,4 +9,5 @@ public sealed record ChatCommand(
     Guid StudentId,
     string Message,
     Guid? ModuleId,
-    bool InAssessment) : IRequest<ZimBotChatDto>, ITenantScopedRequest;
+    bool InAssessment,
+    string? Language = null) : IRequest<ZimBotChatDto>, ITenantScopedRequest;

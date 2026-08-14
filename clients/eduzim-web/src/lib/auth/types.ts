@@ -8,6 +8,8 @@ export type TokenPair = {
 export type SessionInfo = {
   authenticated: boolean;
   accessTokenExpiresAt?: string;
+  userId?: string;
+  role?: string;
 };
 
 export type PublicRegisterRole = "ParentGuardian" | "SchoolAdmin";

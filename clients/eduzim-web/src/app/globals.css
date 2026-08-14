@@ -73,7 +73,9 @@ html[data-contrast="high"] [role="dialog"] {
 
 html[data-contrast="high"] a,
 html[data-contrast="high"] button,
-html[data-contrast="high"] [role="switch"] {
+html[data-contrast="high"] [role="switch"],
+html[data-contrast="high"] select,
+html[data-contrast="high"] textarea {
   color: #ffff00 !important;
   border-color: #ffff00 !important;
 }

@@ -329,7 +329,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement Client Component renderers for video (with closed captions), PDF, audio (with transcript link), and quiz content types
     - Implement 3D scene viewer with rotate/zoom/interact controls using Three.js or Babylon.js (`'use client'`)
     - _Requirements: 4.2, 4.3, 4.5, 14.4, 14.6_
-  - [ ] 25.2 Implement ZimBot chat widget
+  - [x] 25.2 Implement ZimBot chat widget
     - Implement a persistent ZimBot Client Component on all learning screens; render a chat panel with message history and language selector
     - Display fallback message when ZimBot is unavailable
     - _Requirements: 5.1, 5.2, 5.3, 5.8_

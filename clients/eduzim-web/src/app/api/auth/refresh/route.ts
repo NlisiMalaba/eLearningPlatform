@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { applyAuthCookies, clearAuthCookies } from "@/lib/auth/sessionCookies";
 import { REFRESH_TOKEN_COOKIE } from "@/lib/auth/cookies";
+import { sessionInfoFromAccessToken } from "@/lib/auth/sessionInfo";
 import { parseTokenPair, postUpstreamJson, problemFromUpstream } from "@/lib/auth/upstreamAuth";
 
 export async function POST(request: NextRequest): Promise<NextResponse> {
@@ -29,10 +30,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return response;
   }
 
-  const response = NextResponse.json({
-    authenticated: true,
-    accessTokenExpiresAt: tokens.accessTokenExpiresAt.toISOString(),
-  });
+  const response = NextResponse.json(sessionInfoFromAccessToken(tokens.accessToken));
   applyAuthCookies(response, tokens);
   return response;
 }
