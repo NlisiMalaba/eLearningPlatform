@@ -179,6 +179,7 @@ public static class DependencyInjection
         services.AddScoped<SubscriptionRenewalReminderJob>();
         services.AddScoped<AdaptiveLearningWeeklySummaryJob>();
         services.AddScoped<StudentInactivityAlertJob>();
+        services.AddScoped<ParentWeeklyProgressSummaryJob>();
 
         services.AddScoped(typeof(IRepository<>), typeof(Repository<>));
         services.AddScoped<IUnitOfWork, UnitOfWork>();

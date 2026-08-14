@@ -121,4 +121,10 @@ RecurringJob.AddOrUpdate<StudentInactivityAlertJob>(
     Cron.Daily(7),
     new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
+RecurringJob.AddOrUpdate<ParentWeeklyProgressSummaryJob>(
+    "parent-weekly-progress-summaries",
+    job => job.RunAsync(CancellationToken.None),
+    Cron.Weekly(DayOfWeek.Sunday, 8),
+    new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+
 app.Run();

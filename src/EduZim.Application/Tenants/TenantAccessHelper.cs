@@ -83,6 +83,19 @@ public static class TenantAccessHelper
             parentIsLinkedToStudent,
             "adaptive learning data");
 
+    /// <summary>Progress for a student: teacher, school admin, the student, or a linked parent.</summary>
+    public static void EnsureCanViewStudentProgressData(
+        ICurrentUser user,
+        Guid tenantId,
+        Guid studentUserId,
+        bool parentIsLinkedToStudent) =>
+        EnsureCanViewStudentScopedRecord(
+            user,
+            tenantId,
+            studentUserId,
+            parentIsLinkedToStudent,
+            "progress data");
+
     /// <summary>Points and badges for a student: teacher, school admin, the student, or a linked parent.</summary>
     public static void EnsureCanViewStudentGamificationData(
         ICurrentUser user,

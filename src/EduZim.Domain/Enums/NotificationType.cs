@@ -11,4 +11,5 @@ public enum NotificationType
     InactivityAlert,
     MarketplaceAccessRequested,
     MarketplacePackRemoved,
+    WeeklyProgressSummary,
 }

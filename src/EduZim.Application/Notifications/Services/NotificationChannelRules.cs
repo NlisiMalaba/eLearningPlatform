@@ -36,7 +36,8 @@ public static class NotificationChannelRules
     public static bool IsCriticalSmsType(NotificationType type) =>
         type is NotificationType.SubscriptionExpiry
             or NotificationType.LiveClassroomReminder
-            or NotificationType.InactivityAlert;
+            or NotificationType.InactivityAlert
+            or NotificationType.WeeklyProgressSummary;
 
     public static string EmailSubject(NotificationType type) => type switch
     {
@@ -49,6 +50,7 @@ public static class NotificationChannelRules
         NotificationType.InactivityAlert => "EduZim: we miss you",
         NotificationType.MarketplaceAccessRequested => "EduZim: marketplace access requested",
         NotificationType.MarketplacePackRemoved => "EduZim: marketplace pack removed",
+        NotificationType.WeeklyProgressSummary => "EduZim: weekly progress summary",
         _ => "EduZim notification",
     };
 

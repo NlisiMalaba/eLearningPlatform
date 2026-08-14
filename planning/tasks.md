@@ -278,7 +278,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 23: Marketplace Attribution Completeness — Validates: Requirements 8.5**
 
 - [ ] 21. Progress and Parent Dashboard feature — commands, handlers, and endpoints
-  - [ ] 21.1 Implement Progress command/query handlers
+  - [x] 21.1 Implement Progress command/query handlers
     - Implement `RecordModuleCompletionCommandHandler` as a `INotificationHandler<ModuleCompletedNotification>`: set `IsCompleted = true`, unlock next module in sequence, calculate and store per-subject progress percentage
     - Implement `GetStudentProgressQueryHandler` returning per-subject progress percentage
     - Implement `GetParentDashboardQueryHandler` returning `CurrentGrade`, `Subjects`, `RecentActivity`, and `OverallProgressPercent` for each linked student
