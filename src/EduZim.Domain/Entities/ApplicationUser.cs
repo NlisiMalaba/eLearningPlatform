@@ -16,4 +16,5 @@ public class ApplicationUser : IdentityUser<Guid>
     public string? FullName { get; set; }
     public DateTime? LastLoginAt { get; set; }
     public DateTime? LastInactivityAlertAt { get; set; }
+    public int? DailyScreenTimeLimitSeconds { get; set; }
 }

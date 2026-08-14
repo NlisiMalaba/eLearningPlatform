@@ -33,6 +33,7 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<AnswerRecord> AnswerRecords => Set<AnswerRecord>();
     public DbSet<StudentProgress> StudentProgresses => Set<StudentProgress>();
     public DbSet<SubjectProgress> SubjectProgresses => Set<SubjectProgress>();
+    public DbSet<StudentSession> StudentSessions => Set<StudentSession>();
     public DbSet<StudentPoints> StudentPoints => Set<StudentPoints>();
     public DbSet<Badge> Badges => Set<Badge>();
     public DbSet<Notification> Notifications => Set<Notification>();

@@ -277,20 +277,20 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 22: Cross-Tenant Content Access Requires Approval — Validates: Requirements 8.3, 8.4**
     - **Property 23: Marketplace Attribution Completeness — Validates: Requirements 8.5**
 
-- [ ] 21. Progress and Parent Dashboard feature — commands, handlers, and endpoints
+- [x] 21. Progress and Parent Dashboard feature — commands, handlers, and endpoints
   - [x] 21.1 Implement Progress command/query handlers
     - Implement `RecordModuleCompletionCommandHandler` as a `INotificationHandler<ModuleCompletedNotification>`: set `IsCompleted = true`, unlock next module in sequence, calculate and store per-subject progress percentage
     - Implement `GetStudentProgressQueryHandler` returning per-subject progress percentage
     - Implement `GetParentDashboardQueryHandler` returning `CurrentGrade`, `Subjects`, `RecentActivity`, and `OverallProgressPercent` for each linked student
     - Implement weekly summary notification Hangfire job (email + SMS) for parents
     - _Requirements: 4.4, 4.8, 10.1, 10.2, 10.4_
-  - [ ] 21.2 Implement screen time limit enforcement
+  - [x] 21.2 Implement screen time limit enforcement
     - Track daily session time per student; when `DailyScreenTimeLimitSeconds` is reached, pause session and block new session creation until next calendar day
     - _Requirements: 10.5_
-  - [ ] 21.3 Add Progress and Parent Dashboard API endpoints
+  - [x] 21.3 Add Progress and Parent Dashboard API endpoints
     - `GET /students/{studentId}/progress`, `GET /parents/{parentId}/dashboard`
     - _Requirements: 4.8, 10.1_
-  - [ ]* 21.4 Write property tests for Progress and Parent Dashboard (Properties 13, 14, 29, 31)
+  - [x]* 21.4 Write property tests for Progress and Parent Dashboard (Properties 13, 14, 29, 31)
     - **Property 13: Module Completion Unlocks Next Module — Validates: Requirements 4.4**
     - **Property 14: Progress Percentage Calculation — Validates: Requirements 4.8**
     - **Property 29: Parent Dashboard Data Completeness — Validates: Requirements 10.1**

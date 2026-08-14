@@ -27,6 +27,7 @@ public interface IEduZimDbContext
     DbSet<AssessmentClassAssignment> AssessmentClassAssignments { get; }
     DbSet<StudentProgress> StudentProgresses { get; }
     DbSet<SubjectProgress> SubjectProgresses { get; }
+    DbSet<StudentSession> StudentSessions { get; }
     DbSet<StudentPoints> StudentPoints { get; }
     DbSet<Badge> Badges { get; }
     DbSet<Notification> Notifications { get; }

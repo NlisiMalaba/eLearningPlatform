@@ -17,4 +17,6 @@ internal static class ApiRoutes
     public const string V1Classrooms = "api/v1/classrooms";
     public const string V1Sync = "api/v1/sync";
     public const string V1Marketplace = "api/v1/marketplace";
+    public const string V1Students = "api/v1/students";
+    public const string V1Parents = "api/v1/parents";
 }

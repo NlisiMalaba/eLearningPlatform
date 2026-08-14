@@ -90,4 +90,38 @@ internal static class ProgressTestData
             CreatedAt = DateTime.UtcNow,
         };
     }
+
+    public static ApplicationUser Student(Guid tenantId, Guid studentId, int? dailyLimitSeconds = null)
+    {
+        return new ApplicationUser
+        {
+            Id = studentId,
+            TenantId = tenantId,
+            Role = UserRole.Student,
+            DailyScreenTimeLimitSeconds = dailyLimitSeconds,
+        };
+    }
+
+    public static StudentSession Session(
+        Guid tenantId,
+        Guid studentId,
+        SessionStatus status,
+        DateOnly sessionDate,
+        int accumulatedSeconds,
+        DateTime lastHeartbeatAt)
+    {
+        return new StudentSession
+        {
+            Id = Guid.NewGuid(),
+            TenantId = tenantId,
+            StudentId = studentId,
+            Status = status,
+            SessionDate = sessionDate,
+            StartedAt = lastHeartbeatAt,
+            LastHeartbeatAt = lastHeartbeatAt,
+            AccumulatedSeconds = accumulatedSeconds,
+            CreatedAt = lastHeartbeatAt,
+            UpdatedAt = lastHeartbeatAt,
+        };
+    }
 }

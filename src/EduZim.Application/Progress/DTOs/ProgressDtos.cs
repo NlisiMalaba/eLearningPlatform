@@ -35,3 +35,14 @@ public sealed record RecentActivityDto(
     string Kind,
     string Title,
     DateTime OccurredAt);
+
+public sealed record ScreenTimeSettingsDto(Guid StudentId, int? DailyScreenTimeLimitSeconds);
+
+public sealed record StudentSessionDto(
+    Guid SessionId,
+    Guid StudentId,
+    SessionStatus Status,
+    DateOnly SessionDate,
+    int AccumulatedSeconds,
+    int UsedTodaySeconds,
+    bool LimitReached);
