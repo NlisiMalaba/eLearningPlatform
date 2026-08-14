@@ -47,6 +47,8 @@ public static class NotificationChannelRules
         NotificationType.SubscriptionRenewal => "EduZim: subscription renewal",
         NotificationType.SubscriptionExpiry => "EduZim: subscription expiry",
         NotificationType.InactivityAlert => "EduZim: we miss you",
+        NotificationType.MarketplaceAccessRequested => "EduZim: marketplace access requested",
+        NotificationType.MarketplacePackRemoved => "EduZim: marketplace pack removed",
         _ => "EduZim notification",
     };
 

@@ -51,6 +51,10 @@ public class EduZimDbContext : IdentityDbContext<ApplicationUser, IdentityRole<G
     public DbSet<SchoolClass> SchoolClasses => Set<SchoolClass>();
     public DbSet<ClassEnrollment> ClassEnrollments => Set<ClassEnrollment>();
     public DbSet<AssessmentClassAssignment> AssessmentClassAssignments => Set<AssessmentClassAssignment>();
+    public DbSet<ContentPack> ContentPacks => Set<ContentPack>();
+    public DbSet<ContentPackItem> ContentPackItems => Set<ContentPackItem>();
+    public DbSet<ContentPackAccessRequest> ContentPackAccessRequests => Set<ContentPackAccessRequest>();
+    public DbSet<ContentPackRating> ContentPackRatings => Set<ContentPackRating>();
 
     public Task SetSessionTenantIdAsync(Guid tenantId, CancellationToken cancellationToken = default)
     {

@@ -54,7 +54,7 @@ public sealed class NotificationPropertyTests
         bool email,
         bool sms)
     {
-        NotificationType type = (NotificationType)(typeRaw % 7);
+        NotificationType type = (NotificationType)(typeRaw % Enum.GetValues<NotificationType>().Length);
         using ServiceProvider provider = NotificationPropertyTestHost.Create();
         using IServiceScope scope = provider.CreateScope();
         EduZimDbContext db = scope.ServiceProvider.GetRequiredService<EduZimDbContext>();

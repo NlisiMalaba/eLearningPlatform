@@ -9,4 +9,6 @@ public enum NotificationType
     SubscriptionRenewal,
     SubscriptionExpiry,
     InactivityAlert,
+    MarketplaceAccessRequested,
+    MarketplacePackRemoved,
 }

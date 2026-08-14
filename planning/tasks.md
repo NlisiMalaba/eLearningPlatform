@@ -260,7 +260,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - **Property 33: Offline Sync Conflict Resolution by Timestamp — Validates: Requirements 12.5**
 
 - [ ] 20. Marketplace feature — commands, handlers, and endpoints
-  - [ ] 20.1 Implement Marketplace command/query handlers
+  - [x] 20.1 Implement Marketplace command/query handlers
     - Implement `SubmitContentPackCommandHandler`: create pack with `Status = PendingReview`
     - Implement `ApproveContentPackCommandHandler` (Platform Admin): transition to `Approved`; only `Approved` packs appear in `BrowseContentPacksQueryHandler`
     - Implement `RequestAccessCommandHandler`: notify originating teacher
