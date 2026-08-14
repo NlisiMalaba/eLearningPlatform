@@ -17,4 +17,5 @@ public class ApplicationUser : IdentityUser<Guid>
     public DateTime? LastLoginAt { get; set; }
     public DateTime? LastInactivityAlertAt { get; set; }
     public int? DailyScreenTimeLimitSeconds { get; set; }
+    public FontSize FontSize { get; set; } = FontSize.Medium;
 }

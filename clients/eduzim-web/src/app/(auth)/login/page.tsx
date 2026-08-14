@@ -11,12 +11,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const from = safeRedirectPath(params.from);
 
   return (
-    <main>
+    <>
       <h1 className="text-2xl font-semibold tracking-tight text-[#0B6E4F]">
         {t("auth.login.title")}
       </h1>
       <p className="mt-3 mb-6 text-base text-zinc-600">{t("auth.login.subtitle")}</p>
       <LoginForm from={from} />
-    </main>
+    </>
   );
 }

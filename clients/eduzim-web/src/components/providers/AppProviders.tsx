@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useState, type ReactNode } from "react";
 import { OfflineSyncManager } from "@/components/offline/OfflineSyncManager";
 import { SilentTokenRefresh } from "@/components/auth/SilentTokenRefresh";
+import { AccessibilityProvider } from "@/components/accessibility/AccessibilityProvider";
 
 type AppProvidersProps = {
   children: ReactNode;
@@ -27,6 +28,7 @@ export function AppProviders({ children }: AppProvidersProps) {
 
   return (
     <QueryClientProvider client={queryClient}>
+      <AccessibilityProvider />
       <SilentTokenRefresh />
       <OfflineSyncManager />
       {children}

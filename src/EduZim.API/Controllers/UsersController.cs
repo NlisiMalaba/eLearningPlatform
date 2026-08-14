@@ -1,6 +1,8 @@
 using Asp.Versioning;
 using EduZim.API.Contracts;
 using EduZim.Application.Common.Interfaces;
+using EduZim.Application.Identity.Commands.UpdateFontSizePreference;
+using EduZim.Application.Identity.DTOs;
 using EduZim.Application.Notifications.Commands.UpdateNotificationPreferences;
 using EduZim.Application.Notifications.DTOs;
 using MediatR;
@@ -39,6 +41,20 @@ public sealed class UsersController : ControllerBase
         Guid resolvedTenantId = TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
         NotificationPreferencesDto dto = await _mediator.Send(
                 new UpdateNotificationPreferencesCommand(resolvedTenantId, userId, request.Preferences),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(dto);
+    }
+
+    [HttpPut("{userId:guid}/font-size")]
+    [ProducesResponseType(typeof(FontSizePreferenceDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateFontSize(
+        Guid userId,
+        [FromBody] UpdateFontSizePreferenceRequest request,
+        CancellationToken cancellationToken)
+    {
+        FontSizePreferenceDto dto = await _mediator.Send(
+                new UpdateFontSizePreferenceCommand(userId, request.FontSize),
                 cancellationToken)
             .ConfigureAwait(false);
         return Ok(dto);

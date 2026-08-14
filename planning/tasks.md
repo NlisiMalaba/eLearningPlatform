@@ -307,7 +307,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
 - [x] 23. Checkpoint — feature handlers complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 24. Next.js Web PWA — foundation and authentication
+- [x] 24. Next.js Web PWA — foundation and authentication
   - [x] 24.1 Scaffold Next.js App Router PWA with caching and offline support
     - Create Next.js app (App Router, TypeScript) in `clients/eduzim-web`; configure Serwist/Workbox service worker for PWA caching of module content
     - Use App Router route groups `(auth)` and `(app)` with `middleware.ts` for protected-route redirects
@@ -317,11 +317,11 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement App Router pages for login, registration, email verification, and SSO redirect
     - Store JWT and refresh token in httpOnly cookies; implement silent token refresh; `middleware.ts` redirects to login on token expiry
     - _Requirements: 1.1, 1.2, 1.6_
-  - [ ] 24.3 Implement accessibility settings
+  - [x] 24.3 Implement accessibility settings
     - Implement high-contrast mode toggle, font size selector (Small/Medium/Large/ExtraLarge), and text-to-speech activation button in a settings panel
     - Ensure all interactive elements are keyboard-navigable
     - _Requirements: 14.1, 14.2, 14.3, 14.5_
-  - [ ]* 24.4 Write property test for font size validation (Property 37)
+  - [x]* 24.4 Write property test for font size validation (Property 37)
     - **Property 37: Font Size Preference Validation — Validates: Requirements 14.3**
 
 - [ ] 25. Next.js Web PWA — student learning experience

@@ -2,7 +2,7 @@ import { t } from "@/lib/i18n/t";
 
 export default function OfflinePage() {
   return (
-    <main className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
+    <main id="main-content" className="flex flex-1 flex-col items-center justify-center px-6 py-16 text-center">
       <h1 className="text-2xl font-semibold tracking-tight text-[#0B6E4F]">
         {t("offline.page.title")}
       </h1>
