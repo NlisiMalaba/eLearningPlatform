@@ -61,3 +61,8 @@ public sealed class GenerateInviteCodeResponse
     public required string Code { get; init; }
     public required DateTime ExpiresAtUtc { get; init; }
 }
+
+public sealed class UploadBrandingLogoResponse
+{
+    public required string LogoUrl { get; init; }
+}

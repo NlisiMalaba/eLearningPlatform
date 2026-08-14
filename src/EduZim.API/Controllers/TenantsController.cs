@@ -4,6 +4,7 @@ using EduZim.API.Routing;
 using EduZim.Application.Tenants.Commands.GenerateInviteCode;
 using EduZim.Application.Tenants.Commands.ProvisionTenant;
 using EduZim.Application.Tenants.Commands.UpdateBranding;
+using EduZim.Application.Tenants.Commands.UploadBrandingLogo;
 using EduZim.Application.Tenants.Models;
 using EduZim.Application.Tenants.Queries.GetTenant;
 using EduZim.Application.Tenants.Queries.GetTenantDashboard;
@@ -79,6 +80,33 @@ public sealed class TenantsController : ControllerBase
 
         await _mediator.Send(new UpdateBrandingCommand(tenantId, branding), cancellationToken);
         return NoContent();
+    }
+
+    [HttpPost("{tenantId:guid}/branding/logo")]
+    [Consumes("multipart/form-data")]
+    [ProducesResponseType(typeof(UploadBrandingLogoResponse), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UploadBrandingLogo(
+        Guid tenantId,
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file is not { Length: > 0 })
+        {
+            return Problem(
+                title: "File required",
+                detail: "Upload a non-empty logo image.",
+                statusCode: StatusCodes.Status400BadRequest);
+        }
+
+        await using Stream stream = file.OpenReadStream();
+        string contentType = string.IsNullOrWhiteSpace(file.ContentType)
+            ? "application/octet-stream"
+            : file.ContentType;
+        string logoUrl = await _mediator.Send(
+                new UploadBrandingLogoCommand(tenantId, file.Length, contentType, stream),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(new UploadBrandingLogoResponse { LogoUrl = logoUrl });
     }
 
     [HttpGet("{tenantId:guid}/dashboard")]

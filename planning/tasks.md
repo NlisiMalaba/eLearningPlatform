@@ -338,7 +338,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Display gamification points, earned badges, and leaderboard position
     - _Requirements: 4.8, 9.3, 9.4, 9.5_
 
-- [ ] 26. Next.js Web PWA — teacher and admin screens
+- [X] 26. Next.js Web PWA — teacher and admin screens
   - [x] 26.1 Implement teacher content editor and module management
     - Implement file upload UI (drag-and-drop) with client-side size validation before upload
     - Implement module builder: create/reorder content items, assign grade and subject, publish to tenant or submit to marketplace
@@ -347,7 +347,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement question editor for multiple-choice, true/false, and short-answer types with optional time limit
     - Implement class results view with per-student scores, completion rates, and time-on-task table
     - _Requirements: 7.5, 7.6, 7.7_
-  - [ ] 26.3 Implement school admin dashboard and tenant branding
+  - [x] 26.3 Implement school admin dashboard and tenant branding
     - Implement admin dashboard showing enrolled students, active teachers, subscription status, and storage usage
     - Implement branding settings form (logo upload, school name, primary colour picker)
     - _Requirements: 11.4, 11.5_

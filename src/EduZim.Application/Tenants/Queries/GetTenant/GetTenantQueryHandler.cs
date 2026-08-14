@@ -1,9 +1,11 @@
+using EduZim.Application.Common.Configuration;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Application.Exceptions;
 using EduZim.Application.Tenants.Models;
 using EduZim.Domain.Entities;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace EduZim.Application.Tenants.Queries.GetTenant;
 
@@ -11,11 +13,19 @@ public sealed class GetTenantQueryHandler : IRequestHandler<GetTenantQuery, Tena
 {
     private readonly IEduZimDbContext _db;
     private readonly ICurrentUser _currentUser;
+    private readonly IStorageService _storage;
+    private readonly ContentStorageOptions _options;
 
-    public GetTenantQueryHandler(IEduZimDbContext db, ICurrentUser currentUser)
+    public GetTenantQueryHandler(
+        IEduZimDbContext db,
+        ICurrentUser currentUser,
+        IStorageService storage,
+        IOptions<ContentStorageOptions> options)
     {
         _db = db;
         _currentUser = currentUser;
+        _storage = storage;
+        _options = options.Value;
     }
 
     public async Task<TenantDetailsDto> Handle(GetTenantQuery request, CancellationToken cancellationToken)
@@ -39,7 +49,16 @@ public sealed class GetTenantQueryHandler : IRequestHandler<GetTenantQuery, Tena
             new TenantBrandingDto(
                 b.SchoolName,
                 b.PrimaryColour,
-                b.LogoUrl,
+                await ResolveLogoUrlAsync(b.LogoUrl).ConfigureAwait(false),
                 b.SsoAuthorizationEndpoint));
+    }
+
+    private async Task<string?> ResolveLogoUrlAsync(string? stored)
+    {
+        if (string.IsNullOrWhiteSpace(stored) || BrandingLogoRules.IsHttpUrl(stored))
+            return stored;
+
+        TimeSpan expiry = TimeSpan.FromMinutes(_options.SignedUrlExpiryMinutes);
+        return await _storage.GetSignedUrlAsync(stored, expiry).ConfigureAwait(false);
     }
 }

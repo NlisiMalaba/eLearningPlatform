@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { AdminStudioNav } from "@/components/admin/AdminStudioNav";
 import { AccessibilitySettingsDialog } from "@/components/accessibility/AccessibilitySettingsDialog";
 import { SignOutButton } from "@/components/auth/SignOutButton";
 import { TeacherStudioNav } from "@/components/teacher/TeacherStudioNav";
@@ -15,6 +16,7 @@ export default function AppLayout({ children }: AppLayoutProps) {
       <header className="flex items-center justify-between border-b border-black/5 bg-white px-4 py-3">
         <p className="text-lg font-semibold tracking-tight text-[#0B6E4F]">{t("app.name")}</p>
         <div className="flex items-center gap-3">
+          <AdminStudioNav />
           <TeacherStudioNav />
           <AccessibilitySettingsDialog />
           <SignOutButton />

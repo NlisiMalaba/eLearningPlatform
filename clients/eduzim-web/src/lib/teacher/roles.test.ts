@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageSchoolContent } from "@/lib/teacher/roles";
+import { canManageSchoolContent, canManageTenantSettings } from "@/lib/teacher/roles";
 import { isLearningPath } from "@/lib/zimbot/learningContext";
 
 describe("canManageSchoolContent", () => {
@@ -9,6 +9,15 @@ describe("canManageSchoolContent", () => {
     expect(canManageSchoolContent("PlatformAdmin")).toBe(true);
     expect(canManageSchoolContent("Student")).toBe(false);
     expect(canManageSchoolContent("ParentGuardian")).toBe(false);
+  });
+});
+
+describe("canManageTenantSettings", () => {
+  it("allows school and platform admins only", () => {
+    expect(canManageTenantSettings("SchoolAdmin")).toBe(true);
+    expect(canManageTenantSettings("PlatformAdmin")).toBe(true);
+    expect(canManageTenantSettings("Teacher")).toBe(false);
+    expect(canManageTenantSettings("Student")).toBe(false);
   });
 });
 

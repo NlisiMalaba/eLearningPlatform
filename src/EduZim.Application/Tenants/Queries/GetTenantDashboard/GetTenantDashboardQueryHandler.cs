@@ -22,6 +22,7 @@ public sealed class GetTenantDashboardQueryHandler : IRequestHandler<GetTenantDa
     public async Task<TenantDashboardDto> Handle(GetTenantDashboardQuery request, CancellationToken cancellationToken)
     {
         TenantAccessHelper.EnsureCanViewTenantDashboard(_currentUser, request.TenantId);
+        await _db.SetSessionTenantIdAsync(request.TenantId, cancellationToken).ConfigureAwait(false);
 
         var exists = await _db.Tenants.AsNoTracking()
             .AnyAsync(t => t.Id == request.TenantId, cancellationToken)
