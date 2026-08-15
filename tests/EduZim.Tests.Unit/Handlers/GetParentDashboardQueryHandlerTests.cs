@@ -20,6 +20,8 @@ public sealed class GetParentDashboardQueryHandlerTests
         Guid studentId = Guid.NewGuid();
         Guid moduleId = Guid.NewGuid();
         DateTime completedAt = DateTime.UtcNow.AddDays(-1);
+        ApplicationUser linkedStudent = ProgressTestData.Student(tenantId, studentId, 3_600);
+        linkedStudent.FullName = "Tariro Moyo";
         GetParentDashboardQueryHandler handler = CreateHandler(
             tenantId,
             UserRole.ParentGuardian,
@@ -27,7 +29,8 @@ public sealed class GetParentDashboardQueryHandlerTests
             [ProgressTestData.Link(tenantId, parentId, studentId)],
             [ProgressTestData.Module(tenantId, moduleId, "Math", 1, GradeLevel.Grade2, "Fractions")],
             [ProgressTestData.Progress(tenantId, studentId, moduleId, true, true, completedAt)],
-            [ProgressTestData.Badge(tenantId, studentId, BadgeType.FirstModule, completedAt)]);
+            [ProgressTestData.Badge(tenantId, studentId, BadgeType.FirstModule, completedAt)],
+            [linkedStudent]);
 
         ParentDashboardDto dto = await handler.Handle(
             new GetParentDashboardQuery(tenantId, parentId),
@@ -35,9 +38,11 @@ public sealed class GetParentDashboardQueryHandlerTests
 
         LinkedStudentDashboardDto student = Assert.Single(dto.Students);
         Assert.Equal(studentId, student.StudentId);
+        Assert.Equal("Tariro Moyo", student.DisplayName);
         Assert.Equal(GradeLevel.Grade2, student.CurrentGrade);
         Assert.Contains("Math", student.Subjects);
         Assert.Equal(100, student.OverallProgressPercent);
+        Assert.Equal(3_600, student.DailyScreenTimeLimitSeconds);
         Assert.Contains(student.RecentActivity, a => a.Kind == "ModuleCompleted" && a.Title == "Fractions");
         Assert.Contains(student.RecentActivity, a => a.Kind == "BadgeEarned");
     }
@@ -87,7 +92,8 @@ public sealed class GetParentDashboardQueryHandlerTests
         List<ParentStudentLink> links,
         List<Module> modules,
         List<StudentProgress> progresses,
-        List<Badge> badges)
+        List<Badge> badges,
+        List<ApplicationUser>? students = null)
     {
         Mock<IEduZimDbContext> db = new();
         db.Setup(x => x.SetSessionTenantIdAsync(It.IsAny<Guid>(), It.IsAny<CancellationToken>()))
@@ -96,6 +102,7 @@ public sealed class GetParentDashboardQueryHandlerTests
         db.Setup(x => x.Modules).Returns(modules.AsQueryable().BuildMockDbSet().Object);
         db.Setup(x => x.StudentProgresses).Returns(progresses.AsQueryable().BuildMockDbSet().Object);
         db.Setup(x => x.Badges).Returns(badges.AsQueryable().BuildMockDbSet().Object);
+        db.Setup(x => x.Users).Returns((students ?? []).AsQueryable().BuildMockDbSet().Object);
 
         Mock<ICurrentUser> user = new();
         user.Setup(u => u.Role).Returns(role);

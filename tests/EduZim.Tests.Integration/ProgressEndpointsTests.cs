@@ -1,14 +1,16 @@
 using System.Net;
 using EduZim.API;
+using EduZim.Tests.Integration.Support;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace EduZim.Tests.Integration;
 
-public sealed class ProgressEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(UnauthorizedApiCollection.Name)]
+public sealed class ProgressEndpointsTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly UnauthorizedApiFactory _factory;
 
-    public ProgressEndpointsTests(WebApplicationFactory<Program> factory)
+    public ProgressEndpointsTests(UnauthorizedApiFactory factory)
     {
         _factory = factory;
     }
@@ -31,6 +33,19 @@ public sealed class ProgressEndpointsTests : IClassFixture<WebApplicationFactory
         Guid parentId = Guid.NewGuid();
 
         HttpResponseMessage response = await client.GetAsync($"/api/v1.0/parents/{parentId}/dashboard");
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
+    [Fact]
+    public async Task Put_screen_time_without_auth_returns_unauthorized()
+    {
+        HttpClient client = CreateClient();
+        Guid studentId = Guid.NewGuid();
+
+        HttpResponseMessage response = await client.PutAsync(
+            $"/api/v1.0/students/{studentId}/screen-time",
+            content: null);
 
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }

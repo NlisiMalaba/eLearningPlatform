@@ -26,10 +26,12 @@ public sealed record ParentDashboardDto(
 
 public sealed record LinkedStudentDashboardDto(
     Guid StudentId,
+    string DisplayName,
     GradeLevel CurrentGrade,
     IReadOnlyList<string> Subjects,
     IReadOnlyList<RecentActivityDto> RecentActivity,
-    int OverallProgressPercent);
+    int OverallProgressPercent,
+    int? DailyScreenTimeLimitSeconds);
 
 public sealed record RecentActivityDto(
     string Kind,

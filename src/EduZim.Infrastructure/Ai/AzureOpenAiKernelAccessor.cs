@@ -1,4 +1,5 @@
 using EduZim.Application.Common.Configuration;
+using EduZim.Infrastructure.Http;
 using Microsoft.Extensions.Options;
 using Microsoft.SemanticKernel;
 
@@ -6,14 +7,14 @@ namespace EduZim.Infrastructure.Ai;
 
 internal sealed class AzureOpenAiKernelAccessor
 {
-    public AzureOpenAiKernelAccessor(IOptions<AzureOpenAiOptions> options)
+    public AzureOpenAiKernelAccessor(IOptions<AzureOpenAiOptions> options, IHttpClientFactory httpClients)
     {
-        Kernel = TryCreate(options.Value);
+        Kernel = TryCreate(options.Value, httpClients.CreateClient(ExternalHttpClientNames.Ai));
     }
 
     public Kernel? Kernel { get; }
 
-    private static Kernel? TryCreate(AzureOpenAiOptions options)
+    private static Kernel? TryCreate(AzureOpenAiOptions options, HttpClient httpClient)
     {
         string? endpoint = options.Endpoint;
         string? apiKey = options.ApiKey;
@@ -26,7 +27,11 @@ internal sealed class AzureOpenAiKernelAccessor
         }
 
         IKernelBuilder builder = Kernel.CreateBuilder();
-        builder.AddAzureOpenAIChatCompletion(deployment, endpoint, apiKey);
+        builder.AddAzureOpenAIChatCompletion(
+            deploymentName: deployment,
+            endpoint: endpoint,
+            apiKey: apiKey,
+            httpClient: httpClient);
         return builder.Build();
     }
 }

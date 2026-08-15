@@ -110,7 +110,7 @@ public sealed class TenantPropertyTests
     }
 
     // Feature: elearning-app-zimbabwe, Property 30 (invalid code) — Validates: Requirements 10.3
-    [Property(MaxTest = 50)]
+    [Property(MaxTest = 100)]
     public async Task Property30_unknown_invite_code_redeem_fails()
     {
         using var provider = TenantPropertyTestHost.Create();
@@ -140,7 +140,7 @@ public sealed class TenantPropertyTests
     }
 
     // Feature: elearning-app-zimbabwe, Property 30 (expired code) — Validates: Requirements 10.3
-    [Property(MaxTest = 50)]
+    [Property(MaxTest = 100)]
     public async Task Property30_expired_invite_code_redeem_fails()
     {
         using var provider = TenantPropertyTestHost.Create();

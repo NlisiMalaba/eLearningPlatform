@@ -29,7 +29,12 @@ public sealed class UpdateBrandingCommandHandler : IRequestHandler<UpdateBrandin
 
         tenant.Branding.SchoolName = request.Branding.SchoolName;
         tenant.Branding.PrimaryColour = request.Branding.PrimaryColour;
-        tenant.Branding.LogoUrl = request.Branding.LogoUrl;
+        if (!string.IsNullOrWhiteSpace(request.Branding.LogoUrl)
+            && BrandingLogoRules.IsHttpUrl(request.Branding.LogoUrl))
+        {
+            tenant.Branding.LogoUrl = request.Branding.LogoUrl;
+        }
+
         tenant.Branding.SsoAuthorizationEndpoint = request.Branding.SsoAuthorizationEndpoint;
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
         return Unit.Value;

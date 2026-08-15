@@ -22,8 +22,10 @@ using EduZim.Infrastructure.Ai;
 using EduZim.Infrastructure.Notifications;
 using EduZim.Infrastructure.Tenants;
 using EduZim.Infrastructure.Video;
+using EduZim.Infrastructure.Http;
 using EduZim.Infrastructure.Hubs;
 using Hangfire;
+using Hangfire.InMemory;
 using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
@@ -98,9 +100,11 @@ public static class DependencyInjection
             .AddSignInManager()
             .AddDefaultTokenProviders();
 
+        services.AddResilientExternalHttpClients(configuration);
         services.AddSingleton<IEmailService, NullEmailService>();
         services.AddSingleton<ISmsService, NullSmsService>();
         services.AddSingleton<IVideoService, NullVideoService>();
+        services.AddSingleton<IPaymentService, NullPaymentService>();
         services.AddSingleton<AzureOpenAiKernelAccessor>();
         services.AddSingleton(AiResiliencePipeline.Create());
         services.AddScoped<IAiService, SemanticKernelAiService>();
@@ -149,13 +153,20 @@ public static class DependencyInjection
         services.AddScoped<IAccessTokenIssuer>(sp => sp.GetRequiredService<JwtAccessTokenIssuer>());
         services.AddScoped<IRefreshTokenService, RefreshTokenService>();
 
+        bool useInMemoryHangfire = UseInMemoryHangfire(configuration);
         services.AddHangfire((_, config) =>
+        {
             config
                 .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
                 .UseSimpleAssemblyNameTypeSerializer()
-                .UseRecommendedSerializerSettings()
-                .UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString)));
-        services.AddHangfireServer();
+                .UseRecommendedSerializerSettings();
+            if (useInMemoryHangfire)
+                config.UseInMemoryStorage();
+            else
+                config.UsePostgreSqlStorage(c => c.UseNpgsqlConnection(connectionString));
+        });
+        if (!useInMemoryHangfire)
+            services.AddHangfireServer();
 
         services.AddScoped<CurrentUser>();
         services.AddScoped<ICurrentUser>(sp => sp.GetRequiredService<CurrentUser>());
@@ -199,5 +210,15 @@ public static class DependencyInjection
         services.AddScoped<ClassroomHubCurrentUserFilter>();
 
         return services;
+    }
+
+    private static bool UseInMemoryHangfire(IConfiguration configuration)
+    {
+        if (string.Equals(configuration["Hangfire:UseInMemory"], "true", StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        string? environment = configuration["ASPNETCORE_ENVIRONMENT"]
+            ?? Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT");
+        return string.Equals(environment, "Testing", StringComparison.OrdinalIgnoreCase);
     }
 }

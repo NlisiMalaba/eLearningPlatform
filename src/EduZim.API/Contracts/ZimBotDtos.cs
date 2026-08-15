@@ -14,4 +14,7 @@ public sealed class ZimBotChatRequest
     public Guid? ModuleId { get; set; }
 
     public bool InAssessment { get; set; }
+
+    [MaxLength(32)]
+    public string? Language { get; set; }
 }

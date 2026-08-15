@@ -1,5 +1,7 @@
 using Asp.Versioning;
+using EduZim.API.Contracts;
 using EduZim.Application.Common.Interfaces;
+using EduZim.Application.Progress.Commands.SetDailyScreenTimeLimit;
 using EduZim.Application.Progress.DTOs;
 using EduZim.Application.Progress.Queries.GetParentDashboard;
 using EduZim.Application.Progress.Queries.GetStudentProgress;
@@ -56,6 +58,28 @@ public sealed class ProgressController : ControllerBase
         Guid resolvedTenantId = TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
         ParentDashboardDto dto = await _mediator.Send(
                 new GetParentDashboardQuery(resolvedTenantId, parentId),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(dto);
+    }
+
+    [HttpPut("students/{studentId:guid}/screen-time")]
+    [ProducesResponseType(typeof(ScreenTimeSettingsDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> SetDailyScreenTimeLimit(
+        Guid studentId,
+        [FromBody] SetDailyScreenTimeLimitRequest request,
+        [FromQuery] Guid? tenantId,
+        CancellationToken cancellationToken)
+    {
+        if (TenantQueryResolution.ValidateTenantQuery(this, _currentUser, tenantId) is { } err)
+            return err;
+
+        Guid resolvedTenantId = TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
+        ScreenTimeSettingsDto dto = await _mediator.Send(
+                new SetDailyScreenTimeLimitCommand(
+                    resolvedTenantId,
+                    studentId,
+                    request.DailyScreenTimeLimitSeconds),
                 cancellationToken)
             .ConfigureAwait(false);
         return Ok(dto);

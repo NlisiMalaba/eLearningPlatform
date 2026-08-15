@@ -2,7 +2,7 @@
 
 ## Overview
 
-Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a React Web PWA and React Native mobile app. The solution has four layers: Domain → Application → Infrastructure → API. Tasks are sequenced: solution scaffold → domain → application → infrastructure → API → frontends → testing.
+Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a Next.js Web PWA and React Native mobile app. The solution has four layers: Domain → Application → Infrastructure → API. Tasks are sequenced: solution scaffold → domain → application → infrastructure → API → frontends → testing.
 
 ## Tasks
 
@@ -307,129 +307,130 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
 - [x] 23. Checkpoint — feature handlers complete
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 24. React Web PWA — foundation and authentication
-  - [ ] 24.1 Scaffold React Web PWA with PWA caching and offline support
-    - Create React app with Vite; configure service worker for PWA caching of module content
-    - Implement offline indicator banner shown when `navigator.onLine = false`
+- [x] 24. Next.js Web PWA — foundation and authentication
+  - [x] 24.1 Scaffold Next.js App Router PWA with caching and offline support
+    - Create Next.js app (App Router, TypeScript) in `clients/eduzim-web`; configure Serwist/Workbox service worker for PWA caching of module content
+    - Use App Router route groups `(auth)` and `(app)` with `middleware.ts` for protected-route redirects
+    - Implement offline indicator banner shown when `navigator.onLine = false`; queue failed mutations in IndexedDB and sync via `POST /sync/upload` on reconnect
     - _Requirements: 12.3, 12.4_
-  - [ ] 24.2 Implement authentication screens and JWT management
-    - Implement login, registration, email verification, and SSO redirect screens
-    - Store JWT and refresh token securely; implement silent token refresh; redirect to login on token expiry
+  - [x] 24.2 Implement authentication screens and JWT management
+    - Implement App Router pages for login, registration, email verification, and SSO redirect
+    - Store JWT and refresh token in httpOnly cookies; implement silent token refresh; `middleware.ts` redirects to login on token expiry
     - _Requirements: 1.1, 1.2, 1.6_
-  - [ ] 24.3 Implement accessibility settings
+  - [x] 24.3 Implement accessibility settings
     - Implement high-contrast mode toggle, font size selector (Small/Medium/Large/ExtraLarge), and text-to-speech activation button in a settings panel
     - Ensure all interactive elements are keyboard-navigable
     - _Requirements: 14.1, 14.2, 14.3, 14.5_
-  - [ ]* 24.4 Write property test for font size validation (Property 37)
+  - [x]* 24.4 Write property test for font size validation (Property 37)
     - **Property 37: Font Size Preference Validation — Validates: Requirements 14.3**
 
-- [ ] 25. React Web PWA — student learning experience
-  - [ ] 25.1 Implement module viewer with content type renderers
-    - Implement renderers for video (with closed captions), PDF, audio (with transcript link), and quiz content types
-    - Implement 3D scene viewer with rotate/zoom/interact controls using Three.js or Babylon.js
+- [x] 25. Next.js Web PWA — student learning experience
+  - [x] 25.1 Implement module viewer with content type renderers
+    - Implement Client Component renderers for video (with closed captions), PDF, audio (with transcript link), and quiz content types
+    - Implement 3D scene viewer with rotate/zoom/interact controls using Three.js or Babylon.js (`'use client'`)
     - _Requirements: 4.2, 4.3, 4.5, 14.4, 14.6_
-  - [ ] 25.2 Implement ZimBot chat widget
-    - Implement a persistent ZimBot button on all learning screens; render a chat panel with message history and language selector
+  - [x] 25.2 Implement ZimBot chat widget
+    - Implement a persistent ZimBot Client Component on all learning screens; render a chat panel with message history and language selector
     - Display fallback message when ZimBot is unavailable
     - _Requirements: 5.1, 5.2, 5.3, 5.8_
-  - [ ] 25.3 Implement student dashboard with progress display
-    - Render per-subject progress percentage bars and recent activity feed
+  - [x] 25.3 Implement student dashboard with progress display
+    - Render per-subject progress percentage bars and recent activity feed (Server Components for initial data, Client Components for live updates)
     - Display gamification points, earned badges, and leaderboard position
     - _Requirements: 4.8, 9.3, 9.4, 9.5_
 
-- [ ] 26. React Web PWA — teacher and admin screens
-  - [ ] 26.1 Implement teacher content editor and module management
+- [X] 26. Next.js Web PWA — teacher and admin screens
+  - [x] 26.1 Implement teacher content editor and module management
     - Implement file upload UI (drag-and-drop) with client-side size validation before upload
     - Implement module builder: create/reorder content items, assign grade and subject, publish to tenant or submit to marketplace
     - _Requirements: 7.1, 7.2, 7.3, 8.1_
-  - [ ] 26.2 Implement assessment builder and results dashboard
+  - [x] 26.2 Implement assessment builder and results dashboard
     - Implement question editor for multiple-choice, true/false, and short-answer types with optional time limit
     - Implement class results view with per-student scores, completion rates, and time-on-task table
     - _Requirements: 7.5, 7.6, 7.7_
-  - [ ] 26.3 Implement school admin dashboard and tenant branding
+  - [x] 26.3 Implement school admin dashboard and tenant branding
     - Implement admin dashboard showing enrolled students, active teachers, subscription status, and storage usage
     - Implement branding settings form (logo upload, school name, primary colour picker)
     - _Requirements: 11.4, 11.5_
 
-- [ ] 27. React Web PWA — parent dashboard and live classroom
-  - [ ] 27.1 Implement parent dashboard
+- [x] 27. Next.js Web PWA — parent dashboard and live classroom
+  - [x] 27.1 Implement parent dashboard
     - Render linked students' grade, subjects, recent activity, progress percentage, badges, and weekly summary
     - Implement screen time limit configuration control
     - _Requirements: 10.1, 10.4, 10.5_
-  - [ ] 27.2 Implement live classroom join and SignalR integration
+  - [x] 27.2 Implement live classroom join and SignalR integration
     - Implement classroom join flow using the join token from the Live Classroom API
-    - Integrate Daily.co or Jitsi embed; connect to `ClassroomHub` SignalR for presence and teacher controls
+    - Integrate Daily.co or Jitsi embed in a Client Component; connect to `ClassroomHub` SignalR for presence and teacher controls
     - _Requirements: 13.3, 13.4, 13.6_
 
-- [ ] 28. React Native Mobile app
-  - [ ] 28.1 Scaffold React Native app with offline storage
+- [x] 28. React Native Mobile app
+  - [x] 28.1 Scaffold React Native app with offline storage
     - Create React Native project (Expo or bare workflow); configure WatermelonDB or SQLite for local offline queue storage
     - Implement offline progress queue: write `OfflineSyncQueue` records locally when offline; trigger `POST /sync/upload` on connectivity restore
     - _Requirements: 12.1, 12.2, 12.4_
-  - [ ] 28.2 Implement mobile learning screens and content renderers
+  - [x] 28.2 Implement mobile learning screens and content renderers
     - Implement video player (with captions), PDF viewer, audio player (with transcript), and quiz screens
     - Implement 3D scene viewer with touch-based rotate/zoom/interact
     - Implement ZimBot chat widget with language selector
     - _Requirements: 4.3, 4.5, 5.1, 14.4_
-  - [ ] 28.3 Implement switch access navigation and accessibility
+  - [x] 28.3 Implement switch access navigation and accessibility
     - Ensure all interactive elements support switch access on iOS and Android
     - Implement text-to-speech activation and high-contrast mode
     - _Requirements: 14.1, 14.2, 14.5_
-  - [ ] 28.4 Implement pre-school tier experience on mobile
+  - [x] 28.4 Implement pre-school tier experience on mobile
     - Implement toddler home screen with animated character, audio pronunciation on tap, and celebratory animation on activity completion
     - Implement 20-minute segment rest prompt and 60-second inactivity pause
     - Implement language selector (English, Shona, Ndebele) for pre-school interface
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.6, 3.7, 3.8_
 
-- [ ] 29. Checkpoint — frontends
+- [x] 29. Checkpoint — frontends
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 30. MediatR notification wiring — cross-feature event flows
-  - [ ] 30.1 Wire `ModuleCompletedNotification` handlers
+- [X] 30. MediatR notification wiring — cross-feature event flows
+  - [x] 30.1 Wire `ModuleCompletedNotification` handlers
     - Ensure `ModuleCompletedNotification` is handled by: `RecordModuleCompletionCommandHandler` (progress + unlock), `AwardPointsCommandHandler` (gamification), `CheckAndAwardBadgesCommandHandler` (badges), `UpdateLearningProfileCommandHandler` (adaptive learning)
     - _Requirements: 4.4, 6.1, 9.3, 10.2_
-  - [ ] 30.2 Wire `AssessmentSubmittedNotification` handlers
+  - [x] 30.2 Wire `AssessmentSubmittedNotification` handlers
     - Ensure `AssessmentSubmittedNotification` is handled by: `UpdateLearningProfileCommandHandler` (adaptive path update), `AwardPointsCommandHandler` (points + badge check), Notification handler (parent notification)
     - _Requirements: 6.1, 9.2, 9.3_
-  - [ ] 30.3 Wire `BadgeAwardedNotification` handlers
+  - [x] 30.3 Wire `BadgeAwardedNotification` handlers
     - Ensure `BadgeAwardedNotification` triggers: certificate generation Hangfire job, parent in-app notification, and email notification
     - _Requirements: 9.6, 10.2_
-  - [ ] 30.4 Wire `PaymentSucceededNotification` and `PaymentFailedNotification` handlers
+  - [x] 30.4 Wire `PaymentSucceededNotification` and `PaymentFailedNotification` handlers
     - Ensure payment notifications trigger tenant status updates and subscriber notifications within 60 seconds
     - _Requirements: 2.3, 2.5_
-  - [ ] 30.5 Wire offline sync trigger on connectivity restore
-    - Implement connectivity listener in React Native and PWA that calls `POST /sync/upload` when `navigator.onLine` transitions to `true`
+  - [x] 30.5 Wire offline sync trigger on connectivity restore
+    - Implement connectivity listener in React Native and the Next.js PWA that calls `POST /sync/upload` when `navigator.onLine` transitions to `true`
     - _Requirements: 12.2_
 
-- [ ] 31. FsCheck custom arbitraries and test project setup
+- [x] 31. FsCheck custom arbitraries and test project setup
   - Create `EduZim.Tests.Properties/Arbitraries/EduZimArbitraries.cs` with FsCheck generators for `ApplicationUser`, `Tenant`, `AssessmentAttempt`, `Subscription`, `ContentItem`, `Notification`, and `OfflineProgressItem`
   - Configure all property test classes with `[Property(MaxTest = 500)]` for security-critical properties (P1, P2, P3, P4, P42, P44) and `[Property(MaxTest = 100)]` for others
   - _Requirements: all_
 
-- [ ] 32. Integration tests with Testcontainers
-  - [ ]* 32.1 Write integration tests for RLS policy enforcement
+- [x] 32. Integration tests with Testcontainers
+  - [x]* 32.1 Write integration tests for RLS policy enforcement
     - Use `WebApplicationFactory<Program>` + Testcontainers PostgreSQL to verify that queries from tenant A never return rows belonging to tenant B
     - _Requirements: 11.1, 11.3_
-  - [ ]* 32.2 Write integration tests for billing webhook idempotency
+  - [x]* 32.2 Write integration tests for billing webhook idempotency
     - Verify that replaying the same payment success event twice results in exactly one `Invoice` record and one subscription status transition
     - _Requirements: 2.3, 2.7_
-  - [ ]* 32.3 Write integration tests for Hangfire job execution
+  - [x]* 32.3 Write integration tests for Hangfire job execution
     - Verify soft-delete cleanup job, renewal reminder job, and inactivity alert job execute correctly against a real PostgreSQL instance
     - _Requirements: 7.4, 2.4, 10.6_
-  - [ ]* 32.4 Write integration tests for offline sync conflict resolution
+  - [x]* 32.4 Write integration tests for offline sync conflict resolution
     - Simulate concurrent local and server progress records and verify last-write-wins resolution and conflict log creation
     - _Requirements: 12.5_
 
-- [ ] 33. Security hardening
-  - [ ] 33.1 Enforce TLS and security headers
+- [x] 33. Security hardening
+  - [x] 33.1 Enforce TLS and security headers
     - Configure HTTPS redirection and HSTS in `EduZim.API/Program.cs`
     - Verify security headers middleware (X-Content-Type-Options, X-Frame-Options, CSP) is active
     - _Requirements: 16.1_
-  - [ ] 33.2 Implement Polly resilience policies for all external calls
+  - [x] 33.2 Implement Polly resilience policies for all external calls
     - Add retry + circuit breaker Polly policies to all `HttpClient` registrations in Infrastructure: `IAiService`, `ISmsService`, `IPaymentService`, `IVideoService`
     - _Requirements: 5.8, 15.5_
 
-- [ ] 34. Final checkpoint — full system
+- [x] 34. Final checkpoint — full system
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

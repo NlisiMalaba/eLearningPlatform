@@ -45,6 +45,35 @@ public sealed class ChatCommandHandlerTests
     }
 
     [Fact]
+    public async Task Chat_language_override_wins_over_preferred_language()
+    {
+        Guid tenantId = Guid.NewGuid();
+        Guid studentId = Guid.NewGuid();
+        string? prompt = null;
+        Mock<IAiService> ai = new();
+        ai.Setup(s => s.ChatAsync(It.IsAny<string>(), It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .Callback<string, string, CancellationToken>((system, _, _) => prompt = system)
+            .ReturnsAsync("CONFIDENCE:HIGH\nA verb names an action.");
+        ChatCommandHandler handler = CreateHandler(
+            tenantId,
+            UserRole.Student,
+            studentId,
+            [Student(tenantId, studentId, "en")],
+            [],
+            [],
+            [],
+            ai);
+
+        ZimBotChatDto dto = await handler.Handle(
+            new ChatCommand(tenantId, studentId, "Help with verbs", null, false, "Ndebele"),
+            CancellationToken.None);
+
+        Assert.NotNull(prompt);
+        Assert.Contains("Ndebele", prompt, StringComparison.Ordinal);
+        Assert.Equal(ZimBotLanguage.Ndebele, dto.Language);
+    }
+
+    [Fact]
     public async Task Answer_request_enables_hint_mode_and_persists_interaction()
     {
         Guid tenantId = Guid.NewGuid();

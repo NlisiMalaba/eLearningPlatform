@@ -72,7 +72,7 @@ public sealed class GetParentDashboardQueryHandler : IRequestHandler<GetParentDa
         CancellationToken ct)
     {
         if (studentIds.Count == 0)
-            return new DashboardSnapshot([], []);
+            return new DashboardSnapshot([], [], []);
 
         List<StudentProgress> progress = await _db.StudentProgresses
             .AsNoTracking()
@@ -86,7 +86,13 @@ public sealed class GetParentDashboardQueryHandler : IRequestHandler<GetParentDa
             .ToListAsync(ct)
             .ConfigureAwait(false);
 
-        return new DashboardSnapshot(progress, badges);
+        List<ApplicationUser> students = await _db.Users
+            .AsNoTracking()
+            .Where(u => u.TenantId == tenantId && studentIds.Contains(u.Id))
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+
+        return new DashboardSnapshot(progress, badges, students);
     }
 
     private static LinkedStudentDashboardDto MapStudent(
@@ -109,10 +115,31 @@ public sealed class GetParentDashboardQueryHandler : IRequestHandler<GetParentDa
             modules,
             snapshot.Progress,
             snapshot.Badges);
-        return new LinkedStudentDashboardDto(studentId, currentGrade, subjects, recent, overall);
+        ApplicationUser? user = snapshot.Students.FirstOrDefault(u => u.Id == studentId);
+        string displayName = ResolveDisplayName(user);
+        return new LinkedStudentDashboardDto(
+            studentId,
+            displayName,
+            currentGrade,
+            subjects,
+            recent,
+            overall,
+            user?.DailyScreenTimeLimitSeconds);
+    }
+
+    private static string ResolveDisplayName(ApplicationUser? user)
+    {
+        if (user is null)
+            return string.Empty;
+
+        if (!string.IsNullOrWhiteSpace(user.FullName))
+            return user.FullName.Trim();
+
+        return user.UserName ?? string.Empty;
     }
 
     private sealed record DashboardSnapshot(
         IReadOnlyList<StudentProgress> Progress,
-        IReadOnlyList<Badge> Badges);
+        IReadOnlyList<Badge> Badges,
+        IReadOnlyList<ApplicationUser> Students);
 }

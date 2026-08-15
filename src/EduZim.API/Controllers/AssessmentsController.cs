@@ -7,6 +7,7 @@ using EduZim.Application.Assessments.Commands.SubmitAssessment;
 using EduZim.Application.Assessments.DTOs;
 using EduZim.Application.Assessments.Queries.GetClassResults;
 using EduZim.Application.Assessments.Queries.GetStudentAssessmentResult;
+using EduZim.Application.Assessments.Queries.ListAssessments;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Application.Tenants;
 using MediatR;
@@ -31,6 +32,20 @@ public sealed class AssessmentsController : ControllerBase
         _currentUser = currentUser;
     }
 
+    [HttpGet]
+    [ProducesResponseType(typeof(IReadOnlyList<AssessmentListItemDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> List([FromQuery] Guid? tenantId, CancellationToken cancellationToken)
+    {
+        if (TenantError(tenantId) is { } err)
+            return err;
+
+        IReadOnlyList<AssessmentListItemDto> items = await _mediator.Send(
+                new ListAssessmentsQuery(TenantId(tenantId)),
+                cancellationToken)
+            .ConfigureAwait(false);
+        return Ok(items);
+    }
+
     [HttpPost]
     [ProducesResponseType(typeof(CreateAssessmentResponse), StatusCodes.Status201Created)]
     public async Task<IActionResult> CreateAssessment(
@@ -38,37 +53,14 @@ public sealed class AssessmentsController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (TenantQueryResolution.ValidateTenantQuery(this, _currentUser, tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        Guid resolvedTenantId = TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
+        Guid resolvedTenantId = TenantId(tenantId);
         TenantAccessHelper.EnsureCanManageSchoolContent(_currentUser, resolvedTenantId);
-
-        IReadOnlyList<CreateAssessmentQuestionItem> questions = request.Questions
-            .Select(
-                q => new CreateAssessmentQuestionItem(
-                    q.Type,
-                    q.Text,
-                    q.Points,
-                    q.OptionTexts,
-                    q.CorrectOptionIndex,
-                    q.CorrectShortAnswer))
-            .ToList();
-
-        Guid id = await _mediator.Send(
-                new CreateAssessmentCommand(
-                    resolvedTenantId,
-                    request.ModuleId,
-                    request.Title,
-                    request.TimeLimitSeconds,
-                    request.PassingScorePercent,
-                    questions),
-                cancellationToken)
+        Guid id = await _mediator.Send(ToCreateCommand(resolvedTenantId, request), cancellationToken)
             .ConfigureAwait(false);
-
-        return Created(
-            $"/{ApiRoutes.V1Assessments}/{id}",
-            new CreateAssessmentResponse { AssessmentId = id });
+        return Created($"/{ApiRoutes.V1Assessments}/{id}", new CreateAssessmentResponse { AssessmentId = id });
     }
 
     [HttpPost("{assessmentId:guid}/assign")]
@@ -79,12 +71,11 @@ public sealed class AssessmentsController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (TenantQueryResolution.ValidateTenantQuery(this, _currentUser, tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        Guid resolvedTenantId = TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
+        Guid resolvedTenantId = TenantId(tenantId);
         TenantAccessHelper.EnsureCanManageSchoolContent(_currentUser, resolvedTenantId);
-
         await _mediator
             .Send(
                 new AssignAssessmentCommand(
@@ -94,7 +85,6 @@ public sealed class AssessmentsController : ControllerBase
                     request.DueAtUtc),
                 cancellationToken)
             .ConfigureAwait(false);
-
         return NoContent();
     }
 
@@ -106,22 +96,19 @@ public sealed class AssessmentsController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (TenantQueryResolution.ValidateTenantQuery(this, _currentUser, tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        Guid resolvedTenantId = TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
+        Guid resolvedTenantId = TenantId(tenantId);
         TenantAccessHelper.EnsureCanAccessTenantScope(_currentUser, resolvedTenantId);
-
         IReadOnlyList<SubmitAssessmentAnswerItem> answers = request.Answers
             .Select(a => new SubmitAssessmentAnswerItem(a.QuestionId, a.Answer))
             .ToList();
-
         SubmitAssessmentResultDto result = await _mediator
             .Send(
                 new SubmitAssessmentCommand(resolvedTenantId, assessmentId, request.AttemptId, answers),
                 cancellationToken)
             .ConfigureAwait(false);
-
         return Ok(result);
     }
 
@@ -133,16 +120,13 @@ public sealed class AssessmentsController : ControllerBase
         [FromQuery] Guid? tenantId,
         CancellationToken cancellationToken)
     {
-        if (TenantQueryResolution.ValidateTenantQuery(this, _currentUser, tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        Guid resolvedTenantId = TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
-
         SubmitAssessmentResultDto dto = await _mediator.Send(
-                new GetStudentAssessmentResultQuery(resolvedTenantId, assessmentId, studentId),
+                new GetStudentAssessmentResultQuery(TenantId(tenantId), assessmentId, studentId),
                 cancellationToken)
             .ConfigureAwait(false);
-
         return Ok(dto);
     }
 
@@ -162,16 +146,40 @@ public sealed class AssessmentsController : ControllerBase
                 statusCode: StatusCodes.Status400BadRequest);
         }
 
-        if (TenantQueryResolution.ValidateTenantQuery(this, _currentUser, tenantId) is { } err)
+        if (TenantError(tenantId) is { } err)
             return err;
 
-        Guid resolvedTenantId = TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
-
         ClassAssessmentResultsDto dto = await _mediator.Send(
-                new GetClassResultsQuery(resolvedTenantId, assessmentId, schoolClassId),
+                new GetClassResultsQuery(TenantId(tenantId), assessmentId, schoolClassId),
                 cancellationToken)
             .ConfigureAwait(false);
-
         return Ok(dto);
     }
+
+    private static CreateAssessmentCommand ToCreateCommand(Guid tenantId, CreateAssessmentRequest request)
+    {
+        IReadOnlyList<CreateAssessmentQuestionItem> questions = request.Questions
+            .Select(
+                q => new CreateAssessmentQuestionItem(
+                    q.Type,
+                    q.Text,
+                    q.Points,
+                    q.OptionTexts,
+                    q.CorrectOptionIndex,
+                    q.CorrectShortAnswer))
+            .ToList();
+        return new CreateAssessmentCommand(
+            tenantId,
+            request.ModuleId,
+            request.Title,
+            request.TimeLimitSeconds,
+            request.PassingScorePercent,
+            questions);
+    }
+
+    private IActionResult? TenantError(Guid? tenantId) =>
+        TenantQueryResolution.ValidateTenantQuery(this, _currentUser, tenantId);
+
+    private Guid TenantId(Guid? tenantId) =>
+        TenantQueryResolution.ResolveTenantId(_currentUser, tenantId);
 }

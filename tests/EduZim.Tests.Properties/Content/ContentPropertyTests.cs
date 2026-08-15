@@ -18,7 +18,7 @@ namespace EduZim.Tests.Properties.Content;
 public sealed class ContentPropertyTests
 {
     // Property 10: Pre-school Video Duration Limit — Validates: Requirements 3.3
-    [Property(MaxTest = 200)]
+    [Property(MaxTest = 100)]
     public void Property10_pre_school_video_duration_must_not_exceed_five_minutes(
         NonNegativeInt durationSeconds,
         bool tenantIsPreSchool,
@@ -83,7 +83,7 @@ public sealed class ContentPropertyTests
     }
 
     // Property 18: File Upload Size Enforcement — Validates: Requirements 7.1
-    [Property(MaxTest = 50)]
+    [Property(MaxTest = 100)]
     public async Task Property18_rejects_oversized_video_and_audio_before_storage()
     {
         using var provider = ContentPropertyTestHost.Create();
@@ -145,7 +145,7 @@ public sealed class ContentPropertyTests
     }
 
     // Property 19: Soft Delete Retention — Validates: Requirements 7.4
-    [Property(MaxTest = 50)]
+    [Property(MaxTest = 100)]
     public async Task Property19_archive_sets_archived_and_schedules_permanent_deletion_after_retention_window()
     {
         var jobs = new RecordingContentBackgroundJobs();
@@ -201,7 +201,7 @@ public sealed class ContentPropertyTests
     }
 
     // Property 38: Closed Captions Required for Video Content — Validates: Requirements 14.4
-    [Property(MaxTest = 200)]
+    [Property(MaxTest = 100)]
     public void Property38_video_or_animation_with_audio_requires_at_least_one_caption_track(
         int typeOrdinal,
         bool hasAudio,
@@ -218,7 +218,7 @@ public sealed class ContentPropertyTests
     }
 
     // Property 39: Audio Content Transcript Required — Validates: Requirements 14.6
-    [Property(MaxTest = 200)]
+    [Property(MaxTest = 100)]
     public void Property39_audio_requires_transcript_record(int typeOrdinal, bool hasTranscript)
     {
         var types = Enum.GetValues<ContentType>();

@@ -12,4 +12,7 @@ public enum NotificationType
     MarketplaceAccessRequested,
     MarketplacePackRemoved,
     WeeklyProgressSummary,
+    AssessmentSubmitted,
+    PaymentSucceeded,
+    PaymentFailed,
 }

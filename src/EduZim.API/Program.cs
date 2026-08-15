@@ -1,5 +1,6 @@
 using Asp.Versioning;
 using Asp.Versioning.ApiExplorer;
+using EduZim.API;
 using EduZim.API.ExceptionHandling;
 using EduZim.API.Middleware;
 using EduZim.Application;
@@ -60,6 +61,7 @@ builder.Services.AddOpenApi(options =>
 });
 builder.Services.AddProblemDetails();
 builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+builder.AddTransportSecurity();
 
 var app = builder.Build();
 
@@ -74,16 +76,10 @@ if (app.Environment.IsDevelopment())
             .AddPreferredSecuritySchemes("Bearer");
     });
 }
-else
-{
-    app.UseHsts();
-}
 
 app.UseExceptionHandler();
 
-app.UseHttpsRedirection();
-
-app.UseMiddleware<SecurityHeadersMiddleware>();
+app.UseTransportSecurity();
 
 app.UseAuthentication();
 app.UseAuthorization();
@@ -99,32 +95,35 @@ if (app.Environment.IsDevelopment())
     app.MapHangfireDashboard("/hangfire");
 }
 
-var renewalHour = Math.Clamp(
-    app.Services.GetRequiredService<IOptions<BillingPricingOptions>>().Value.RenewalReminderUtcHour,
-    0,
-    23);
-RecurringJob.AddOrUpdate<SubscriptionRenewalReminderJob>(
-    "subscription-renewal-reminders",
-    job => job.RunAsync(),
-    Cron.Daily(renewalHour),
-    new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+if (!app.Environment.IsEnvironment("Testing"))
+{
+    var renewalHour = Math.Clamp(
+        app.Services.GetRequiredService<IOptions<BillingPricingOptions>>().Value.RenewalReminderUtcHour,
+        0,
+        23);
+    RecurringJob.AddOrUpdate<SubscriptionRenewalReminderJob>(
+        "subscription-renewal-reminders",
+        job => job.RunAsync(),
+        Cron.Daily(renewalHour),
+        new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
-RecurringJob.AddOrUpdate<AdaptiveLearningWeeklySummaryJob>(
-    "adaptive-weekly-summary-cache",
-    job => job.RunAsync(CancellationToken.None),
-    Cron.Weekly(DayOfWeek.Sunday, 3),
-    new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+    RecurringJob.AddOrUpdate<AdaptiveLearningWeeklySummaryJob>(
+        "adaptive-weekly-summary-cache",
+        job => job.RunAsync(CancellationToken.None),
+        Cron.Weekly(DayOfWeek.Sunday, 3),
+        new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
-RecurringJob.AddOrUpdate<StudentInactivityAlertJob>(
-    "student-inactivity-alerts",
-    job => job.RunAsync(CancellationToken.None),
-    Cron.Daily(7),
-    new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+    RecurringJob.AddOrUpdate<StudentInactivityAlertJob>(
+        "student-inactivity-alerts",
+        job => job.RunAsync(CancellationToken.None),
+        Cron.Daily(7),
+        new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
 
-RecurringJob.AddOrUpdate<ParentWeeklyProgressSummaryJob>(
-    "parent-weekly-progress-summaries",
-    job => job.RunAsync(CancellationToken.None),
-    Cron.Weekly(DayOfWeek.Sunday, 8),
-    new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+    RecurringJob.AddOrUpdate<ParentWeeklyProgressSummaryJob>(
+        "parent-weekly-progress-summaries",
+        job => job.RunAsync(CancellationToken.None),
+        Cron.Weekly(DayOfWeek.Sunday, 8),
+        new RecurringJobOptions { TimeZone = TimeZoneInfo.Utc });
+}
 
 app.Run();

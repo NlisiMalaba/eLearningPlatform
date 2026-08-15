@@ -1,4 +1,3 @@
-using System.Globalization;
 using EduZim.Application.AdaptiveLearning.Services;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Application.Tenants;
@@ -47,15 +46,9 @@ public sealed class RefreshStudentAdaptiveCachesCommandHandler : IRequestHandler
                 ct)
             .ConfigureAwait(false);
 
-        DateTime referenceUtc = DateTime.UtcNow;
-        int isoYear = ISOWeek.GetYear(referenceUtc);
-        int isoWeek = ISOWeek.GetWeekOfYear(referenceUtc);
-        string weeklyKey = AdaptiveLearningCacheKeys.WeeklySummary(
-            request.TenantId,
-            request.StudentId,
-            isoYear,
-            isoWeek);
-        await _cache.RemoveAsync(weeklyKey, ct).ConfigureAwait(false);
+        await AdaptiveLearningProfileCacheUpdater
+            .InvalidateCurrentWeeklySummaryAsync(_cache, request.TenantId, request.StudentId, ct)
+            .ConfigureAwait(false);
 
         _logger.LogDebug(
             "Refreshed adaptive caches for student {StudentId} (profile from latest attempt: {Updated}).",
