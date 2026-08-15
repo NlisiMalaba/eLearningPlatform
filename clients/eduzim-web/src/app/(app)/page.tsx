@@ -1,10 +1,13 @@
 import { StudentDashboard } from "@/components/dashboard/StudentDashboard";
+import { ParentDashboard } from "@/components/parent/ParentDashboard";
 import { serverApiFetch } from "@/lib/api/serverFetch";
 import { readServerSession } from "@/lib/auth/readServerSession";
 import { loadStudentDashboard } from "@/lib/dashboard/dashboardService";
 import type { StudentDashboardData } from "@/lib/dashboard/types";
+import { loadParentDashboard } from "@/lib/parent/parentDashboardService";
+import type { ParentDashboardData } from "@/lib/parent/types";
 import { t } from "@/lib/i18n/t";
-import { canManageSchoolContent, canManageTenantSettings } from "@/lib/teacher/roles";
+import { canManageSchoolContent, canManageTenantSettings, isParentGuardian } from "@/lib/teacher/roles";
 
 export default async function HomePage() {
   const session = await readServerSession();
@@ -14,6 +17,17 @@ export default async function HomePage() {
 
   if (canManageSchoolContent(session?.role)) {
     return <TeacherHome />;
+  }
+
+  if (isParentGuardian(session?.role) && session.userId) {
+    const parentData = await loadInitialParentDashboard(session.userId, session.tenantId);
+    return (
+      <ParentDashboard
+        parentId={session.userId}
+        tenantId={session.tenantId}
+        initialData={parentData}
+      />
+    );
   }
 
   if (session?.role !== "Student" || !session.userId) {
@@ -91,6 +105,17 @@ async function loadInitialDashboard(
 ): Promise<StudentDashboardData | null> {
   try {
     return await loadStudentDashboard(studentId, tenantId, serverApiFetch);
+  } catch {
+    return null;
+  }
+}
+
+async function loadInitialParentDashboard(
+  parentId: string,
+  tenantId: string | undefined,
+): Promise<ParentDashboardData | null> {
+  try {
+    return await loadParentDashboard(parentId, tenantId, serverApiFetch);
   } catch {
     return null;
   }

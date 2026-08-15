@@ -353,7 +353,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - _Requirements: 11.4, 11.5_
 
 - [ ] 27. Next.js Web PWA — parent dashboard and live classroom
-  - [ ] 27.1 Implement parent dashboard
+  - [x] 27.1 Implement parent dashboard
     - Render linked students' grade, subjects, recent activity, progress percentage, badges, and weekly summary
     - Implement screen time limit configuration control
     - _Requirements: 10.1, 10.4, 10.5_

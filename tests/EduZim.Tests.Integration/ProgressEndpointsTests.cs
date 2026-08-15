@@ -35,6 +35,19 @@ public sealed class ProgressEndpointsTests : IClassFixture<WebApplicationFactory
         Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
     }
 
+    [Fact]
+    public async Task Put_screen_time_without_auth_returns_unauthorized()
+    {
+        HttpClient client = CreateClient();
+        Guid studentId = Guid.NewGuid();
+
+        HttpResponseMessage response = await client.PutAsync(
+            $"/api/v1.0/students/{studentId}/screen-time",
+            content: null);
+
+        Assert.Equal(HttpStatusCode.Unauthorized, response.StatusCode);
+    }
+
     private HttpClient CreateClient() =>
         _factory.CreateClient(new WebApplicationFactoryClientOptions { AllowAutoRedirect = false });
 }

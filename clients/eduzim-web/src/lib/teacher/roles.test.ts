@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { canManageSchoolContent, canManageTenantSettings } from "@/lib/teacher/roles";
+import { canManageSchoolContent, canManageTenantSettings, isParentGuardian } from "@/lib/teacher/roles";
 import { isLearningPath } from "@/lib/zimbot/learningContext";
 
 describe("canManageSchoolContent", () => {
@@ -18,6 +18,15 @@ describe("canManageTenantSettings", () => {
     expect(canManageTenantSettings("PlatformAdmin")).toBe(true);
     expect(canManageTenantSettings("Teacher")).toBe(false);
     expect(canManageTenantSettings("Student")).toBe(false);
+  });
+});
+
+describe("isParentGuardian", () => {
+  it("is true only for parent or guardian accounts", () => {
+    expect(isParentGuardian("ParentGuardian")).toBe(true);
+    expect(isParentGuardian("Student")).toBe(false);
+    expect(isParentGuardian("Teacher")).toBe(false);
+    expect(isParentGuardian(undefined)).toBe(false);
   });
 });
 

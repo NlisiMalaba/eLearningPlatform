@@ -9,3 +9,7 @@ export function canManageSchoolContent(role: string | undefined): boolean {
 export function canManageTenantSettings(role: string | undefined): boolean {
   return role === "SchoolAdmin" || role === "PlatformAdmin";
 }
+
+export function isParentGuardian(role: string | undefined): boolean {
+  return role === "ParentGuardian";
+}
