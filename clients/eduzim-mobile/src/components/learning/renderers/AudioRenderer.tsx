@@ -1,8 +1,9 @@
 import { Audio, type AVPlaybackStatusSuccess } from "expo-av";
 import { useEffect, useState } from "react";
-import { Linking, Pressable, StyleSheet, Text, View } from "react-native";
+import { Linking, StyleSheet, Text, View } from "react-native";
+import { Focusable } from "@/components/a11y/Focusable";
 import { t } from "@/lib/i18n/t";
-import { colors } from "@/theme";
+import { useTheme, type ThemeColors } from "@/theme";
 
 type AudioRendererProps = {
   src: string;
@@ -17,6 +18,8 @@ export function AudioRenderer({
   transcriptUrl,
   transcriptText,
 }: AudioRendererProps) {
+  const { colors } = useTheme();
+  const styles = makeAudioStyles(colors);
   const [sound, setSound] = useState<Audio.Sound | null>(null);
   const [playing, setPlaying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -80,7 +83,7 @@ export function AudioRenderer({
 
   return (
     <View style={styles.stack}>
-      <Pressable
+      <Focusable
         accessibilityRole="button"
         accessibilityLabel={`${playing ? t("content.audio.pause") : t("content.audio.play")}: ${title}`}
         onPress={() => {
@@ -91,7 +94,7 @@ export function AudioRenderer({
         <Text style={styles.playLabel}>
           {playing ? t("content.audio.pause") : t("content.audio.play")}
         </Text>
-      </Pressable>
+      </Focusable>
       {error ? (
         <Text accessibilityRole="alert" style={styles.error}>
           {error}
@@ -101,14 +104,15 @@ export function AudioRenderer({
         <View accessibilityLabel={t("content.audio.transcript")} style={styles.transcript}>
           <View style={styles.transcriptHeader}>
             <Text style={styles.transcriptTitle}>{t("content.audio.transcript")}</Text>
-            <Pressable
+            <Focusable
               accessibilityRole="link"
+              accessibilityLabel={t("content.audio.transcriptOpen")}
               onPress={() => {
                 void Linking.openURL(transcriptUrl);
               }}
             >
               <Text style={styles.link}>{t("content.audio.transcriptOpen")}</Text>
-            </Pressable>
+            </Focusable>
           </View>
           {transcriptText ? <Text style={styles.transcriptBody}>{transcriptText}</Text> : null}
         </View>
@@ -119,7 +123,8 @@ export function AudioRenderer({
   );
 }
 
-const styles = StyleSheet.create({
+function makeAudioStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   stack: {
     gap: 16,
   },
@@ -173,4 +178,5 @@ const styles = StyleSheet.create({
     color: colors.danger,
     fontSize: 14,
   },
-});
+  });
+}

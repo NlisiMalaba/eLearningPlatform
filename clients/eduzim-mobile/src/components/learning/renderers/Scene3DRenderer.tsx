@@ -1,16 +1,17 @@
 import { GLView, type ExpoWebGLRenderingContext } from "expo-gl";
 import { useEffect, useRef, useState, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
-import { PanResponder, Pressable, StyleSheet, Text, View } from "react-native";
+import { PanResponder, StyleSheet, Text, View } from "react-native";
+import { Focusable } from "@/components/a11y/Focusable";
 import {
   applySceneGestureMove,
   beginSceneGesture,
   isSceneTap,
   type SceneGestureSession,
 } from "@/lib/content/sceneGestures";
-import { pointerToNdc, zoomOrbit } from "@/lib/content/sceneControls";
+import { pointerToNdc, rotateOrbit, zoomOrbit } from "@/lib/content/sceneControls";
 import { createMobileScene, type MobileSceneHandle } from "@/lib/content/sceneRuntime";
 import { t } from "@/lib/i18n/t";
-import { colors } from "@/theme";
+import { useTheme, type ThemeColors } from "@/theme";
 
 type Scene3DRendererProps = {
   src: string;
@@ -18,6 +19,8 @@ type Scene3DRendererProps = {
 };
 
 export function Scene3DRenderer({ src, title }: Scene3DRendererProps) {
+  const { colors } = useTheme();
+  const styles = makeSceneStyles(colors);
   const handleRef = useRef<MobileSceneHandle | null>(null);
   const gestureRef = useRef<SceneGestureSession | null>(null);
   const sizeRef = useRef({ width: 1, height: 1 });
@@ -97,8 +100,9 @@ export function Scene3DRenderer({ src, title }: Scene3DRendererProps) {
           handleRef.current?.resize(width, height);
         }}
         {...panResponder.panHandlers}
-        accessibilityRole="image"
-        accessibilityLabel={`${t("content.scene.label")}: ${title}. ${t("content.scene.hint")}`}
+        accessible={false}
+        importantForAccessibility="no"
+        accessibilityElementsHidden
       >
         <GLView
           key={src}
@@ -113,11 +117,34 @@ export function Scene3DRenderer({ src, title }: Scene3DRendererProps) {
           </View>
         ) : null}
       </View>
-      <Text style={styles.muted}>{t("content.scene.hint")}</Text>
+      <Text style={styles.muted} accessibilityLabel={`${t("content.scene.label")}: ${title}. ${t("content.scene.hint")}`}>
+        {t("content.scene.hint")}
+      </Text>
       <View style={styles.controls}>
+        <ControlButton
+          label={t("content.scene.rotateLeft")}
+          onPress={() => {
+            const handle = handleRef.current;
+            if (handle) {
+              handle.setOrbit(rotateOrbit(handle.getOrbit(), -0.2, 0));
+            }
+          }}
+          styles={styles}
+        />
+        <ControlButton
+          label={t("content.scene.rotateRight")}
+          onPress={() => {
+            const handle = handleRef.current;
+            if (handle) {
+              handle.setOrbit(rotateOrbit(handle.getOrbit(), 0.2, 0));
+            }
+          }}
+          styles={styles}
+        />
         <ControlButton
           label={t("content.scene.reset")}
           onPress={() => handleRef.current?.reset()}
+          styles={styles}
         />
         <ControlButton
           label={t("content.scene.zoomIn")}
@@ -127,6 +154,7 @@ export function Scene3DRenderer({ src, title }: Scene3DRendererProps) {
               handle.setOrbit(zoomOrbit(handle.getOrbit(), -0.8));
             }
           }}
+          styles={styles}
         />
         <ControlButton
           label={t("content.scene.zoomOut")}
@@ -136,17 +164,26 @@ export function Scene3DRenderer({ src, title }: Scene3DRendererProps) {
               handle.setOrbit(zoomOrbit(handle.getOrbit(), 0.8));
             }
           }}
+          styles={styles}
         />
       </View>
     </View>
   );
 }
 
-function ControlButton({ label, onPress }: { label: string; onPress: () => void }) {
+function ControlButton({
+  label,
+  onPress,
+  styles,
+}: {
+  label: string;
+  onPress: () => void;
+  styles: ReturnType<typeof makeSceneStyles>;
+}) {
   return (
-    <Pressable accessibilityRole="button" onPress={onPress} style={styles.control}>
+    <Focusable accessibilityRole="button" accessibilityLabel={label} onPress={onPress} style={styles.control}>
       <Text style={styles.controlLabel}>{label}</Text>
-    </Pressable>
+    </Focusable>
   );
 }
 
@@ -170,7 +207,8 @@ function pinchDistance(touches: readonly { pageX: number; pageY: number }[]): nu
   return Math.hypot(touches[0].pageX - touches[1].pageX, touches[0].pageY - touches[1].pageY);
 }
 
-const styles = StyleSheet.create({
+function makeSceneStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   stack: {
     gap: 12,
   },
@@ -201,13 +239,11 @@ const styles = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 8,
     paddingHorizontal: 12,
-    paddingVertical: 10,
-    minHeight: 44,
-    justifyContent: "center",
   },
   controlLabel: {
     fontSize: 14,
     fontWeight: "500",
     color: colors.text,
   },
-});
+  });
+}

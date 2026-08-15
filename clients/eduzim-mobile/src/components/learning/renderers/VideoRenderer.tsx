@@ -1,11 +1,12 @@
 import { Video, ResizeMode } from "expo-av";
 import { useEffect, useMemo, useState } from "react";
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { Focusable } from "@/components/a11y/Focusable";
 import { inferCaptionFormat } from "@/lib/content/captionFormat";
 import { cueTextAt, parseCaptionDocument, type CaptionCue } from "@/lib/content/parseCaptions";
 import type { CaptionTrack, ContentType } from "@/lib/content/types";
 import { t } from "@/lib/i18n/t";
-import { colors } from "@/theme";
+import { useTheme } from "@/theme";
 
 type VideoRendererProps = {
   src: string;
@@ -15,6 +16,7 @@ type VideoRendererProps = {
 };
 
 export function VideoRenderer({ src, title, contentType, captions }: VideoRendererProps) {
+  const { colors } = useTheme();
   const labelKey = contentType === "Animation" ? "content.animation.label" : "content.video.label";
   const [selectedTrackId, setSelectedTrackId] = useState(captions[0]?.trackId);
   const [cues, setCues] = useState<CaptionCue[]>([]);
@@ -70,21 +72,27 @@ export function VideoRenderer({ src, title, contentType, captions }: VideoRender
         ) : null}
       </View>
       {captions.length === 0 ? (
-        <Text style={styles.muted}>{t("content.video.captionsMissing")}</Text>
+        <Text style={{ color: colors.muted, fontSize: 14 }}>{t("content.video.captionsMissing")}</Text>
       ) : (
         <View style={styles.tracks}>
           {captions.map((track) => {
             const on = track.trackId === selected?.trackId;
             return (
-              <Pressable
+              <Focusable
                 key={track.trackId}
                 accessibilityRole="button"
                 accessibilityState={{ selected: on }}
+                accessibilityLabel={track.language}
                 onPress={() => setSelectedTrackId(track.trackId)}
-                style={[styles.track, on ? styles.trackOn : null]}
+                style={[
+                  styles.track,
+                  { borderColor: on ? colors.brand : colors.border, backgroundColor: on ? colors.brand : "transparent" },
+                ]}
               >
-                <Text style={[styles.trackLabel, on ? styles.trackLabelOn : null]}>{track.language}</Text>
-              </Pressable>
+                <Text style={{ fontSize: 13, fontWeight: on ? "600" : "400", color: on ? colors.background : colors.text }}>
+                  {track.language}
+                </Text>
+              </Focusable>
             );
           })}
         </View>
@@ -124,10 +132,6 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 14,
   },
-  muted: {
-    color: colors.muted,
-    fontSize: 14,
-  },
   tracks: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -135,23 +139,7 @@ const styles = StyleSheet.create({
   },
   track: {
     borderWidth: 1,
-    borderColor: colors.border,
     borderRadius: 999,
     paddingHorizontal: 12,
-    paddingVertical: 8,
-    minHeight: 44,
-    justifyContent: "center",
-  },
-  trackOn: {
-    backgroundColor: colors.brand,
-    borderColor: colors.brand,
-  },
-  trackLabel: {
-    fontSize: 13,
-    color: colors.text,
-  },
-  trackLabelOn: {
-    color: colors.surface,
-    fontWeight: "600",
   },
 });

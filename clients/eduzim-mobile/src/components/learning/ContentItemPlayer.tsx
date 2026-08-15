@@ -13,7 +13,7 @@ import { selectRendererKind } from "@/lib/content/selectRenderer";
 import type { CaptionTrack, ContentDetail, QuizPayload, TranscriptLink } from "@/lib/content/types";
 import { setLearningContext } from "@/lib/learning/context";
 import { t } from "@/lib/i18n/t";
-import { colors } from "@/theme";
+import { useTheme } from "@/theme";
 
 type ContentItemPlayerProps = {
   contentItemId: string;
@@ -33,6 +33,7 @@ type PlayerState =
     };
 
 export function ContentItemPlayer({ contentItemId, moduleId }: ContentItemPlayerProps) {
+  const { colors } = useTheme();
   const [state, setState] = useState<PlayerState>({ status: "loading" });
 
   useEffect(() => {

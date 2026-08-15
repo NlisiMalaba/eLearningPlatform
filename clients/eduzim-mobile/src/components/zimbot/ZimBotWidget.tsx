@@ -1,11 +1,13 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
+import { StyleSheet, Text, View } from "react-native";
+import { Focusable } from "@/components/a11y/Focusable";
 import { ZimBotPanel } from "@/components/zimbot/ZimBotPanel";
 import { getStudentId } from "@/lib/auth/session";
 import { t } from "@/lib/i18n/t";
 import { setZimBotOpen, useZimBotStore } from "@/lib/zimbot/store";
-import { colors } from "@/theme";
+import { useTheme } from "@/theme";
 
 export function ZimBotWidget() {
+  const { colors } = useTheme();
   const { open } = useZimBotStore();
   const studentId = getStudentId();
 
@@ -20,14 +22,15 @@ export function ZimBotWidget() {
           <ZimBotPanel studentId={studentId} onClose={() => setZimBotOpen(false)} />
         </View>
       ) : null}
-      <Pressable
+      <Focusable
         accessibilityRole="button"
+        accessibilityLabel={t("zimbot.launcher")}
         accessibilityState={{ expanded: open }}
         onPress={() => setZimBotOpen(!open)}
-        style={styles.launcher}
+        style={[styles.launcher, { backgroundColor: colors.brand }]}
       >
-        <Text style={styles.launcherLabel}>{t("zimbot.launcher")}</Text>
-      </Pressable>
+        <Text style={[styles.launcherLabel, { color: colors.background }]}>{t("zimbot.launcher")}</Text>
+      </Focusable>
     </View>
   );
 }
@@ -46,19 +49,14 @@ const styles = StyleSheet.create({
     maxWidth: 420,
   },
   launcher: {
-    backgroundColor: colors.brand,
     borderRadius: 999,
     paddingHorizontal: 16,
-    paddingVertical: 12,
-    minHeight: 44,
-    justifyContent: "center",
     shadowColor: "#000",
     shadowOpacity: 0.2,
     shadowRadius: 8,
     elevation: 4,
   },
   launcherLabel: {
-    color: colors.surface,
     fontWeight: "600",
     fontSize: 14,
   },

@@ -1,13 +1,6 @@
 import { useRef, useState } from "react";
-import {
-  Modal,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from "react-native";
+import { Modal, ScrollView, StyleSheet, Text, TextInput, View } from "react-native";
+import { Focusable } from "@/components/a11y/Focusable";
 import { createId } from "@/lib/ids";
 import { t } from "@/lib/i18n/t";
 import { useLearningContext } from "@/lib/learning/context";
@@ -22,7 +15,7 @@ import {
 import type { ChatMessage } from "@/lib/zimbot/types";
 import { isZimBotUnavailable, ZIMBOT_UNAVAILABLE_REPLY } from "@/lib/zimbot/unavailable";
 import { sendZimBotChat } from "@/lib/zimbot/zimbotService";
-import { colors } from "@/theme";
+import { useTheme, type ThemeColors } from "@/theme";
 
 type ZimBotPanelProps = {
   studentId: string;
@@ -30,6 +23,8 @@ type ZimBotPanelProps = {
 };
 
 export function ZimBotPanel({ studentId, onClose }: ZimBotPanelProps) {
+  const { colors } = useTheme();
+  const styles = makeZimBotStyles(colors);
   const { language, messages, sending, helpOpen } = useZimBotStore();
   const { moduleId, inAssessment } = useLearningContext();
   const [draft, setDraft] = useState("");
@@ -69,15 +64,15 @@ export function ZimBotPanel({ studentId, onClose }: ZimBotPanelProps) {
     <View accessibilityLabel={t("zimbot.title")} style={styles.panel}>
       <View style={styles.header}>
         <Text style={styles.title}>{t("zimbot.title")}</Text>
-        <Pressable accessibilityRole="button" onPress={onClose} style={styles.headerButton}>
+        <Focusable accessibilityRole="button" onPress={onClose} style={styles.headerButton}>
           <Text style={styles.headerButtonLabel}>{t("zimbot.close")}</Text>
-        </Pressable>
+        </Focusable>
       </View>
       <View accessibilityLabel={t("zimbot.language")} style={styles.languages}>
         {ZIMBOT_LANGUAGES.map((item) => {
           const selected = item === language;
           return (
-            <Pressable
+            <Focusable
               key={item}
               accessibilityRole="button"
               accessibilityState={{ selected }}
@@ -87,7 +82,7 @@ export function ZimBotPanel({ studentId, onClose }: ZimBotPanelProps) {
               <Text style={[styles.langChipLabel, selected ? styles.langChipLabelOn : null]}>
                 {languageLabel(item)}
               </Text>
-            </Pressable>
+            </Focusable>
           );
         })}
       </View>
@@ -99,20 +94,21 @@ export function ZimBotPanel({ studentId, onClose }: ZimBotPanelProps) {
         {messages.length === 0 ? (
           <Text style={styles.muted}>{t("zimbot.empty")}</Text>
         ) : (
-          messages.map((message) => <ChatBubble key={message.id} message={message} />)
+          messages.map((message) => <ChatBubble key={message.id} message={message} styles={styles} />)
         )}
         {sending ? <Text style={styles.muted}>{t("zimbot.thinking")}</Text> : null}
       </ScrollView>
       {showFallback ? (
         <View style={styles.fallback}>
           <Text style={styles.fallbackText}>{t("zimbot.unavailable")}</Text>
-          <Pressable accessibilityRole="button" onPress={() => setZimBotHelpOpen(true)}>
+          <Focusable accessibilityRole="button" onPress={() => setZimBotHelpOpen(true)}>
             <Text style={styles.link}>{t("zimbot.helpLink")}</Text>
-          </Pressable>
+          </Focusable>
         </View>
       ) : null}
       <View style={styles.composer}>
         <TextInput
+          accessible
           accessibilityLabel={t("zimbot.input")}
           placeholder={t("zimbot.placeholder")}
           value={draft}
@@ -121,7 +117,7 @@ export function ZimBotPanel({ studentId, onClose }: ZimBotPanelProps) {
           maxLength={4000}
           style={styles.input}
         />
-        <Pressable
+        <Focusable
           accessibilityRole="button"
           disabled={sending}
           onPress={() => {
@@ -130,29 +126,40 @@ export function ZimBotPanel({ studentId, onClose }: ZimBotPanelProps) {
           style={[styles.send, sending ? styles.sendDisabled : null]}
         >
           <Text style={styles.sendLabel}>{t("zimbot.send")}</Text>
-        </Pressable>
+        </Focusable>
       </View>
-      <Modal visible={helpOpen} animationType="slide" onRequestClose={() => setZimBotHelpOpen(false)}>
+      <Modal
+        visible={helpOpen}
+        animationType="slide"
+        onRequestClose={() => setZimBotHelpOpen(false)}
+        accessibilityViewIsModal
+      >
         <View style={styles.help}>
           <Text style={styles.helpTitle}>{t("help.title")}</Text>
           <Text style={styles.muted}>{t("help.intro")}</Text>
           <Text style={styles.helpTip}>{t("help.tip.module")}</Text>
           <Text style={styles.helpTip}>{t("help.tip.teacher")}</Text>
           <Text style={styles.helpTip}>{t("help.tip.retry")}</Text>
-          <Pressable
+          <Focusable
             accessibilityRole="button"
             onPress={() => setZimBotHelpOpen(false)}
             style={styles.send}
           >
             <Text style={styles.sendLabel}>{t("help.close")}</Text>
-          </Pressable>
+          </Focusable>
         </View>
       </Modal>
     </View>
   );
 }
 
-function ChatBubble({ message }: { message: ChatMessage }) {
+function ChatBubble({
+  message,
+  styles,
+}: {
+  message: ChatMessage;
+  styles: ReturnType<typeof makeZimBotStyles>;
+}) {
   const isStudent = message.role === "student";
   return (
     <View style={[styles.bubbleRow, isStudent ? styles.bubbleRight : styles.bubbleLeft]}>
@@ -196,7 +203,8 @@ function languageLabel(language: ZimBotLanguage): string {
   }
 }
 
-const styles = StyleSheet.create({
+function makeZimBotStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   panel: {
     height: 480,
     maxHeight: "80%",
@@ -326,6 +334,7 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     minHeight: 56,
     fontSize: 14,
+    color: colors.text,
   },
   send: {
     alignSelf: "flex-start",
@@ -359,4 +368,5 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: colors.text,
   },
-});
+  });
+}

@@ -11,3 +11,5 @@ Expo (React Native) client for EduZim on Android and iOS. Offline module progres
 Set `EXPO_PUBLIC_API_URL` (see `.env.example`) to the EduZim.API base URL.
 
 Learning screens render video (with captions), PDF, audio (with transcript), quizzes, and 3D scenes. ZimBot is available on module screens when a student session token is set. Optionally set `EXPO_PUBLIC_MODULE_ID` to open a module immediately.
+
+Accessibility settings (high-contrast mode and text-to-speech in English, Shona, or Ndebele) are on every screen. Interactive controls are switch-accessible: 44pt targets, accessibility roles/labels, a visible focus ring, and hardware switch/keyboard next-prev-activate.

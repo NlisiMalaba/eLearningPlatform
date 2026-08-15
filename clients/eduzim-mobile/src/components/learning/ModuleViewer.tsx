@@ -1,11 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from "react-native";
+import { Focusable } from "@/components/a11y/Focusable";
 import { ContentItemPlayer } from "@/components/learning/ContentItemPlayer";
+import { useReadableSection } from "@/lib/accessibility/useReadableSection";
 import { getModule } from "@/lib/content/contentService";
 import type { ModuleContentItem, ModuleDetail } from "@/lib/content/types";
 import { setLearningContext } from "@/lib/learning/context";
 import { t } from "@/lib/i18n/t";
-import { colors } from "@/theme";
+import { useTheme, type ThemeColors } from "@/theme";
 
 type ModuleViewerProps = {
   moduleId: string;
@@ -13,6 +15,8 @@ type ModuleViewerProps = {
 };
 
 export function ModuleViewer({ moduleId, initialContentItemId }: ModuleViewerProps) {
+  const { colors } = useTheme();
+  const styles = makeStyles(colors);
   const [moduleDetail, setModuleDetail] = useState<ModuleDetail | null>(null);
   const [error, setError] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -45,6 +49,12 @@ export function ModuleViewer({ moduleId, initialContentItemId }: ModuleViewerPro
 
   const items = moduleDetail?.contentItems ?? [];
   const activeId = useMemo(() => resolveActiveItemId(items, selectedId), [items, selectedId]);
+  useReadableSection(
+    "module",
+    moduleDetail
+      ? `${moduleDetail.subject} ${moduleDetail.title} ${items.map((item) => item.title).join(". ")}`
+      : "",
+  );
 
   if (loading) {
     return (
@@ -65,7 +75,10 @@ export function ModuleViewer({ moduleId, initialContentItemId }: ModuleViewerPro
 
   return (
     <ScrollView contentContainerStyle={styles.body}>
-      <ModuleHeading title={moduleDetail.title} subject={moduleDetail.subject} />
+      <View>
+        <Text style={styles.subject}>{moduleDetail.subject}</Text>
+        <Text style={styles.title}>{moduleDetail.title}</Text>
+      </View>
       {items.length === 0 ? (
         <Text style={styles.muted}>{t("module.empty")}</Text>
       ) : (
@@ -74,7 +87,7 @@ export function ModuleViewer({ moduleId, initialContentItemId }: ModuleViewerPro
             {items.map((item) => {
               const current = item.contentItemId === activeId;
               return (
-                <Pressable
+                <Focusable
                   key={item.contentItemId}
                   accessibilityRole="button"
                   accessibilityState={{ selected: current }}
@@ -85,7 +98,7 @@ export function ModuleViewer({ moduleId, initialContentItemId }: ModuleViewerPro
                   <Text style={[styles.itemLabel, current ? styles.itemLabelActive : null]}>
                     {item.title}
                   </Text>
-                </Pressable>
+                </Focusable>
               );
             })}
           </View>
@@ -93,15 +106,6 @@ export function ModuleViewer({ moduleId, initialContentItemId }: ModuleViewerPro
         </>
       )}
     </ScrollView>
-  );
-}
-
-function ModuleHeading({ title, subject }: { title: string; subject: string }) {
-  return (
-    <View>
-      <Text style={styles.subject}>{subject}</Text>
-      <Text style={styles.title}>{title}</Text>
-    </View>
   );
 }
 
@@ -116,55 +120,56 @@ function resolveActiveItemId(
   return items[0]?.contentItemId;
 }
 
-const styles = StyleSheet.create({
-  body: {
-    gap: 16,
-    paddingBottom: 120,
-  },
-  centered: {
-    paddingVertical: 24,
-    gap: 8,
-  },
-  subject: {
-    color: colors.brand,
-    fontSize: 14,
-    fontWeight: "600",
-  },
-  title: {
-    marginTop: 4,
-    fontSize: 24,
-    fontWeight: "600",
-    color: colors.text,
-  },
-  nav: {
-    gap: 8,
-  },
-  item: {
-    borderWidth: 1,
-    borderColor: colors.border,
-    backgroundColor: colors.surface,
-    borderRadius: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 12,
-    minHeight: 44,
-  },
-  itemActive: {
-    borderColor: colors.brand,
-    backgroundColor: colors.brandSoft,
-  },
-  itemLabel: {
-    fontSize: 14,
-    color: colors.text,
-  },
-  itemLabelActive: {
-    fontWeight: "600",
-  },
-  muted: {
-    color: colors.muted,
-    fontSize: 16,
-  },
-  error: {
-    color: colors.danger,
-    fontSize: 16,
-  },
-});
+function makeStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    body: {
+      gap: 16,
+      paddingBottom: 120,
+    },
+    centered: {
+      paddingVertical: 24,
+      gap: 8,
+    },
+    subject: {
+      color: colors.brand,
+      fontSize: 14,
+      fontWeight: "600",
+    },
+    title: {
+      marginTop: 4,
+      fontSize: 24,
+      fontWeight: "600",
+      color: colors.text,
+    },
+    nav: {
+      gap: 8,
+    },
+    item: {
+      borderWidth: 1,
+      borderColor: colors.border,
+      backgroundColor: colors.surface,
+      borderRadius: 8,
+      paddingHorizontal: 12,
+      paddingVertical: 12,
+    },
+    itemActive: {
+      borderColor: colors.brand,
+      backgroundColor: colors.brandSoft,
+    },
+    itemLabel: {
+      fontSize: 14,
+      color: colors.text,
+    },
+    itemLabelActive: {
+      fontWeight: "600",
+    },
+    muted: {
+      color: colors.muted,
+      fontSize: 16,
+    },
+    error: {
+      color: colors.danger,
+      fontSize: 16,
+    },
+  });
+}

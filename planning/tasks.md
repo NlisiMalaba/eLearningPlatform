@@ -372,7 +372,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement 3D scene viewer with touch-based rotate/zoom/interact
     - Implement ZimBot chat widget with language selector
     - _Requirements: 4.3, 4.5, 5.1, 14.4_
-  - [ ] 28.3 Implement switch access navigation and accessibility
+  - [x] 28.3 Implement switch access navigation and accessibility
     - Ensure all interactive elements support switch access on iOS and Android
     - Implement text-to-speech activation and high-contrast mode
     - _Requirements: 14.1, 14.2, 14.5_
