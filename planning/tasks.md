@@ -352,12 +352,12 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement branding settings form (logo upload, school name, primary colour picker)
     - _Requirements: 11.4, 11.5_
 
-- [ ] 27. Next.js Web PWA — parent dashboard and live classroom
+- [x] 27. Next.js Web PWA — parent dashboard and live classroom
   - [x] 27.1 Implement parent dashboard
     - Render linked students' grade, subjects, recent activity, progress percentage, badges, and weekly summary
     - Implement screen time limit configuration control
     - _Requirements: 10.1, 10.4, 10.5_
-  - [ ] 27.2 Implement live classroom join and SignalR integration
+  - [x] 27.2 Implement live classroom join and SignalR integration
     - Implement classroom join flow using the join token from the Live Classroom API
     - Integrate Daily.co or Jitsi embed in a Client Component; connect to `ClassroomHub` SignalR for presence and teacher controls
     - _Requirements: 13.3, 13.4, 13.6_

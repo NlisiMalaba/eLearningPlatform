@@ -35,6 +35,9 @@ export function TeacherStudioNav() {
       <a href="/teacher/assessments" className="text-[#0B6E4F] underline">
         {t("teacher.nav.assessments")}
       </a>
+      <a href="/teacher/classrooms" className="text-[#0B6E4F] underline">
+        {t("teacher.nav.classrooms")}
+      </a>
     </nav>
   );
 }

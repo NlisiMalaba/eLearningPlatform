@@ -23,7 +23,10 @@ const THIRTY_DAYS_SECONDS = 30 * 24 * 60 * 60;
 const moduleContentCache: RuntimeCaching[] = [
   {
     matcher: ({ url }) =>
-      url.pathname.startsWith("/api/v1/sync/") || url.pathname.startsWith("/api/auth/"),
+      url.pathname.startsWith("/api/v1/sync/") ||
+      url.pathname.startsWith("/api/auth/") ||
+      url.pathname.startsWith("/hubs/") ||
+      url.pathname.startsWith("/api/v1/classrooms/"),
     handler: new NetworkOnly(),
   },
   {

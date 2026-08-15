@@ -35,5 +35,7 @@ describe("teacher studio is not a ZimBot learning path", () => {
     expect(isLearningPath("/teacher")).toBe(false);
     expect(isLearningPath("/teacher/content")).toBe(false);
     expect(isLearningPath("/teacher/modules")).toBe(false);
+    expect(isLearningPath("/classrooms")).toBe(false);
+    expect(isLearningPath("/classrooms/11111111-1111-1111-1111-111111111111")).toBe(false);
   });
 });

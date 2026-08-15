@@ -38,6 +38,11 @@ export function StudentDashboard({ studentId, tenantId, initialData }: StudentDa
       <header>
         <h1 className="text-2xl font-semibold tracking-tight">{t("dashboard.title")}</h1>
         <p className="mt-2 max-w-xl text-zinc-600">{t("dashboard.subtitle")}</p>
+        <p className="mt-3">
+          <a href="/classrooms" className="font-medium text-[#0B6E4F] underline">
+            {t("classroom.join.title")}
+          </a>
+        </p>
       </header>
       <GamificationSummary
         totalPoints={data.totalPoints}

@@ -65,6 +65,9 @@ function AdminHome() {
         <a href="/teacher/assessments" className="font-medium text-[#0B6E4F] underline">
           {t("teacher.nav.assessments")}
         </a>
+        <a href="/teacher/classrooms" className="font-medium text-[#0B6E4F] underline">
+          {t("teacher.nav.classrooms")}
+        </a>
       </div>
     </>
   );
@@ -85,6 +88,9 @@ function TeacherHome() {
         <a href="/teacher/assessments" className="font-medium text-[#0B6E4F] underline">
           {t("teacher.nav.assessments")}
         </a>
+        <a href="/teacher/classrooms" className="font-medium text-[#0B6E4F] underline">
+          {t("teacher.nav.classrooms")}
+        </a>
       </div>
     </>
   );
@@ -95,6 +101,11 @@ function WelcomeHome() {
     <>
       <h1 className="text-2xl font-semibold tracking-tight">{t("app.home.title")}</h1>
       <p className="mt-3 max-w-xl text-base text-zinc-600">{t("app.home.subtitle")}</p>
+      <p className="mt-6">
+        <a href="/classrooms" className="font-medium text-[#0B6E4F] underline">
+          {t("classroom.join.title")}
+        </a>
+      </p>
     </>
   );
 }

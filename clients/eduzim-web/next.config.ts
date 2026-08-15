@@ -14,9 +14,20 @@ const withSerwist = withSerwistInit({
   swDest: "public/sw.js",
 });
 
+const apiBase =
+  process.env.EDUZIM_API_URL?.trim().replace(/\/$/, "") || "http://localhost:5196";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   transpilePackages: ["three"],
+  async rewrites() {
+    return [
+      {
+        source: "/hubs/:path*",
+        destination: `${apiBase}/hubs/:path*`,
+      },
+    ];
+  },
 };
 
 export default withSerwist(nextConfig);
