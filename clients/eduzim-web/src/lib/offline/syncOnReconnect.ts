@@ -36,49 +36,21 @@ export function subscribeConnectivityRestore(
   return unsubscribe;
 }
 
-export function isNetInfoOnline(state: {
-  isConnected?: boolean | null;
-  isInternetReachable?: boolean | null;
-}): boolean {
-  if (state.isConnected !== true) {
-    return false;
-  }
-
-  return state.isInternetReachable !== false;
-}
-
 export function createNavigatorOnlineSource(): ConnectivitySource {
   return {
     getIsOnline: () => typeof navigator !== "undefined" && navigator.onLine === true,
     subscribe: (listener) => {
-      if (typeof globalThis.addEventListener !== "function") {
+      if (typeof window === "undefined") {
         return () => undefined;
       }
 
       const onOnline = () => listener(true);
       const onOffline = () => listener(false);
-      globalThis.addEventListener("online", onOnline);
-      globalThis.addEventListener("offline", onOffline);
+      window.addEventListener("online", onOnline);
+      window.addEventListener("offline", onOffline);
       return () => {
-        globalThis.removeEventListener("online", onOnline);
-        globalThis.removeEventListener("offline", onOffline);
-      };
-    },
-  };
-}
-
-export function combineConnectivitySources(sources: ConnectivitySource[]): ConnectivitySource {
-  return {
-    getIsOnline: async () => {
-      const flags = await Promise.all(sources.map((source) => source.getIsOnline()));
-      return flags.some((online) => online);
-    },
-    subscribe: (listener) => {
-      const unsubscribes = sources.map((source) => source.subscribe(listener));
-      return () => {
-        for (const unsubscribe of unsubscribes) {
-          unsubscribe();
-        }
+        window.removeEventListener("online", onOnline);
+        window.removeEventListener("offline", onOffline);
       };
     },
   };

@@ -1,7 +1,12 @@
 import { useEffect } from "react";
 import NetInfo from "@react-native-community/netinfo";
 import { tryFlushOfflineQueue } from "@/lib/offline/flushQueue";
-import { isNetInfoOnline, subscribeConnectivityRestore } from "@/lib/offline/syncOnReconnect";
+import {
+  combineConnectivitySources,
+  createNavigatorOnlineSource,
+  isNetInfoOnline,
+  subscribeConnectivityRestore,
+} from "@/lib/offline/syncOnReconnect";
 import { setOnline, setPendingCount } from "@/lib/offline/connectivityStore";
 import { getQueuedMutations } from "@/lib/offline/queue";
 
@@ -17,11 +22,14 @@ export function OfflineSyncManager() {
     };
 
     const unsubscribe = subscribeConnectivityRestore(
-      {
-        getIsOnline: async () => isNetInfoOnline(await NetInfo.fetch()),
-        subscribe: (listener) =>
-          NetInfo.addEventListener((state) => listener(isNetInfoOnline(state))),
-      },
+      combineConnectivitySources([
+        {
+          getIsOnline: async () => isNetInfoOnline(await NetInfo.fetch()),
+          subscribe: (listener) =>
+            NetInfo.addEventListener((state) => listener(isNetInfoOnline(state))),
+        },
+        createNavigatorOnlineSource(),
+      ]),
       async () => {
         setOnline(true);
         const result = await tryFlushOfflineQueue();

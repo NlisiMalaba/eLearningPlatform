@@ -14,13 +14,12 @@ namespace EduZim.Tests.Unit.Handlers;
 public sealed class CheckAndAwardBadgesCommandHandlerTests
 {
     [Fact]
-    public async Task First_module_completion_awards_first_module_badge_and_queues_certificate()
+    public async Task First_module_completion_awards_first_module_badge_and_publishes_event()
     {
         Guid tenantId = Guid.NewGuid();
         Guid studentId = Guid.NewGuid();
         Guid moduleId = Guid.NewGuid();
         List<Badge> captured = new();
-        RecordingJobs jobs = new();
         Mock<IPublisher> publisher = new();
         CheckAndAwardBadgesCommandHandler handler = CreateHandler(
             new List<Module>
@@ -32,14 +31,12 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
             attempts: [],
             badges: [],
             captured,
-            jobs,
             publisher);
 
         await handler.Handle(new ModuleCompletedNotification(studentId, moduleId, tenantId), CancellationToken.None);
 
         Assert.Single(captured);
         Assert.Equal(BadgeType.FirstModule, captured[0].Type);
-        Assert.Single(jobs.Queued);
         publisher.Verify(
             p => p.Publish(It.Is<BadgeAwardedNotification>(n => n.BadgeType == BadgeType.FirstModule), It.IsAny<CancellationToken>()),
             Times.Once);
@@ -52,7 +49,6 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
         Guid studentId = Guid.NewGuid();
         Guid moduleId = Guid.NewGuid();
         List<Badge> captured = new();
-        RecordingJobs jobs = new();
         Mock<IPublisher> publisher = new();
         Badge existing = Badge(tenantId, studentId, BadgeType.FirstModule);
         CheckAndAwardBadgesCommandHandler handler = CreateHandler(
@@ -65,13 +61,11 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
             attempts: [],
             badges: [existing],
             captured,
-            jobs,
             publisher);
 
         await handler.Handle(new ModuleCompletedNotification(studentId, moduleId, tenantId), CancellationToken.None);
 
         Assert.Empty(captured);
-        Assert.Empty(jobs.Queued);
         publisher.Verify(
             p => p.Publish(It.IsAny<BadgeAwardedNotification>(), It.IsAny<CancellationToken>()),
             Times.Never);
@@ -87,7 +81,6 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
             .Select(i => Progress(tenantId, studentId, Guid.NewGuid(), today.AddDays(-i)))
             .ToList();
         List<Badge> captured = new();
-        RecordingJobs jobs = new();
         Mock<IPublisher> publisher = new();
         CheckAndAwardBadgesCommandHandler handler = CreateHandler(
             modules: [],
@@ -95,7 +88,6 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
             attempts: [],
             badges: [],
             captured,
-            jobs,
             publisher);
 
         await handler.Handle(
@@ -103,7 +95,9 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
             CancellationToken.None);
 
         Assert.Contains(captured, b => b.Type == BadgeType.FiveConsecutiveDays);
-        Assert.NotEmpty(jobs.Queued);
+        publisher.Verify(
+            p => p.Publish(It.IsAny<BadgeAwardedNotification>(), It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce);
     }
 
     [Fact]
@@ -114,7 +108,6 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
         Guid m1 = Guid.NewGuid();
         Guid m2 = Guid.NewGuid();
         List<Badge> captured = new();
-        RecordingJobs jobs = new();
         Mock<IPublisher> publisher = new();
         CheckAndAwardBadgesCommandHandler handler = CreateHandler(
             new List<Module>
@@ -126,14 +119,15 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
             attempts: [],
             badges: [],
             captured,
-            jobs,
             publisher);
 
         await handler.Handle(new ModuleCompletedNotification(studentId, m2, tenantId), CancellationToken.None);
 
         Assert.Contains(captured, b => b.Type == BadgeType.SubjectMastery);
         Assert.Contains(captured, b => b.Type == BadgeType.GradeCompletion);
-        Assert.Equal(captured.Count, jobs.Queued.Count);
+        publisher.Verify(
+            p => p.Publish(It.IsAny<BadgeAwardedNotification>(), It.IsAny<CancellationToken>()),
+            Times.Exactly(captured.Count));
     }
 
     private static Module Module(Guid tenantId, Guid id, string subject, GradeLevel grade)
@@ -189,7 +183,6 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
         List<AssessmentAttempt> attempts,
         List<Badge> badges,
         List<Badge> capturedAdds,
-        RecordingJobs jobs,
         Mock<IPublisher> publisher)
     {
         Mock<IEduZimDbContext> db = new();
@@ -213,18 +206,6 @@ public sealed class CheckAndAwardBadgesCommandHandlerTests
         return new CheckAndAwardBadgesCommandHandler(
             db.Object,
             publisher.Object,
-            jobs,
             NullLogger<CheckAndAwardBadgesCommandHandler>.Instance);
-    }
-
-    private sealed class RecordingJobs : IGamificationBackgroundJobs
-    {
-        public List<(Guid TenantId, Guid StudentId, Guid BadgeId)> Queued { get; } = new();
-
-        public string? EnqueueCertificateGeneration(Guid tenantId, Guid studentId, Guid badgeId)
-        {
-            Queued.Add((tenantId, studentId, badgeId));
-            return "job-id";
-        }
     }
 }

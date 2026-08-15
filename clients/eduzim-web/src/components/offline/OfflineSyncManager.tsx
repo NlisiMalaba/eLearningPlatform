@@ -4,6 +4,10 @@ import { useEffect } from "react";
 import { getQueuedMutations } from "@/lib/offline/queue";
 import { tryFlushOfflineQueue } from "@/lib/offline/flushQueue";
 import { useConnectivityStore } from "@/lib/offline/connectivityStore";
+import {
+  createNavigatorOnlineSource,
+  subscribeConnectivityRestore,
+} from "@/lib/offline/syncOnReconnect";
 
 export function OfflineSyncManager() {
   const setOnline = useConnectivityStore((state) => state.setOnline);
@@ -23,33 +27,25 @@ export function OfflineSyncManager() {
       }
     };
 
-    const handleOnline = async () => {
-      setOnline(true);
-      const result = await tryFlushOfflineQueue();
-      if (!cancelled) {
-        setPendingCount(result.remaining);
-      }
-    };
-
-    const handleOffline = () => {
-      setOnline(false);
-    };
+    const unsubscribe = subscribeConnectivityRestore(
+      createNavigatorOnlineSource(),
+      async () => {
+        setOnline(true);
+        const result = await tryFlushOfflineQueue();
+        if (!cancelled) {
+          setPendingCount(result.remaining);
+        }
+      },
+      () => {
+        setOnline(false);
+      },
+    );
 
     void refreshPendingCount();
 
-    if (navigator.onLine) {
-      void handleOnline();
-    } else {
-      setOnline(false);
-    }
-
-    window.addEventListener("online", handleOnline);
-    window.addEventListener("offline", handleOffline);
-
     return () => {
       cancelled = true;
-      window.removeEventListener("online", handleOnline);
-      window.removeEventListener("offline", handleOffline);
+      unsubscribe();
     };
   }, [setOnline, setPendingCount]);
 

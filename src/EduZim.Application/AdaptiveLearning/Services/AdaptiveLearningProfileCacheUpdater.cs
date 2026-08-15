@@ -1,3 +1,4 @@
+using System.Globalization;
 using EduZim.Application.AdaptiveLearning.DTOs;
 using EduZim.Application.Common.Interfaces;
 using EduZim.Domain.Entities;
@@ -34,6 +35,94 @@ public static class AdaptiveLearningProfileCacheUpdater
 
         string key = AdaptiveLearningCacheKeys.LearningProfile(tenantId, studentId);
         await cache.SetAsync(key, profile, TimeSpan.FromDays(30), ct).ConfigureAwait(false);
+    }
+
+    /// <summary>
+    /// Updates the cached learning profile from this module's latest assessment scores
+    /// and invalidates the weekly summary so time-on-task is recomputed.
+    /// </summary>
+    public static async Task ApplyFromCompletedModuleAsync(
+        IEduZimDbContext db,
+        ICacheService cache,
+        Guid tenantId,
+        Guid studentId,
+        Guid moduleId,
+        CancellationToken ct)
+    {
+        string key = AdaptiveLearningCacheKeys.LearningProfile(tenantId, studentId);
+        StudentLearningProfileDto? existing = await cache.GetAsync<StudentLearningProfileDto>(key, ct)
+            .ConfigureAwait(false);
+
+        AssessmentAttempt? latest = await LoadLatestModuleAttemptAsync(db, tenantId, studentId, moduleId, ct)
+            .ConfigureAwait(false);
+
+        if (latest is not null)
+        {
+            await ApplyFromSubmittedAssessmentAsync(
+                    cache,
+                    tenantId,
+                    studentId,
+                    latest.AssessmentId,
+                    moduleId,
+                    latest.ScorePercent,
+                    existing,
+                    ct)
+                .ConfigureAwait(false);
+        }
+        else
+        {
+            StudentLearningProfileDto profile = new(
+                studentId,
+                DateTime.UtcNow,
+                existing?.LastAssessmentId ?? Guid.Empty,
+                moduleId,
+                existing?.LastScorePercent ?? 0,
+                existing?.DifficultyTier ?? 3);
+            await cache.SetAsync(key, profile, TimeSpan.FromDays(30), ct).ConfigureAwait(false);
+        }
+
+        await InvalidateCurrentWeeklySummaryAsync(cache, tenantId, studentId, ct).ConfigureAwait(false);
+    }
+
+    public static async Task InvalidateCurrentWeeklySummaryAsync(
+        ICacheService cache,
+        Guid tenantId,
+        Guid studentId,
+        CancellationToken ct)
+    {
+        DateTime referenceUtc = DateTime.UtcNow;
+        int isoYear = ISOWeek.GetYear(referenceUtc);
+        int isoWeek = ISOWeek.GetWeekOfYear(referenceUtc);
+        string weeklyKey = AdaptiveLearningCacheKeys.WeeklySummary(tenantId, studentId, isoYear, isoWeek);
+        await cache.RemoveAsync(weeklyKey, ct).ConfigureAwait(false);
+    }
+
+    private static async Task<AssessmentAttempt?> LoadLatestModuleAttemptAsync(
+        IEduZimDbContext db,
+        Guid tenantId,
+        Guid studentId,
+        Guid moduleId,
+        CancellationToken ct)
+    {
+        List<Guid> assessmentIds = await db.Assessments
+            .AsNoTracking()
+            .Where(a => a.ModuleId == moduleId && a.TenantId == tenantId)
+            .Select(a => a.Id)
+            .ToListAsync(ct)
+            .ConfigureAwait(false);
+        if (assessmentIds.Count == 0)
+            return null;
+
+        return await db.AssessmentAttempts
+            .AsNoTracking()
+            .Where(
+                a => a.TenantId == tenantId
+                    && a.StudentId == studentId
+                    && a.SubmittedAt != null
+                    && assessmentIds.Contains(a.AssessmentId))
+            .OrderByDescending(a => a.SubmittedAt)
+            .FirstOrDefaultAsync(ct)
+            .ConfigureAwait(false);
     }
 
     /// <summary>Rebuilds the learning-profile cache from the student's latest submitted attempt, if any.</summary>

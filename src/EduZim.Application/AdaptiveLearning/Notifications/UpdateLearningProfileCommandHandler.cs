@@ -9,8 +9,10 @@ using Microsoft.Extensions.Logging;
 
 namespace EduZim.Application.AdaptiveLearning.Notifications;
 
-/// <summary>Updates cached learning profile when an assessment attempt is submitted.</summary>
-public sealed class UpdateLearningProfileCommandHandler : INotificationHandler<AssessmentSubmittedNotification>
+/// <summary>Updates the cached learning profile after assessments and module completions.</summary>
+public sealed class UpdateLearningProfileCommandHandler :
+    INotificationHandler<ModuleCompletedNotification>,
+    INotificationHandler<AssessmentSubmittedNotification>
 {
     private readonly IEduZimDbContext _db;
     private readonly ICacheService _cache;
@@ -24,6 +26,25 @@ public sealed class UpdateLearningProfileCommandHandler : INotificationHandler<A
         _db = db;
         _cache = cache;
         _logger = logger;
+    }
+
+    public async Task Handle(ModuleCompletedNotification notification, CancellationToken ct)
+    {
+        await _db.SetSessionTenantIdAsync(notification.TenantId, ct).ConfigureAwait(false);
+
+        await AdaptiveLearningProfileCacheUpdater.ApplyFromCompletedModuleAsync(
+                _db,
+                _cache,
+                notification.TenantId,
+                notification.StudentId,
+                notification.ModuleId,
+                ct)
+            .ConfigureAwait(false);
+
+        _logger.LogDebug(
+            "Updated adaptive learning profile for student {StudentId} after module {ModuleId}.",
+            notification.StudentId,
+            notification.ModuleId);
     }
 
     public async Task Handle(AssessmentSubmittedNotification notification, CancellationToken ct)

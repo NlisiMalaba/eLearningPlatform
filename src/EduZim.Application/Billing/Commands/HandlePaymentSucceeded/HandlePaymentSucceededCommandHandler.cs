@@ -2,6 +2,7 @@ using EduZim.Application.Common.Interfaces;
 using EduZim.Application.Exceptions;
 using EduZim.Domain.Entities;
 using EduZim.Domain.Enums;
+using EduZim.Domain.Events;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
@@ -14,6 +15,7 @@ public sealed class HandlePaymentSucceededCommandHandler : IRequestHandler<Handl
     private readonly IUnitOfWork _unitOfWork;
     private readonly IBillingPeriodService _periodService;
     private readonly IBillingInvoiceService _invoiceService;
+    private readonly IPublisher _publisher;
     private readonly ILogger<HandlePaymentSucceededCommandHandler> _logger;
 
     public HandlePaymentSucceededCommandHandler(
@@ -21,12 +23,14 @@ public sealed class HandlePaymentSucceededCommandHandler : IRequestHandler<Handl
         IUnitOfWork unitOfWork,
         IBillingPeriodService periodService,
         IBillingInvoiceService invoiceService,
+        IPublisher publisher,
         ILogger<HandlePaymentSucceededCommandHandler> logger)
     {
         _db = db;
         _unitOfWork = unitOfWork;
         _periodService = periodService;
         _invoiceService = invoiceService;
+        _publisher = publisher;
         _logger = logger;
     }
 
@@ -89,6 +93,15 @@ public sealed class HandlePaymentSucceededCommandHandler : IRequestHandler<Handl
         await _invoiceService.CreateOrGetInvoiceAsync(payment, subscription, tenant, cancellationToken).ConfigureAwait(false);
 
         await _unitOfWork.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+
+        await _publisher.Publish(
+                new PaymentSucceededNotification(
+                    request.TenantId,
+                    request.SubscriptionId,
+                    request.PaymentProviderReference,
+                    request.IdempotencyKey),
+                cancellationToken)
+            .ConfigureAwait(false);
 
         _logger.LogInformation(
             "Payment succeeded for subscription {SubscriptionId}, payment {PaymentId}.",

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { enqueueMutation, getQueuedMutations, clearQueuedMutations } from "@/lib/offline/queue";
 import { flushOfflineQueue, tryFlushOfflineQueue } from "@/lib/offline/flushQueue";
 import { OfflineSyncKinds } from "@/lib/offline/types";
+import { createNavigatorOnlineSource, subscribeConnectivityRestore } from "@/lib/offline/syncOnReconnect";
 
 vi.mock("@/lib/api/syncService", async () => {
   const actual = await vi.importActual<typeof import("@/lib/api/syncService")>(
@@ -20,6 +21,7 @@ const mockedUpload = vi.mocked(uploadOfflineQueue);
 afterEach(async () => {
   await clearQueuedMutations();
   vi.clearAllMocks();
+  Object.defineProperty(navigator, "onLine", { configurable: true, get: () => true });
 });
 
 describe("offline queue", () => {
@@ -73,5 +75,37 @@ describe("offline queue", () => {
     expect(result.uploaded).toBe(0);
     expect(result.remaining).toBe(1);
     expect(await getQueuedMutations()).toHaveLength(1);
+  });
+});
+
+describe("connectivity restore", () => {
+  it("flushes when navigator.onLine transitions to true", async () => {
+    const onOnline = vi.fn();
+    Object.defineProperty(navigator, "onLine", { configurable: true, get: () => false });
+    const unsubscribe = subscribeConnectivityRestore(createNavigatorOnlineSource(), onOnline);
+
+    await Promise.resolve();
+    expect(onOnline).not.toHaveBeenCalled();
+
+    Object.defineProperty(navigator, "onLine", { configurable: true, get: () => true });
+    window.dispatchEvent(new Event("online"));
+    await Promise.resolve();
+
+    expect(onOnline).toHaveBeenCalledOnce();
+    unsubscribe();
+  });
+
+  it("does not flush again while already online", async () => {
+    const onOnline = vi.fn();
+    Object.defineProperty(navigator, "onLine", { configurable: true, get: () => true });
+    const unsubscribe = subscribeConnectivityRestore(createNavigatorOnlineSource(), onOnline);
+
+    await Promise.resolve();
+    expect(onOnline).toHaveBeenCalledOnce();
+
+    window.dispatchEvent(new Event("online"));
+    await Promise.resolve();
+    expect(onOnline).toHaveBeenCalledOnce();
+    unsubscribe();
   });
 });

@@ -362,7 +362,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Integrate Daily.co or Jitsi embed in a Client Component; connect to `ClassroomHub` SignalR for presence and teacher controls
     - _Requirements: 13.3, 13.4, 13.6_
 
-- [ ] 28. React Native Mobile app
+- [x] 28. React Native Mobile app
   - [x] 28.1 Scaffold React Native app with offline storage
     - Create React Native project (Expo or bare workflow); configure WatermelonDB or SQLite for local offline queue storage
     - Implement offline progress queue: write `OfflineSyncQueue` records locally when offline; trigger `POST /sync/upload` on connectivity restore
@@ -382,23 +382,23 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement language selector (English, Shona, Ndebele) for pre-school interface
     - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.6, 3.7, 3.8_
 
-- [ ] 29. Checkpoint — frontends
+- [x] 29. Checkpoint — frontends
   - Ensure all tests pass, ask the user if questions arise.
 
-- [ ] 30. MediatR notification wiring — cross-feature event flows
-  - [ ] 30.1 Wire `ModuleCompletedNotification` handlers
+- [X] 30. MediatR notification wiring — cross-feature event flows
+  - [x] 30.1 Wire `ModuleCompletedNotification` handlers
     - Ensure `ModuleCompletedNotification` is handled by: `RecordModuleCompletionCommandHandler` (progress + unlock), `AwardPointsCommandHandler` (gamification), `CheckAndAwardBadgesCommandHandler` (badges), `UpdateLearningProfileCommandHandler` (adaptive learning)
     - _Requirements: 4.4, 6.1, 9.3, 10.2_
-  - [ ] 30.2 Wire `AssessmentSubmittedNotification` handlers
+  - [x] 30.2 Wire `AssessmentSubmittedNotification` handlers
     - Ensure `AssessmentSubmittedNotification` is handled by: `UpdateLearningProfileCommandHandler` (adaptive path update), `AwardPointsCommandHandler` (points + badge check), Notification handler (parent notification)
     - _Requirements: 6.1, 9.2, 9.3_
-  - [ ] 30.3 Wire `BadgeAwardedNotification` handlers
+  - [x] 30.3 Wire `BadgeAwardedNotification` handlers
     - Ensure `BadgeAwardedNotification` triggers: certificate generation Hangfire job, parent in-app notification, and email notification
     - _Requirements: 9.6, 10.2_
-  - [ ] 30.4 Wire `PaymentSucceededNotification` and `PaymentFailedNotification` handlers
+  - [x] 30.4 Wire `PaymentSucceededNotification` and `PaymentFailedNotification` handlers
     - Ensure payment notifications trigger tenant status updates and subscriber notifications within 60 seconds
     - _Requirements: 2.3, 2.5_
-  - [ ] 30.5 Wire offline sync trigger on connectivity restore
+  - [x] 30.5 Wire offline sync trigger on connectivity restore
     - Implement connectivity listener in React Native and the Next.js PWA that calls `POST /sync/upload` when `navigator.onLine` transitions to `true`
     - _Requirements: 12.2_
 

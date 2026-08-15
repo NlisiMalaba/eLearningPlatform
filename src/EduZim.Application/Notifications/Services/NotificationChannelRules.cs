@@ -35,6 +35,7 @@ public static class NotificationChannelRules
 
     public static bool IsCriticalSmsType(NotificationType type) =>
         type is NotificationType.SubscriptionExpiry
+            or NotificationType.PaymentFailed
             or NotificationType.LiveClassroomReminder
             or NotificationType.InactivityAlert
             or NotificationType.WeeklyProgressSummary;
@@ -51,6 +52,9 @@ public static class NotificationChannelRules
         NotificationType.MarketplaceAccessRequested => "EduZim: marketplace access requested",
         NotificationType.MarketplacePackRemoved => "EduZim: marketplace pack removed",
         NotificationType.WeeklyProgressSummary => "EduZim: weekly progress summary",
+        NotificationType.AssessmentSubmitted => "EduZim: assessment result",
+        NotificationType.PaymentSucceeded => "EduZim: payment received",
+        NotificationType.PaymentFailed => "EduZim: payment failed",
         _ => "EduZim notification",
     };
 

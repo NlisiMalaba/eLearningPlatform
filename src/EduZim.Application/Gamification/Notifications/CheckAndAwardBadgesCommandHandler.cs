@@ -9,25 +9,22 @@ using Microsoft.Extensions.Logging;
 
 namespace EduZim.Application.Gamification.Notifications;
 
-/// <summary>Awards milestone badges and queues certificate generation.</summary>
+/// <summary>Awards milestone badges and publishes <see cref="BadgeAwardedNotification"/>.</summary>
 public sealed class CheckAndAwardBadgesCommandHandler :
     INotificationHandler<ModuleCompletedNotification>,
     INotificationHandler<AssessmentSubmittedNotification>
 {
     private readonly IEduZimDbContext _db;
     private readonly IPublisher _publisher;
-    private readonly IGamificationBackgroundJobs _backgroundJobs;
     private readonly ILogger<CheckAndAwardBadgesCommandHandler> _logger;
 
     public CheckAndAwardBadgesCommandHandler(
         IEduZimDbContext db,
         IPublisher publisher,
-        IGamificationBackgroundJobs backgroundJobs,
         ILogger<CheckAndAwardBadgesCommandHandler> logger)
     {
         _db = db;
         _publisher = publisher;
-        _backgroundJobs = backgroundJobs;
         _logger = logger;
     }
 
@@ -167,7 +164,6 @@ public sealed class CheckAndAwardBadgesCommandHandler :
 
         foreach (Badge badge in awarded)
         {
-            _backgroundJobs.EnqueueCertificateGeneration(tenantId, studentId, badge.Id);
             await _publisher.Publish(
                     new BadgeAwardedNotification(studentId, badge.Id, tenantId, badge.Type),
                     ct)
