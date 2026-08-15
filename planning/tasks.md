@@ -363,11 +363,11 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - _Requirements: 13.3, 13.4, 13.6_
 
 - [ ] 28. React Native Mobile app
-  - [ ] 28.1 Scaffold React Native app with offline storage
+  - [x] 28.1 Scaffold React Native app with offline storage
     - Create React Native project (Expo or bare workflow); configure WatermelonDB or SQLite for local offline queue storage
     - Implement offline progress queue: write `OfflineSyncQueue` records locally when offline; trigger `POST /sync/upload` on connectivity restore
     - _Requirements: 12.1, 12.2, 12.4_
-  - [ ] 28.2 Implement mobile learning screens and content renderers
+  - [x] 28.2 Implement mobile learning screens and content renderers
     - Implement video player (with captions), PDF viewer, audio player (with transcript), and quiz screens
     - Implement 3D scene viewer with touch-based rotate/zoom/interact
     - Implement ZimBot chat widget with language selector

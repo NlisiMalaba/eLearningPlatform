@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "EduZim",
+    "slug": "eduzim-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "eduzim",
+    "userInterfaceStyle": "automatic",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "zw.co.eduzim.mobile"
+    },
+    "android": {
+      "package": "zw.co.eduzim.mobile",
+      "adaptiveIcon": {
+        "backgroundColor": "#0B6E4F"
+      }
+    },
+    "plugins": ["expo-sqlite", "expo-av", "expo-gl"],
+    "extra": {
+      "apiUrl": "http://localhost:5196"
+    }
+  }
+}

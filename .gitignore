@@ -24,6 +24,11 @@ node_modules/
 .next/
 out/
 
+## Expo / React Native
+.expo/
+dist/
+web-build/
+
 ## OS
 Thumbs.db
 Desktop.ini
