@@ -376,7 +376,7 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Ensure all interactive elements support switch access on iOS and Android
     - Implement text-to-speech activation and high-contrast mode
     - _Requirements: 14.1, 14.2, 14.5_
-  - [ ] 28.4 Implement pre-school tier experience on mobile
+  - [x] 28.4 Implement pre-school tier experience on mobile
     - Implement toddler home screen with animated character, audio pronunciation on tap, and celebratory animation on activity completion
     - Implement 20-minute segment rest prompt and 60-second inactivity pause
     - Implement language selector (English, Shona, Ndebele) for pre-school interface
