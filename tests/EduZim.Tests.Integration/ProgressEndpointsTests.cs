@@ -1,14 +1,16 @@
 using System.Net;
 using EduZim.API;
+using EduZim.Tests.Integration.Support;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace EduZim.Tests.Integration;
 
-public sealed class ProgressEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(UnauthorizedApiCollection.Name)]
+public sealed class ProgressEndpointsTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly UnauthorizedApiFactory _factory;
 
-    public ProgressEndpointsTests(WebApplicationFactory<Program> factory)
+    public ProgressEndpointsTests(UnauthorizedApiFactory factory)
     {
         _factory = factory;
     }

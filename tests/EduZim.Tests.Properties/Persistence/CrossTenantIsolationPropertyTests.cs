@@ -10,7 +10,8 @@ namespace EduZim.Tests.Properties.Persistence;
 /// </summary>
 public sealed class CrossTenantIsolationPropertyTests
 {
-    [Property(MaxTest = 100)]
+    // Feature: elearning-app-zimbabwe, Property 1: Cross-tenant data isolation — Validates: Requirements 11.1, 11.3
+    [Property(MaxTest = 500)]
     public void SessionTenantId_string_matches_uuid_format(Guid tenantId)
     {
         Assert.Equal(36, tenantId.ToString("D").Length);

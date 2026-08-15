@@ -36,7 +36,7 @@ public sealed class IdentityPropertyTests
     }
 
     // Feature: elearning-app-zimbabwe, Property 3: Account Lockout Threshold — Validates: Requirements 1.5
-    [Property(MaxTest = 100)]
+    [Property(MaxTest = 500)]
     public async Task Property3_exactly_five_failed_attempts_locks_account_fewer_does_not()
     {
         using var provider = IdentityPropertyTestHost.Create();
@@ -70,7 +70,7 @@ public sealed class IdentityPropertyTests
     }
 
     // Feature: elearning-app-zimbabwe, Property 4: Unverified Accounts Cannot Access Protected Resources — Validates: Requirements 1.2
-    [Property(MaxTest = 100)]
+    [Property(MaxTest = 500)]
     public async Task Property4_unverified_user_correct_password_sign_in_not_allowed()
     {
         using var provider = IdentityPropertyTestHost.Create();
@@ -123,7 +123,7 @@ public sealed class IdentityPropertyTests
     }
 
     // Feature: elearning-app-zimbabwe, Property 43: PII Deletion on Request — Validates: Requirements 16.4
-    [Property(MaxTest = 500)]
+    [Property(MaxTest = 100)]
     public void Property43_redaction_clears_or_tombstones_pii(Guid userId, NonWhiteSpaceString email)
     {
         var user = new ApplicationUser

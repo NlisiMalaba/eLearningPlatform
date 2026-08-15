@@ -1,14 +1,16 @@
 using System.Net;
 using EduZim.API;
+using EduZim.Tests.Integration.Support;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace EduZim.Tests.Integration;
 
-public sealed class UserPreferenceEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(UnauthorizedApiCollection.Name)]
+public sealed class UserPreferenceEndpointsTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly UnauthorizedApiFactory _factory;
 
-    public UserPreferenceEndpointsTests(WebApplicationFactory<Program> factory)
+    public UserPreferenceEndpointsTests(UnauthorizedApiFactory factory)
     {
         _factory = factory;
     }

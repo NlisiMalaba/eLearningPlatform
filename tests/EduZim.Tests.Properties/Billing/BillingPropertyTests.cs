@@ -243,7 +243,7 @@ public sealed class BillingPropertyTests
     }
 
     // Feature: elearning-app-zimbabwe, Property 7 (tenant suspension does not immediately delete learning data) — Validates: Requirements 2.6, 11.6
-    [Property(MaxTest = 50)]
+    [Property(MaxTest = 100)]
     public async Task Property7_tenant_suspend_does_not_remove_progress_attempts_or_badges_before_retention_job()
     {
         using var provider = BillingPropertyTestHost.Create();

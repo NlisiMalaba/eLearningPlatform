@@ -1,14 +1,16 @@
 using System.Net;
 using EduZim.API;
+using EduZim.Tests.Integration.Support;
 using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace EduZim.Tests.Integration;
 
-public sealed class GamificationEndpointsTests : IClassFixture<WebApplicationFactory<Program>>
+[Collection(UnauthorizedApiCollection.Name)]
+public sealed class GamificationEndpointsTests
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly UnauthorizedApiFactory _factory;
 
-    public GamificationEndpointsTests(WebApplicationFactory<Program> factory)
+    public GamificationEndpointsTests(UnauthorizedApiFactory factory)
     {
         _factory = factory;
     }

@@ -402,35 +402,35 @@ Implement EduZim as a Clean Architecture ASP.NET Core (.NET 10) monolith with a 
     - Implement connectivity listener in React Native and the Next.js PWA that calls `POST /sync/upload` when `navigator.onLine` transitions to `true`
     - _Requirements: 12.2_
 
-- [ ] 31. FsCheck custom arbitraries and test project setup
+- [x] 31. FsCheck custom arbitraries and test project setup
   - Create `EduZim.Tests.Properties/Arbitraries/EduZimArbitraries.cs` with FsCheck generators for `ApplicationUser`, `Tenant`, `AssessmentAttempt`, `Subscription`, `ContentItem`, `Notification`, and `OfflineProgressItem`
   - Configure all property test classes with `[Property(MaxTest = 500)]` for security-critical properties (P1, P2, P3, P4, P42, P44) and `[Property(MaxTest = 100)]` for others
   - _Requirements: all_
 
-- [ ] 32. Integration tests with Testcontainers
-  - [ ]* 32.1 Write integration tests for RLS policy enforcement
+- [x] 32. Integration tests with Testcontainers
+  - [x]* 32.1 Write integration tests for RLS policy enforcement
     - Use `WebApplicationFactory<Program>` + Testcontainers PostgreSQL to verify that queries from tenant A never return rows belonging to tenant B
     - _Requirements: 11.1, 11.3_
-  - [ ]* 32.2 Write integration tests for billing webhook idempotency
+  - [x]* 32.2 Write integration tests for billing webhook idempotency
     - Verify that replaying the same payment success event twice results in exactly one `Invoice` record and one subscription status transition
     - _Requirements: 2.3, 2.7_
-  - [ ]* 32.3 Write integration tests for Hangfire job execution
+  - [x]* 32.3 Write integration tests for Hangfire job execution
     - Verify soft-delete cleanup job, renewal reminder job, and inactivity alert job execute correctly against a real PostgreSQL instance
     - _Requirements: 7.4, 2.4, 10.6_
-  - [ ]* 32.4 Write integration tests for offline sync conflict resolution
+  - [x]* 32.4 Write integration tests for offline sync conflict resolution
     - Simulate concurrent local and server progress records and verify last-write-wins resolution and conflict log creation
     - _Requirements: 12.5_
 
-- [ ] 33. Security hardening
-  - [ ] 33.1 Enforce TLS and security headers
+- [x] 33. Security hardening
+  - [x] 33.1 Enforce TLS and security headers
     - Configure HTTPS redirection and HSTS in `EduZim.API/Program.cs`
     - Verify security headers middleware (X-Content-Type-Options, X-Frame-Options, CSP) is active
     - _Requirements: 16.1_
-  - [ ] 33.2 Implement Polly resilience policies for all external calls
+  - [x] 33.2 Implement Polly resilience policies for all external calls
     - Add retry + circuit breaker Polly policies to all `HttpClient` registrations in Infrastructure: `IAiService`, `ISmsService`, `IPaymentService`, `IVideoService`
     - _Requirements: 5.8, 15.5_
 
-- [ ] 34. Final checkpoint — full system
+- [x] 34. Final checkpoint — full system
   - Ensure all tests pass, ask the user if questions arise.
 
 ## Notes

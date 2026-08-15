@@ -19,7 +19,7 @@ namespace EduZim.Tests.Properties.Audit;
 /// </summary>
 public sealed class AuthorizationAuditPropertyTests
 {
-    [Property(MaxTest = 100)]
+    [Property(MaxTest = 500)]
     public void Property44_TenantAccessViolation_maps_to_403_problem_details(NonEmptyString message)
     {
         var ex = new TenantAccessViolationException(message.Get);
@@ -31,7 +31,7 @@ public sealed class AuthorizationAuditPropertyTests
         Assert.Contains("tenant-access", details.Type, StringComparison.Ordinal);
     }
 
-    [Property(MaxTest = 100)]
+    [Property(MaxTest = 500)]
     public async Task Property44_forbidden_response_audit_write_persists_with_forbidden_action(
         NonEmptyString path,
         Guid userId,
